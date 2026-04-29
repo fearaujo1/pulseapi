@@ -1,0 +1,65 @@
+# =========================
+# JAVA / SPRING BOOT
+# =========================
+target/
+*.log
+*.class
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# =========================
+# IDEs
+# =========================
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code
+.vscode/
+
+# Eclipse / STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+# =========================
+# FRONTEND (React/Vite)
+# =========================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+
+# =========================
+# SISTEMA OPERACIONAL
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# BANCO DE DADOS LOCAL
+# =========================
+*.mv.db
+*.trace.db
+database.mv.db
+
+# =========================
+# OUTROS
+# =========================
+.env

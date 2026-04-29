@@ -1,0 +1,27 @@
+# =========================
+# NORMALIZAÇÃO DE TEXTO
+# =========================
+* text=auto
+
+# =========================
+# WINDOWS
+# =========================
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# =========================
+# SHELL / LINUX
+# =========================
+*.sh text eol=lf
+mvnw text eol=lf
+
+# =========================
+# ARQUIVOS BINÁRIOS
+# =========================
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
