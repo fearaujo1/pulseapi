@@ -55,4 +55,14 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Erro interno do servidor");
         return problemDetail;
     }
+
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ProblemDetail handleBadCredentialsException(org.springframework.security.authentication.BadCredentialsException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED,
+                "Email ou senha Inválidos."
+        );
+        problemDetail.setTitle("Falha na autenticação");
+        return problemDetail;   
+    }
 }
