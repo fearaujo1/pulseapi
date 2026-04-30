@@ -16,11 +16,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 // PassowrdEncoder é quem vai criptografar a senha antes de salvar no banco
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // Permite usar @PreAuthorize("hasRole('ADMIN')")
 public class SecurityConfig {
 
     private final SecurityFilter securityFilter;

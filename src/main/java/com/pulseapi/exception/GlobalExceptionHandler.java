@@ -63,6 +63,16 @@ public class GlobalExceptionHandler {
                 "Email ou senha Inválidos."
         );
         problemDetail.setTitle("Falha na autenticação");
-        return problemDetail;   
+        return problemDetail;
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ProblemDetail handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                "Você não tem permissão para acessar este recurso."
+        );
+        problemDetail.setTitle("Acesso negado");
+        return problemDetail;
     }
 }
