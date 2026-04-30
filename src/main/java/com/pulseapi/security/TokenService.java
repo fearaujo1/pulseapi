@@ -35,4 +35,18 @@ public class TokenService {
                 .plusHours(2)
                 .toInstant(ZoneOffset.of("-03:00"));
     }
+
+    public String validarToken(String token) {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+
+            return JWT.require(algorithm)
+                    .withIssuer("pulseapi")
+                    .build()
+                    .verify(token)
+                    .getSubject();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }
