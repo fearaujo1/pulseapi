@@ -13,6 +13,7 @@ public class LoginResponseDTO {
     private String email;
     private PerfilUsuario perfil;
     private Boolean primeiroAcesso;
+    private String token;
     private String mensagem;
 }
 

@@ -3,21 +3,21 @@ package com.pulseapi.service;
 import com.pulseapi.dto.auth.LoginRequestDTO;
 import com.pulseapi.dto.auth.LoginResponseDTO;
 import com.pulseapi.entity.Usuario;
-import com.pulseapi.repository.UsuarioRepository;
+import com.pulseapi.security.TokenService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-
 @Service
 public class AuthService {
+
     private final AuthenticationManager authenticationManager;
-    private final UsuarioRepository usuarioRepository;
+    private final TokenService tokenService;
 
     public AuthService(AuthenticationManager authenticationManager,
-                       UsuarioRepository usuarioRepository) {
+                       TokenService tokenService) {
         this.authenticationManager = authenticationManager;
-        this.usuarioRepository = usuarioRepository;
+        this.tokenService = tokenService;
     }
 
     public LoginResponseDTO login(LoginRequestDTO dto) {
@@ -27,6 +27,8 @@ public class AuthService {
         Authentication authentication = authenticationManager.authenticate(authToken);
 
         Usuario usuario = (Usuario) authentication.getPrincipal();
+
+        String token = tokenService.gerarToken(usuario);
 
         String mensagem = usuario.getPrimeiroAcesso()
                 ? "Primeiro acesso. Usuário deve alterar a senha."
@@ -38,6 +40,7 @@ public class AuthService {
                 usuario.getEmail(),
                 usuario.getPerfil(),
                 usuario.getPrimeiroAcesso(),
+                token,
                 mensagem
         );
     }
