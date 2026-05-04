@@ -23,13 +23,24 @@ export function AuthProvider({children}) {
     async function login(payload) {
         const data = await authService.login(payload);
 
+        const usuarioLogado = {
+            id: data.id,
+            nome: data.nome,
+            email: data.email,
+            perfil: data.perfil,
+            primeiroAcesso: data.primeiroAcesso,
+        };
+
         localStorage.setItem("token", data.token);
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        localStorage.setItem("usuario", JSON.stringify(usuarioLogado));
 
         setToken(data.token);
-        setUsuario(data.usuario);
+        setUsuario(usuarioLogado);
 
-        return data;
+        return {
+            ...data,
+            usuario: usuarioLogado,
+        };
     }
 
     function logout() {
