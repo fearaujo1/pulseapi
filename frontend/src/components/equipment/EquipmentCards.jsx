@@ -1,7 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import StatusBadge from "./StatusBadge.jsx"
 
-function EquipmentCards({ equipamentos = [], onEdit, onDelete}) {
+function EquipmentCards({ equipamentos = [], onEdit, onDelete, canEdit = true, canDelete = true}) {
     if (equipamentos.length === 0) {
         return (
             <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">
@@ -81,21 +81,24 @@ function EquipmentCards({ equipamentos = [], onEdit, onDelete}) {
                     </div>
 
                     <div className="mt-6 flex items-center justiy-end gap-2">
-                        <button
-                            onClick={() => onEdit(equipamento)}
-                            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
-                            title="Editar"
-                        >
-                            <Pencil size={16} />
-                        </button>
-
-                        <button
-                            onClick={() => onDelete(equipamento)}
-                            className="p-2 rounded-xl border border-slate-200 text-red-600 hover:bg-red-50 transition"
-                            title="Excluir"
-                        >
-                            <Trash2 size={16} />
-                        </button>
+                        {canEdit && (
+                            <button
+                                onClick={() => onEdit(equipamento)}
+                                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
+                                title="Editar"
+                            >
+                                <Pencil size={16} />
+                            </button>
+                        )}
+                        {canDelete && (
+                            <button
+                                onClick={() => onDelete(equipamento)}
+                                className="p-2 rounded-xl border border-slate-200 text-red-600 hover:bg-red-50 transition"
+                                title="Excluir"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
