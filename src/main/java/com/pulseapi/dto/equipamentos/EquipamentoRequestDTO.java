@@ -1,4 +1,4 @@
-package com.pulseapi.dto;
+package com.pulseapi.dto.equipamentos;
 
 import com.pulseapi.entity.StatusEquipamento;
 import jakarta.validation.constraints.NotBlank;
