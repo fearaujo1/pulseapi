@@ -14,6 +14,9 @@ import EquipmentCards from "../components/equipment/EquipmentCards.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 function EquipamentosPage() {
+
+    const { usuario } = useAuth();
+
     const podeCriar = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)
     const podeEditar = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)
     const podeExcluir = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)

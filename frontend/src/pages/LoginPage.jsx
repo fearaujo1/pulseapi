@@ -29,12 +29,16 @@ function LoginPage() {
                 senha,
             });
 
+            console.log("Retorno login:", data);
+            console.log("Usuário logado:", data.usuario);
+
+
             toast.success("Login realizado com sucesso!");
 
             if (data.usuario?.primeiroAcesso) {
-                navigate("/primeiro-acesso");
+                navigate("/primeiro-acesso", { replace: true });
             } else {
-                navigate("/equipamentos");
+                navigate("/equipamentos", { replace: true });
             }
         } catch (error) {
             console.error("Erro ao fazer login: ", error);
