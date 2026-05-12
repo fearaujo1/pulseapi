@@ -15,65 +15,13 @@ import {
     Trash2,
     Filter,
 } from "lucide-react";
+import UserFormModal from "../components/users/UserFormModal";
 
 import Topbar from "../components/layout/Topbar";
 import SummaryCard from "../components/equipment/SummaryCard";
 import CustomFilterSelect from "../components/equipment/CustomFilterSelect";
 import { usuarioService } from "../services/usuarioService";
 import toast from "react-hot-toast";
-
-const usuarios = [
-    {
-        id: 1,
-        nome: "Maria Santos",
-        email: "maria.santos@empresa.com",
-        telefone: "(11) 98765-4321",
-        perfil: "OPERADOR",
-        status: "ATIVO",
-        ultimoAcesso: "2026-02-27 13:45",
-        cadastro: "2025-01-15",
-    },
-    {
-        id: 2,
-        nome: "João Silva",
-        email: "joao.silva@empresa.com",
-        telefone: "(11) 98765-4322",
-        perfil: "OPERADOR",
-        status: "ATIVO",
-        ultimoAcesso: "2026-02-27 13:42",
-        cadastro: "2025-01-20",
-    },
-    {
-        id: 3,
-        nome: "Carlos Lima",
-        email: "carlos.lima@empresa.com",
-        telefone: "(11) 98765-4323",
-        perfil: "SUPERVISOR",
-        status: "ATIVO",
-        ultimoAcesso: "2026-02-27 14:10",
-        cadastro: "2025-02-01",
-    },
-    {
-        id: 4,
-        nome: "Roberto Souza",
-        email: "roberto.souza@empresa.com",
-        telefone: "(11) 98765-4325",
-        perfil: "ADMIN",
-        status: "ATIVO",
-        ultimoAcesso: "2026-02-27 14:05",
-        cadastro: "2024-11-01",
-    },
-    {
-        id: 5,
-        nome: "Lucia Mendes",
-        email: "lucia.mendes@empresa.com",
-        telefone: "(11) 98765-4326",
-        perfil: "OPERADOR",
-        status: "INATIVO",
-        ultimoAcesso: "2026-02-20 08:15",
-        cadastro: "2025-03-01",
-    },
-];
 
 const perfilOptions = [
     { value: "", label: "Todos os perfis" },
@@ -134,6 +82,34 @@ function UsuariosPage() {
 
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Modal para criar um novo usuário
+    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+    const [submitLoading, setSubmitLoading] = useState(false);
+
+    async function handleCreateUsuario(formData) {
+        try {
+            setSubmitLoading(true);
+
+            await usuarioService.criar(formData);
+
+            setIsUserModalOpen(false);
+            await carregarUsuarios();
+
+            toast.success("Usuário criado com sucesso!");
+        } catch (error) {
+            console.error("Erro ao criar usuário:", error);
+            console.error("Resposta:", error.response?.data);
+
+            toast.error(
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                "Erro ao criar usuário."
+            );
+        } finally {
+            setSubmitLoading(false);
+        }
+    }
 
     async function carregarUsuarios() {
         try {
@@ -217,7 +193,10 @@ function UsuariosPage() {
                             Novo Perfil
                         </button>
 
-                        <button className="h-12 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-3 shadow-sm">
+                        <button
+                            onClick={() => setIsUserModalOpen(true)}
+                            className="h-12 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-3 shadow-sm"
+                        >
                             <Plus size={20} />
                             Novo Usuário
                         </button>
@@ -364,9 +343,6 @@ function UsuariosPage() {
                                                             <p className="font-medium text-slate-800 text-sm">
                                                                 {usuario.nome}
                                                             </p>
-                                                            <p className="text-xs text-slate-500">
-                                                                {usuario.email}
-                                                            </p>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -425,6 +401,12 @@ function UsuariosPage() {
                     </section>
                 )}
             </main>
+            <UserFormModal
+                isOpen={isUserModalOpen}
+                onClose={() => setIsUserModalOpen(false)}
+                onSubmit={handleCreateUsuario}
+                loading={submitLoading}
+            />
         </div>
     );
 }
