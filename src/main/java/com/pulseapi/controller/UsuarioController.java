@@ -39,4 +39,26 @@ public class UsuarioController {
     public ResponseEntity<UsuarioResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(usuarioService.buscarPorId(id));
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<UsuarioResponseDTO> atualizar(@PathVariable Long id,
+                                                        @RequestBody @Valid UsuarioUpdateDTO dto) {
+        return ResponseEntity.ok(usuarioService.atualizar(id, dto));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<UsuarioResponseDTO> atualizarStatus(@PathVariable Long id,
+                                                              @RequestBody @Valid UsuarioStatusDTO dto) {
+        return ResponseEntity.ok(usuarioService.atualizarStatus(id, dto));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        usuarioService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }
