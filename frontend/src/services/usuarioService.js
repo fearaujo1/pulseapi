@@ -15,4 +15,9 @@ export const usuarioService = {
         const response = await api.post("/usuarios", payload);
         return response.data;
     },
+
+    async atualizar(id, payload) {
+        const response = await api.put(`/usuarios/${id}`, payload);
+        return response.data;
+    },
 };

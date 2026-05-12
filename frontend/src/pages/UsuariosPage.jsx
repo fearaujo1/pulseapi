@@ -87,6 +87,9 @@ function UsuariosPage() {
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
 
+    //Modal para atualizar um usuário
+    const [selectedUsuario, setSelectedUsuario] = useState(null);
+
     async function handleCreateUsuario(formData) {
         try {
             setSubmitLoading(true);
@@ -110,7 +113,6 @@ function UsuariosPage() {
             setSubmitLoading(false);
         }
     }
-
     async function carregarUsuarios() {
         try {
             setLoading(true);
@@ -130,6 +132,41 @@ function UsuariosPage() {
         } finally {
             setLoading(false);
         }
+    }
+    async function handleUpdateUsuario(formData) {
+        try {
+            setSubmitLoading(true);
+
+            const payload = { ...formData };
+
+            if (!payload.senha) {
+                delete payload.senha;
+            }
+
+            await usuarioService.atualizar(selectedUsuario.id, payload);
+
+            setIsUserModalOpen(false);
+            setSelectedUsuario(null);
+
+            await carregarUsuarios();
+
+            toast.success("Usuário atualizado com sucesso!");
+        } catch (error) {
+            console.error("Erro ao atualizar usuário:", error);
+            console.error("Resposta:", error.response?.data);
+
+            toast.error(
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                "Erro ao atualizar usuário."
+            );
+        } finally {
+            setSubmitLoading(false);
+        }
+    }
+    function handleEditUsuario(usuario) {
+        setSelectedUsuario(usuario);
+        setIsUserModalOpen(true);
     }
 
     useEffect(() => {
@@ -194,7 +231,10 @@ function UsuariosPage() {
                         </button>
 
                         <button
-                            onClick={() => setIsUserModalOpen(true)}
+                            onClick={() => {
+                                setSelectedUsuario(null);
+                                setIsUserModalOpen(true);
+                            }}
                             className="h-12 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-3 shadow-sm"
                         >
                             <Plus size={20} />
@@ -367,7 +407,10 @@ function UsuariosPage() {
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center gap-2">
-                                                        <button className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition">
+                                                        <button
+                                                            onClick={() => handleEditUsuario(usuario)}
+                                                            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
+                                                        >
                                                             <Pencil size={16} />
                                                         </button>
 
@@ -403,9 +446,14 @@ function UsuariosPage() {
             </main>
             <UserFormModal
                 isOpen={isUserModalOpen}
-                onClose={() => setIsUserModalOpen(false)}
-                onSubmit={handleCreateUsuario}
+                onClose={() => {
+                    setIsUserModalOpen(false);
+                    setSelectedUsuario(null);
+                }}
+                onSubmit={selectedUsuario ? handleUpdateUsuario : handleCreateUsuario}
                 loading={submitLoading}
+                mode={selectedUsuario ? "edit" : "create"}
+                initialData={selectedUsuario}
             />
         </div>
     );

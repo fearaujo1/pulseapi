@@ -8,14 +8,30 @@ const initialForm = {
     perfil: "OPERADOR",
 };
 
-function UserFormModal({ isOpen, onClose, onSubmit, loading = false }) {
+function UserFormModal({
+                           isOpen,
+                           onClose,
+                           onSubmit,
+                           loading = false,
+                           initialData = null,
+                           mode = "create",
+                       }) {
     const [formData, setFormData] = useState(initialForm);
 
+    const isEditMode = mode === "edit";
+
     useEffect(() => {
-        if (isOpen) {
+        if (initialData) {
+            setFormData({
+                nome: initialData.nome || "",
+                email: initialData.email || "",
+                senha: "",
+                perfil: initialData.perfil || "OPERADOR",
+            });
+        } else {
             setFormData(initialForm);
         }
-    }, [isOpen]);
+    }, [initialData, isOpen]);
 
     if (!isOpen) return null;
 
@@ -32,6 +48,8 @@ function UserFormModal({ isOpen, onClose, onSubmit, loading = false }) {
         e.preventDefault();
         onSubmit(formData);
     }
+
+
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
@@ -106,9 +124,9 @@ function UserFormModal({ isOpen, onClose, onSubmit, loading = false }) {
                                     name="senha"
                                     value={formData.senha}
                                     onChange={handleChange}
-                                    placeholder="Ex: 12345"
+                                    placeholder={isEditMode ? "Deixe em branco para manter a senha atual" : "Ex: 12345"}
                                     className="w-full bg-transparent outline-none text-[13px]"
-                                    required
+                                    required={!isEditMode}
                                 />
                             </div>
                         </div>
@@ -169,7 +187,9 @@ function UserFormModal({ isOpen, onClose, onSubmit, loading = false }) {
                             disabled={loading}
                             className="h-10 rounded-xl bg-blue-600 px-6 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 text-[13.5px]"
                         >
-                            {loading ? "Criando..." : "Criar Usuário"}
+                            {loading
+                                ? "Salvando..."
+                                : isEditMode ? "Salvar Alterações" : "Criar Usuário"}
                         </button>
                     </div>
                 </form>
