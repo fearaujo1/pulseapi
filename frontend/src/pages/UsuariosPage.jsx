@@ -22,6 +22,7 @@ import SummaryCard from "../components/equipment/SummaryCard";
 import CustomFilterSelect from "../components/equipment/CustomFilterSelect";
 import { usuarioService } from "../services/usuarioService";
 import toast from "react-hot-toast";
+import UserDeleteModal from "../components/users/UserDeleteModal";
 
 const perfilOptions = [
     { value: "", label: "Todos os perfis" },
@@ -89,6 +90,11 @@ function UsuariosPage() {
 
     //Modal para atualizar um usuário
     const [selectedUsuario, setSelectedUsuario] = useState(null);
+
+    //Modal para deletar um usuário
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [usuarioToDelete, setUsuarioToDelete] = useState(null);
 
 
     async function carregarUsuarios() {
@@ -168,6 +174,69 @@ function UsuariosPage() {
     function handleEditUsuario(usuario) {
         setSelectedUsuario(usuario);
         setIsUserModalOpen(true);
+    }
+    async function handleToggleStatusUsuario(usuario) {
+        const novoStatus = usuario.status === "ATIVO" ? "INATIVO" : "ATIVO";
+
+        try {
+            await usuarioService.atualizarStatus(usuario.id, novoStatus);
+
+            setUsuarios((prev) =>
+                prev.map((item) =>
+                    item.id === usuario.id
+                        ? { ...item, status: novoStatus }
+                        : item
+                )
+            );
+
+            toast.success(
+                novoStatus === "ATIVO"
+                    ? "Usuário ativado com sucesso!"
+                    : "Usuário inativado com sucesso!"
+            );
+        } catch (error) {
+            console.error("Erro ao atualizar status do usuário:", error);
+            console.error("Resposta:", error.response?.data);
+
+            toast.error(
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                "Erro ao atualizar status do usuário."
+            );
+        }
+    }
+    function handleDeleteUsuario(usuario) {
+        setUsuarioToDelete(usuario);
+        setIsDeleteModalOpen(true);
+    }
+    async function handleConfirmDeleteUsuario() {
+        if (!usuarioToDelete?.id) return;
+
+        try {
+            setDeleteLoading(true);
+
+            await usuarioService.deletar(usuarioToDelete.id);
+
+            setUsuarios((prev) =>
+                prev.filter((usuario) => usuario.id !== usuarioToDelete.id)
+            );
+
+            setIsDeleteModalOpen(false);
+            setUsuarioToDelete(null);
+
+            toast.success("Usuário excluído com sucesso!");
+        } catch (error) {
+            console.error("Erro ao excluir usuário:", error);
+            console.error("Resposta:", error.response?.data);
+
+            toast.error(
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                "Erro ao excluir usuário."
+            );
+        } finally {
+            setDeleteLoading(false);
+        }
     }
 
     useEffect(() => {
@@ -415,11 +484,19 @@ function UsuariosPage() {
                                                             <Pencil size={16} />
                                                         </button>
 
-                                                        <button className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition">
+                                                        <button
+                                                            onClick={() => handleToggleStatusUsuario(usuario)}
+                                                            className="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition"
+                                                            title={usuario.status === "ATIVO" ? "Inativar usuário" : "Ativar usuário"}
+                                                        >
                                                             <KeyRound size={16} />
                                                         </button>
 
-                                                        <button className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition">
+                                                        <button
+                                                            onClick={() => handleDeleteUsuario(usuario)}
+                                                            className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
+                                                            title="Excluir"
+                                                        >
                                                             <Trash2 size={16} />
                                                         </button>
                                                     </div>
@@ -455,6 +532,16 @@ function UsuariosPage() {
                 loading={submitLoading}
                 mode={selectedUsuario ? "edit" : "create"}
                 initialData={selectedUsuario}
+            />
+            <UserDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setUsuarioToDelete(null);
+                }}
+                onConfirm={handleConfirmDeleteUsuario}
+                loading={deleteLoading}
+                usuario={usuarioToDelete}
             />
         </div>
     );

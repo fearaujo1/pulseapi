@@ -22,7 +22,7 @@ export const usuarioService = {
     },
 
     async atualizarStatus(id, status) {
-        const response = await api.put(`/usuarios/${id}`, {status});
+        const response = await api.patch(`/usuarios/${id}/status`, {status});
         return response.data;
     },
 
