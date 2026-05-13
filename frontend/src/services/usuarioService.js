@@ -20,4 +20,13 @@ export const usuarioService = {
         const response = await api.put(`/usuarios/${id}`, payload);
         return response.data;
     },
+
+    async atualizarStatus(id, status) {
+        const response = await api.put(`/usuarios/${id}`, {status});
+        return response.data;
+    },
+
+    async deletar(id) {
+        await api.delete(`/usuarios/${id}`);
+    },
 };

@@ -28,11 +28,7 @@ function LoginPage() {
                 email,
                 senha,
             });
-
-            console.log("Retorno login:", data);
-            console.log("Usuário logado:", data.usuario);
-
-
+            
             toast.success("Login realizado com sucesso!");
 
             if (data.usuario?.primeiroAcesso) {

@@ -57,10 +57,13 @@ function UserFormModal({
                 <div className="flex items-start justify-between px-8 pt-8">
                     <div>
                         <h2 className="text-[20px] font-bold text-slate-900">
-                            Novo Usuário
+                            {isEditMode ? "Editar Usuário" : "Novo Usuário"}
                         </h2>
+
                         <p className="mt-2 text-[13px] text-slate-500">
-                            Cadastre um usuário e defina seu perfil de acesso
+                            {isEditMode
+                                ? "Atualize as informações do usuário"
+                                : "Cadastre um usuário e defina seu perfil de acesso"}
                         </p>
                     </div>
 
@@ -112,24 +115,26 @@ function UserFormModal({
                             </div>
                         </div>
 
-                        <div>
-                            <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
-                                Senha temporária *
-                            </label>
+                        {!isEditMode && (
+                            <div>
+                                <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
+                                    Senha inicial *
+                                </label>
 
-                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 outline-none focus-within:border-blue-500">
-                                <Lock size={17} className="text-slate-400" />
-                                <input
-                                    type="password"
-                                    name="senha"
-                                    value={formData.senha}
-                                    onChange={handleChange}
-                                    placeholder={isEditMode ? "Deixe em branco para manter a senha atual" : "Ex: 12345"}
-                                    className="w-full bg-transparent outline-none text-[13px]"
-                                    required={!isEditMode}
-                                />
+                                <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 outline-none focus-within:border-blue-500">
+                                    <Lock size={17} className="text-slate-400" />
+                                    <input
+                                        type="password"
+                                        name="senha"
+                                        value={formData.senha}
+                                        onChange={handleChange}
+                                        placeholder="Ex: 12345"
+                                        className="w-full bg-transparent outline-none text-[13px]"
+                                        required
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <div>
                             <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">

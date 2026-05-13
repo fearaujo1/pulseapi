@@ -2,6 +2,8 @@ package com.pulseapi.controller;
 
 import com.pulseapi.dto.usuario.UsuarioRequestDTO;
 import com.pulseapi.dto.usuario.UsuarioResponseDTO;
+import com.pulseapi.dto.usuario.UsuarioStatusDTO;
+import com.pulseapi.dto.usuario.UsuarioUpdateDTO;
 import com.pulseapi.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

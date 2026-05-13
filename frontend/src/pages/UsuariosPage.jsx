@@ -90,6 +90,27 @@ function UsuariosPage() {
     //Modal para atualizar um usuário
     const [selectedUsuario, setSelectedUsuario] = useState(null);
 
+
+    async function carregarUsuarios() {
+        try {
+            setLoading(true);
+
+            const data = await usuarioService.listar();
+
+            if (!Array.isArray(data)) {
+                throw new Error("Resposta inválida da API de usuários.")
+            }
+
+            setUsuarios(data);
+        } catch (error) {
+            console.error("Erro ao carregar usuários: ", error);
+            console.error("Resposta: ", error.response?.data);
+            toast.error("Erro ao carregar usuários: ", error);
+            setUsuarios([]);
+        } finally {
+            setLoading(false);
+        }
+    }
     async function handleCreateUsuario(formData) {
         try {
             setSubmitLoading(true);
@@ -113,35 +134,15 @@ function UsuariosPage() {
             setSubmitLoading(false);
         }
     }
-    async function carregarUsuarios() {
-        try {
-            setLoading(true);
-
-            const data = await usuarioService.listar();
-
-            if (!Array.isArray(data)) {
-                throw new Error("Resposta inválida da API de usuários.")
-            }
-
-            setUsuarios(data);
-        } catch (error) {
-            console.error("Erro ao carregar usuários: ", error);
-            console.error("Resposta: ", error.response?.data);
-            toast.error("Erro ao carregar usuários: ", error);
-            setUsuarios([]);
-        } finally {
-            setLoading(false);
-        }
-    }
     async function handleUpdateUsuario(formData) {
         try {
             setSubmitLoading(true);
 
-            const payload = { ...formData };
-
-            if (!payload.senha) {
-                delete payload.senha;
-            }
+            const payload = {
+                nome: formData.nome,
+                email: formData.email,
+                perfil: formData.perfil,
+            };
 
             await usuarioService.atualizar(selectedUsuario.id, payload);
 
