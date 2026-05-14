@@ -27,6 +27,7 @@ O projeto segue uma arquitetura **Full Stack** dividida em:
 * Spring Boot
 * Spring Data JPA
 * SQL Server / H2 (dev)
+* Spring Security + JWT
 * Arquitetura em camadas (Controller, Service, Repository)
 
 ### 🔹 Frontend
@@ -48,6 +49,44 @@ O projeto segue uma arquitetura **Full Stack** dividida em:
 * Consulta geral e por ID
 * Alteração de status (ativo, inativo, manutenção)
 
+---
+
+### 👤 Gestão de Usuários (Autenticação e Autorização)
+
+* Cadastro de usuários por ADMIN
+* Perfis de acesso:
+  - ADMIN
+  - GESTOR
+  - SUPERVISOR
+  - OPERADOR
+* Senha criptografada com **BCrypt**
+* Controle de status do usuário (ativo, inativo, bloqueado)
+
+---
+
+### 🔐 Autenticação e Segurança
+
+* Login com email e senha
+* Geração de **JWT (JSON Web Token)**
+* Filtro de autenticação para validação do token
+* Proteção de rotas com Spring Security
+* Controle de acesso por perfil (`@PreAuthorize`)
+
+---
+
+### 🔁 Primeiro Acesso
+
+* Usuário criado com senha temporária
+* Obrigatoriedade de troca de senha no primeiro login
+* Validação de senha forte:
+  - mínimo 8 caracteres
+  - letra maiúscula
+  - letra minúscula
+  - número
+  - caractere especial
+
+---
+
 ### 📊 Interface Web
 
 * Tabela com paginação
@@ -55,6 +94,8 @@ O projeto segue uma arquitetura **Full Stack** dividida em:
 * Busca com debounce
 * Cards de resumo
 * Interface moderna e responsiva
+
+---
 
 ### 🔌 Integração Industrial
 
@@ -73,102 +114,3 @@ PulseAPI/
 ├── frontend/           # Frontend (React)
 ├── pom.xml
 └── README.md
-```
-
----
-
-## ▶️ Como Executar o Projeto
-
-### 🔹 Backend
-
-```bash
-./mvnw spring-boot:run
-```
-
-ou no Windows:
-
-```bash
-mvnw.cmd spring-boot:run
-```
-
-A API estará disponível em:
-
-```
-http://localhost:8080
-```
-
----
-
-### 🔹 Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-A aplicação estará disponível em:
-
-```
-http://localhost:5173
-```
-
----
-
-## 🔐 Segurança
-
-* Estrutura preparada para autenticação (Spring Security)
-* Atualmente com permissões liberadas para desenvolvimento
-
----
-
-## 📡 Endpoints principais
-
-| Método | Endpoint                  | Descrição                   |
-| ------ | ------------------------- | --------------------------- |
-| GET    | /equipamentos             | Lista todos os equipamentos |
-| GET    | /equipamentos/{id}        | Busca por ID                |
-| POST   | /equipamentos             | Cria novo equipamento       |
-| PUT    | /equipamentos/{id}        | Atualiza equipamento        |
-| DELETE | /equipamentos/{id}        | Remove equipamento          |
-| PATCH  | /equipamentos/{id}/status | Atualiza status             |
-
----
-
-## 🧠 Tecnologias e Conceitos Aplicados
-
-* Arquitetura em camadas
-* REST API
-* Integração com dispositivos industriais
-* Comunicação via protocolo (Codenet)
-* Frontend reativo
-* Organização de código por domínio
-* Versionamento com Git (commits semânticos)
-
----
-
-## 🚧 Status do Projeto
-
-🟡 Em desenvolvimento
-
-Próximas etapas:
-
-* Autenticação com JWT
-* Dashboard com indicadores (OEE)
-* Multi-tenant
-* Integração com mais equipamentos
-* Deploy em nuvem
-
----
-
-## 👨‍💻 Autor
-
-**Felipe Araújo (Fe)**
-Estudante de Engenharia de Software
-Desenvolvedor Backend | Full Stack em evolução
-
----
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT.
