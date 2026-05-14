@@ -11,8 +11,17 @@ import toast from "react-hot-toast";
 import Pagination from "../components/equipment/Pagination.jsx";
 import EquipmentTableSkeleton from "../components/equipment/EquipmentTableSkeleton";
 import EquipmentCards from "../components/equipment/EquipmentCards.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 function EquipamentosPage() {
+
+    const { usuario } = useAuth();
+
+    const podeCriar = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)
+    const podeEditar = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)
+    const podeExcluir = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)
+
+
     const [equipamentos, setEquipamentos] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -260,13 +269,15 @@ function EquipamentosPage() {
                         </p>
                     </div>
 
-                    <button
-                        onClick={handleNovo}
-                        className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[15px] flex items-center gap-2 shadow-sm"
-                    >
-                        <Plus size={15} />
-                        Novo Equipamento
-                    </button>
+                    {podeCriar && (
+                        <button
+                            onClick={handleNovo}
+                            className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[15px] flex items-center gap-2 shadow-sm"
+                        >
+                            <Plus size={15} />
+                            Novo Equipamento
+                        </button>
+                    )}
                 </section>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
@@ -357,12 +368,16 @@ function EquipamentosPage() {
                                     onSort={handleSort}
                                     sortField={sortField}
                                     sortDirection={sortDirection}
+                                    canEdit={podeEditar}
+                                    canDelete={podeExcluir}
                                 />
                             ) : (
                                 <EquipmentCards
                                     equipamentos={equipamentosPaginados}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
+                                    canEdit={podeEditar}
+                                    canDelete={podeExcluir}
                                 />
                             )}
                             

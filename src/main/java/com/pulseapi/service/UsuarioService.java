@@ -73,9 +73,10 @@ public class UsuarioService {
 
     public UsuarioResponseDTO atualizar(Long id, UsuarioUpdateDTO dto) {
         Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com ID: "+ id));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com ID: " + id));
 
-        if(!usuario.getEmail().equals(dto.getEmail()) && usuarioRepository.existsByEmail(dto.getEmail())) {
+        if (!usuario.getEmail().equals(dto.getEmail()) &&
+                usuarioRepository.existsByEmail(dto.getEmail())) {
             throw new BusinessException("Já existe um usuário cadastrado com este email.");
         }
 
@@ -83,7 +84,7 @@ public class UsuarioService {
         usuario.setEmail(dto.getEmail());
         usuario.setPerfil(dto.getPerfil());
 
-        Usuario atualizado =  usuarioRepository.save(usuario);
+        Usuario atualizado = usuarioRepository.save(usuario);
 
         return toResponseDTO(atualizado);
     }
@@ -94,7 +95,7 @@ public class UsuarioService {
 
         usuario.setStatus(dto.getStatus());
 
-        Usuario atualizado =  usuarioRepository.save(usuario);
+        Usuario atualizado = usuarioRepository.save(usuario);
 
         return toResponseDTO(atualizado);
     }
@@ -105,8 +106,6 @@ public class UsuarioService {
 
         usuarioRepository.delete(usuario);
     }
-
-
 }
 
 

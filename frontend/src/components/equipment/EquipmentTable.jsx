@@ -8,6 +8,8 @@ function EquipmentTable({
                             onSort,
                             sortField,
                             sortDirection,
+                            canEdit = true,
+                            canDelete = true
                         }) {
 
     function renderSortIcon(field) {
@@ -96,21 +98,25 @@ function EquipmentTable({
 
                                 <td className="px-6 py-5">
                                     <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => onEdit(equipamento)}
-                                            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
-                                            title="Editar"
-                                        >
-                                            <Pencil size={16} />
-                                        </button>
+                                        {canEdit && (
+                                            <button
+                                                onClick={() => onEdit(equipamento)}
+                                                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
+                                                title="Editar"
+                                            >
+                                                <Pencil size={16} />
+                                            </button>
+                                        )}
 
-                                        <button
-                                            onClick={() => onDelete(equipamento)}
-                                            className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
-                                            title="Excluir"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        {canDelete && (
+                                            <button
+                                                onClick={() => onDelete(equipamento)}
+                                                className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
+                                                title="Excluir"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>

@@ -1,8 +1,8 @@
 package com.pulseapi.service;
 
-import com.pulseapi.dto.EquipamentoRequestDTO;
-import com.pulseapi.dto.EquipamentoResponseDTO;
-import com.pulseapi.dto.EquipamentoStatusDTO;
+import com.pulseapi.dto.equipamentos.EquipamentoRequestDTO;
+import com.pulseapi.dto.equipamentos.EquipamentoResponseDTO;
+import com.pulseapi.dto.equipamentos.EquipamentoStatusDTO;
 import com.pulseapi.entity.Equipamento;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.exception.ResourceNotFoundException;
