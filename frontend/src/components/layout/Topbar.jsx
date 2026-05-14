@@ -1,61 +1,147 @@
-import { Bell, Menu, Search, ChevronDown, UserCircle2 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+    Menu,
+    Bell,
+    Search,
+    UserCircle,
+    Shield,
+    ChevronDown,
+    User,
+    Settings,
+    LogOut,
+} from "lucide-react";
+
 import Sidebar from "./Sidebar.jsx";
+import { useAuth } from "../../contexts/AuthContext.jsx";
+
+function perfilLabel(perfil) {
+    const labels = {
+        ADMIN: "Administrador",
+        GESTOR: "Gestor",
+        SUPERVISOR: "Supervisor",
+        OPERADOR: "Operador",
+    };
+
+    return labels[perfil] || perfil || "Usuário";
+}
 
 function Topbar() {
+    const navigate = useNavigate();
+    const { usuario, logout } = useAuth();
 
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    function handleLogout() {
+        logout();
+        navigate("/login", { replace: true });
+    }
 
 
     return (
         <>
-            <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+            <header className="h-20 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => setIsSidebarOpen(true)}
-                        className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-slate-100"
+                        className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 transition"
+                        title="Abrir menu"
                     >
-                        <Menu size={24} />
+                        <Menu size={22} />
                     </button>
 
-                    <div className="hidden md:flex items-center gap-3">
-                        <button className="h-10 px-5 rounded-xl border border-slate-200 bg-white text-[13.5px] flex items-center gap-2 text-slate-700">
-                            Planta Londrina <ChevronDown size={18} />
-                        </button>
 
-                        <button className="h-10 px-5 rounded-xl border border-slate-200 bg-white text-[13.5px] flex items-center gap-2 text-slate-700">
-                            Todas as linhas <ChevronDown size={18} />
-                        </button>
-
-                        <button className="h-10 px-5 rounded-xl border border-slate-200 bg-white text-[13.5px] flex items-center gap-2 text-slate-700">
-                            Turno A <ChevronDown size={18} />
-                        </button>
+                    <div>
+                        <h1 className="text-[15px] font-bold text-slate-900">
+                            Smart Production Manager
+                        </h1>
+                        <p className="text-[12px] text-slate-500">
+                            Ambiente de produção industrial
+                        </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-5">
-                    <div className="hidden lg:flex items-center gap-3 w-[420px] h-10 rounded-2x1 border border-slate-200 px-4 bg-slate-50">
-                        <Search size={18} className="text-slate-400" />
+                <div className="hidden lg:flex items-center flex-1 max-w-xl mx-8">
+                    <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 focus-within:border-blue-500 focus-within:bg-white transition">
+                        <Search size={17} className="text-slate-400" />
                         <input
-                            type="text"
-                            placeholder="Buscar equipamento, código, setor..."
-                            className="w-full bg-transparent outline-none text-[13.5px] text-slate-700 placeholder:text-slate-400"
+                            placeholder="Buscar no sistema..."
+                            className="w-full bg-transparent outline-none text-[13px] text-slate-700 placeholder:text-slate-400"
                         />
                     </div>
+                </div>
 
-                    <button className="relative w-11 h-11 rounded-xl flex items-center justify-center hover:bg-slate-100">
-                        <Bell size={18} />
-                        <span className="absolute top-1 right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[12px] flex items-center justify-center">
-                        3
-                    </span>
+                <div className="flex items-center gap-3">
+                    <button
+                        className="relative rounded-xl p-2 text-slate-600 hover:bg-slate-100 transition"
+                        title="Notificações"
+                    >
+                        <Bell size={20} />
+                        <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-600" />
                     </button>
-                    <div className="flex items-center gap-3">
-                        <UserCircle2 size={30} className="text-blue-600" />
-                        <div className="hidden md:block leading-tight">
-                            <p className="font-semibold text-[15px] text-slate-800">João Silva</p>
-                            <p className="text-[12px] text-slate-500">Supervisor</p>
-                        </div>
-                        <ChevronDown size={18} className="text-slate-500" />
+
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                            className="hidden md:flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 hover:bg-slate-100 transition"
+                        >
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                                <UserCircle size={22} />
+                            </div>
+
+                            <div className="text-left leading-tight">
+                                <p className="text-[13px] font-semibold text-slate-900">
+                                    {usuario?.nome || "Usuário"}
+                                </p>
+
+                                <div className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500">
+                                    <Shield size={12} />
+                                    {perfilLabel(usuario?.perfil)}
+                                </div>
+                            </div>
+
+                            <ChevronDown
+                                size={16}
+                                className={`text-slate-500 transition ${
+                                    isUserMenuOpen ? "rotate-180" : ""
+                                }`}
+                            />
+                        </button>
+
+                        {isUserMenuOpen && (
+                            <div className="absolute right-0 top-14 z-50 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                                <div className="border-b border-slate-100 px-5 py-4">
+                                    <p className="text-[15px] font-semibold text-slate-900">
+                                        Minha Conta
+                                    </p>
+                                </div>
+
+                                <button
+                                    className="flex w-full items-center gap-3 px-5 py-4 text-left text-[14px] text-slate-700 hover:bg-slate-50 transition"
+                                >
+                                    <User size={18} />
+                                    Perfil
+                                </button>
+
+                                <button
+                                    className="flex w-full items-center gap-3 px-5 py-4 text-left text-[14px] text-slate-700 hover:bg-slate-50 transition"
+                                >
+                                    <Settings size={18} />
+                                    Configurações
+                                </button>
+
+                                <div className="border-t border-slate-100">
+                                    <button
+                                        onClick={handleLogout}
+                                        className="flex w-full items-center gap-3 px-5 py-4 text-left text-[14px] text-red-600 hover:bg-red-50 transition"
+                                    >
+                                        <LogOut size={18} />
+                                        Sair
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
