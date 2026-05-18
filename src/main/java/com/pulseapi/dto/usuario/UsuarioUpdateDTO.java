@@ -19,5 +19,5 @@ public class UsuarioUpdateDTO {
     private String email;
 
     @NotNull(message = "O perfil é obrigatório.")
-    private PerfilUsuario perfil;
+    private Long perfilId;
 }
