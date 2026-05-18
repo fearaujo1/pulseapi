@@ -50,7 +50,7 @@ public class AuthService {
                 usuario.getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
-                usuario.getPerfil(),
+                usuario.getPerfil().getNome(),
                 usuario.getPrimeiroAcesso(),
                 token,
                 mensagem

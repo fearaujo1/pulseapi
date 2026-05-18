@@ -23,7 +23,7 @@ public class UsuarioRequestDTO {
     private String senha;
 
     @NotNull(message = "O perfil é obrigatório")
-    private PerfilUsuario perfil;
+    private Long perfilId;
 
 
 }

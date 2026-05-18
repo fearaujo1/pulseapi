@@ -24,7 +24,7 @@ public class TokenService {
                 .withSubject(usuario.getEmail())
                 .withClaim("id", usuario.getId())
                 .withClaim("nome", usuario.getNome())
-                .withClaim("perfil", usuario.getPerfil().name())
+                .withClaim("perfil", usuario.getPerfil().getNome())
                 .withClaim("primeiroAcesso", usuario.getPrimeiroAcesso())
                 .withExpiresAt(gerarDataExpiracao())
                 .sign(algorithm);

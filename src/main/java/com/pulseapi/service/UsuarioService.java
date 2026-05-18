@@ -26,6 +26,7 @@ public class UsuarioService {
     }
 
 
+    /*
     public UsuarioResponseDTO criar(UsuarioRequestDTO dto) {
         if (usuarioRepository.existsByEmail(dto.getEmail())) {
             throw new BusinessException("Já existe um usuário cadastrado com esse email.");
@@ -45,6 +46,8 @@ public class UsuarioService {
         return toResponseDTO(salvo);
     }
 
+     */
+
     public List<UsuarioResponseDTO> listarTodos() {
         return usuarioRepository.findAll()
                 .stream()
@@ -63,7 +66,7 @@ public class UsuarioService {
                 usuario.getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
-                usuario.getPerfil(),
+                usuario.getPerfil().getNome(),
                 usuario.getStatus(),
                 usuario.getPrimeiroAcesso(),
                 usuario.getDataCadastro(),
@@ -71,6 +74,7 @@ public class UsuarioService {
         );
     }
 
+    /*
     public UsuarioResponseDTO atualizar(Long id, UsuarioUpdateDTO dto) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com ID: " + id));
@@ -89,6 +93,7 @@ public class UsuarioService {
         return toResponseDTO(atualizado);
     }
 
+     */
     public UsuarioResponseDTO atualizarStatus(Long id, UsuarioStatusDTO dto) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com ID: " + id));
