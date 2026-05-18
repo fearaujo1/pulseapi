@@ -1,6 +1,5 @@
 package com.pulseapi.dto.usuario;
 
-import com.pulseapi.entity.PerfilUsuario;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

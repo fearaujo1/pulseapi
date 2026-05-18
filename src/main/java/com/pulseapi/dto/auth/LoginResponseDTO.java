@@ -1,6 +1,5 @@
 package com.pulseapi.dto.auth;
 
-import com.pulseapi.entity.PerfilUsuario;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

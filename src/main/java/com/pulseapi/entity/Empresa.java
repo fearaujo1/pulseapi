@@ -18,10 +18,10 @@ public class Empresa {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name="razao_social", nullable = false)
     private String razaoSocial;
 
-    @Column(nullable = false)
+    @Column(name="nome_fantasia", nullable = false)
     private String nomeFantasia;
 
     @Column(unique = true)
@@ -31,10 +31,10 @@ public class Empresa {
 
     private String telefone;
 
-    @Column(name = "criadoEm")
+    @Column(name = "criado_em")
     private LocalDateTime criadoEm;
 
-    @Column(name = "atualizadoEm")
+    @Column(name = "atualizado_em")
     private LocalDateTime atualizadoEm;
 
     @PrePersist

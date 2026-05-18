@@ -1,7 +1,6 @@
 package com.pulseapi.dto.usuario;
 
 
-import com.pulseapi.entity.PerfilUsuario;
 import com.pulseapi.entity.StatusUsuario;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

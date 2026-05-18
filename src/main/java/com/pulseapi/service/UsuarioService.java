@@ -5,7 +5,6 @@ import com.pulseapi.dto.usuario.UsuarioResponseDTO;
 import com.pulseapi.dto.usuario.UsuarioStatusDTO;
 import com.pulseapi.dto.usuario.UsuarioUpdateDTO;
 import com.pulseapi.entity.Perfil;
-import com.pulseapi.entity.PerfilUsuario;
 import com.pulseapi.entity.StatusUsuario;
 import com.pulseapi.entity.Usuario;
 import com.pulseapi.exception.BusinessException;
