@@ -9,6 +9,7 @@ import EquipamentosPage from "./pages/EquipamentosPage";
 import LoginPage from "./pages/LoginPage";
 import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
 import UsuariosPage from "./pages/UsuariosPage.jsx";
+import SetupPage from "./pages/SetupPage.jsx";
 
 function App() {
     return (
@@ -29,6 +30,7 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Navigate to="/login" replace />} />
 
+                    <Route path="/setup" element={<SetupPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/primeiro-acesso" element={<PrimeiroAcessoPage />} />
 
