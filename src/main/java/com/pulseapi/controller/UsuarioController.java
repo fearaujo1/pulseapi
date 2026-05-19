@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.pulseapi.entity.Usuario;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -23,16 +25,16 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
-    /*
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<UsuarioResponseDTO> criar(@RequestBody @Valid UsuarioRequestDTO dto) {
-        UsuarioResponseDTO response = usuarioService.criar(dto);
+    public ResponseEntity<UsuarioResponseDTO> criar(@RequestBody @Valid UsuarioRequestDTO dto,
+                                                    Authentication authentication) {
+        Usuario adminLogado = (Usuario) authentication.getPrincipal();
+        UsuarioResponseDTO response = usuarioService.criar(dto, adminLogado);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
 
-     */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<UsuarioResponseDTO>> listarTodos() {
@@ -45,7 +47,6 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.buscarPorId(id));
     }
 
-   /*
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioResponseDTO> atualizar(@PathVariable Long id,
@@ -53,7 +54,6 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.atualizar(id, dto));
     }
 
-    */
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/status")

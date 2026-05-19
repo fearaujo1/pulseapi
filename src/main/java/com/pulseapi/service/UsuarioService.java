@@ -30,7 +30,7 @@ public class UsuarioService {
         this.perfilRepository = perfilRepository;
     }
 
-    public UsuarioResponseDTO criar(UsuarioRequestDTO dto) {
+    public UsuarioResponseDTO criar(UsuarioRequestDTO dto, Usuario adminLogado) {
         if (usuarioRepository.existsByEmail(dto.getEmail())) {
             throw new BusinessException("Já existe um usuário cadastrado com esse email.");
         }
@@ -41,9 +41,10 @@ public class UsuarioService {
         Usuario usuario = Usuario.builder()
                 .nome(dto.getNome())
                 .email(dto.getEmail())
-                .senhaHash(passwordEncoder.encode(dto.getSenha()))
+                .senhaHash(passwordEncoder.encode(dto.getSenhaTemporaria()))
                 .perfil(perfil)
                 .status(StatusUsuario.ATIVO)
+                .empresa(adminLogado.getEmpresa())
                 .primeiroAcesso(true)
                 .build();
 
@@ -70,9 +71,13 @@ public class UsuarioService {
                 usuario.getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
+                usuario.getTelefone(),
                 usuario.getPerfil().getNome(),
+                usuario.getPerfil().getId(),
                 usuario.getStatus(),
                 usuario.getPrimeiroAcesso(),
+                usuario.getEmpresa() != null ? usuario.getEmpresa().getId() : null,
+                usuario.getEmpresa() != null ? usuario.getEmpresa().getNomeFantasia() : null,
                 usuario.getDataCadastro(),
                 usuario.getUltimaAtualizacao()
         );
@@ -88,10 +93,11 @@ public class UsuarioService {
         }
 
         Perfil perfil = perfilRepository.findById(dto.getPerfilId())
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil não encontrado com ID: " + dto.getPerfilId()));
 
         usuario.setNome(dto.getNome());
         usuario.setEmail(dto.getEmail());
+        usuario.setTelefone(dto.getTelefone());
         usuario.setPerfil(perfil);
 
         Usuario atualizado = usuarioRepository.save(usuario);
@@ -114,7 +120,9 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com ID: " + id));
 
-        usuarioRepository.delete(usuario);
+        usuario.setStatus(StatusUsuario.INATIVO);
+
+        usuarioRepository.save(usuario);
     }
 }
 
