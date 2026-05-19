@@ -20,7 +20,9 @@ public class Parada {
 
     private String descricao;
 
-    private String tipo;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoParada tipo;
 
     @ManyToOne
     @JoinColumn(name = "FK_equipamento_id")

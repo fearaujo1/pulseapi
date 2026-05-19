@@ -1,5 +1,6 @@
 package com.pulseapi.dto.parada;
 
+import com.pulseapi.entity.TipoParada;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -10,7 +11,7 @@ public class ParadaResponseDTO {
     private Long id;
     private String titulo;
     private String descricao;
-    private String tipo;
+    private TipoParada tipo;
 
     private Long equipamentoId;
     private String equipamentoNome;
