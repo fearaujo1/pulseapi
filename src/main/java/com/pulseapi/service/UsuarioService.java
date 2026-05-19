@@ -120,7 +120,9 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com ID: " + id));
 
-        usuarioRepository.delete(usuario);
+        usuario.setStatus(StatusUsuario.INATIVO);
+
+        usuarioRepository.save(usuario);
     }
 }
 
