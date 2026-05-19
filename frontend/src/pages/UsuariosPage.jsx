@@ -151,6 +151,9 @@ function UsuariosPage() {
                 perfilId: Number(formData.perfilId || 4),
             };
 
+            console.log("FORM DATA:", formData);
+            console.log("PAYLOAD CREATE:", payload);
+
             await usuarioService.criar(payload);
 
             setIsUserModalOpen(false);
@@ -178,7 +181,7 @@ function UsuariosPage() {
                 nome: formData.nome,
                 email: formData.email,
                 telefone: formData.telefone || null,
-                perfilId: Number(formData.perfil),
+                perfilId: Number(formData.perfilId || selectedUsuario?.perfilId || 4),
             };
 
             await usuarioService.atualizar(selectedUsuario.id, payload);

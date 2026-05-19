@@ -39,7 +39,10 @@ function UserFormModal({
                 email: initialData.email || "",
                 telefone: initialData.telefone || "",
                 senhaTemporaria: "",
-                perfilId: initialData.perfilId || perfilToPerfilId(initialData.perfil),
+                perfilId:
+                    initialData.perfilId ||
+                    perfilToPerfilId(initialData.perfil) ||
+                    4,
             });
         } else {
             setFormData(initialForm);

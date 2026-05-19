@@ -44,6 +44,7 @@ public class UsuarioService {
                 .senhaHash(passwordEncoder.encode(dto.getSenhaTemporaria()))
                 .perfil(perfil)
                 .status(StatusUsuario.ATIVO)
+                .telefone(dto.getTelefone())
                 .empresa(adminLogado.getEmpresa())
                 .primeiroAcesso(true)
                 .build();
