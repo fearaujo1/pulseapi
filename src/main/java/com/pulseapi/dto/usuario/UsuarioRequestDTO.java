@@ -18,11 +18,11 @@ public class UsuarioRequestDTO {
     @NotBlank(message = "O Email é obrigatório")
     private String email;
 
-    @NotBlank(message = "A senha é obrigatória.")
-    private String senha;
+    @NotBlank(message = "A senha temporária é obrigatória.")
+    private String senhaTemporaria;
 
+    private String telefone;
+    
     @NotNull(message = "O perfil é obrigatório")
     private Long perfilId;
-
-
 }
