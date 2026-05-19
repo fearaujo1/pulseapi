@@ -4,9 +4,21 @@ import { X, User, Mail, Lock, ChevronDown, Info } from "lucide-react";
 const initialForm = {
     nome: "",
     email: "",
-    senha: "",
-    perfil: "OPERADOR",
+    telefone: "",
+    senhaTemporaria: "",
+    perfilId: 4,
 };
+
+function perfilToPerfilId(perfil) {
+    const map = {
+        ADMIN: 1,
+        GESTOR: 2,
+        SUPERVISOR: 3,
+        OPERADOR: 4,
+    };
+
+    return map[perfil] || 4;
+}
 
 function UserFormModal({
                            isOpen,
@@ -25,8 +37,9 @@ function UserFormModal({
             setFormData({
                 nome: initialData.nome || "",
                 email: initialData.email || "",
-                senha: "",
-                perfil: initialData.perfil || "OPERADOR",
+                telefone: initialData.telefone || "",
+                senhaTemporaria: "",
+                perfilId: initialData.perfilId || perfilToPerfilId(initialData.perfil),
             });
         } else {
             setFormData(initialForm);
@@ -40,7 +53,7 @@ function UserFormModal({
 
         setFormData((prev) => ({
             ...prev,
-            [name]: value,
+            [name]: name === "perfilId" ? Number(value) : value,
         }));
     }
 
@@ -115,18 +128,34 @@ function UserFormModal({
                             </div>
                         </div>
 
+                        <div>
+                            <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
+                                Telefone
+                            </label>
+
+                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 outline-none focus-within:border-blue-500">
+                                <input
+                                    name="telefone"
+                                    value={formData.telefone}
+                                    onChange={handleChange}
+                                    placeholder="Ex: (43) 99999-9999"
+                                    className="w-full bg-transparent outline-none text-[13px]"
+                                />
+                            </div>
+                        </div>
+
                         {!isEditMode && (
                             <div>
                                 <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
-                                    Senha inicial *
+                                    Senha temporária *
                                 </label>
 
                                 <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 outline-none focus-within:border-blue-500">
                                     <Lock size={17} className="text-slate-400" />
                                     <input
                                         type="password"
-                                        name="senha"
-                                        value={formData.senha}
+                                        name="senhaTemporaria"
+                                        value={formData.senhaTemporaria}
                                         onChange={handleChange}
                                         placeholder="Ex: 12345"
                                         className="w-full bg-transparent outline-none text-[13px]"
@@ -143,16 +172,16 @@ function UserFormModal({
 
                             <div className="relative">
                                 <select
-                                    name="perfil"
-                                    value={formData.perfil}
+                                    name="perfilId"
+                                    value={formData.perfilId}
                                     onChange={handleChange}
                                     className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-blue-500 text-[13px]"
                                     required
                                 >
-                                    <option value="OPERADOR">Operador</option>
-                                    <option value="SUPERVISOR">Supervisor</option>
-                                    <option value="GESTOR">Gestor</option>
-                                    <option value="ADMIN">Administrador</option>
+                                    <option value="4">Operador</option>
+                                    <option value="3">Supervisor</option>
+                                    <option value="2">Gestor</option>
+                                    <option value="1">Administrador</option>
                                 </select>
 
                                 <ChevronDown
