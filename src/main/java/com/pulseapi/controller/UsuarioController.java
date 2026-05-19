@@ -23,6 +23,7 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
+    /*
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<UsuarioResponseDTO> criar(@RequestBody @Valid UsuarioRequestDTO dto) {
@@ -30,6 +31,8 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<UsuarioResponseDTO>> listarTodos() {
@@ -42,12 +45,15 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.buscarPorId(id));
     }
 
+   /*
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioResponseDTO> atualizar(@PathVariable Long id,
                                                         @RequestBody @Valid UsuarioUpdateDTO dto) {
         return ResponseEntity.ok(usuarioService.atualizar(id, dto));
     }
+
+    */
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/status")

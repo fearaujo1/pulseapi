@@ -1,6 +1,5 @@
 package com.pulseapi.dto.usuario;
 
-import com.pulseapi.entity.PerfilUsuario;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,5 +18,5 @@ public class UsuarioUpdateDTO {
     private String email;
 
     @NotNull(message = "O perfil é obrigatório.")
-    private PerfilUsuario perfil;
+    private Long perfilId;
 }

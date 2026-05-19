@@ -32,9 +32,15 @@ public class Usuario implements UserDetails {
     @Column(name = "senha_hash", nullable = false)
     private String senhaHash;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PerfilUsuario perfil;
+    @ManyToOne
+    @JoinColumn(name = "perfil_id", nullable = false)
+    private Perfil perfil;
+
+    @ManyToOne
+    @JoinColumn(name = "empresa_id")
+    private Empresa empresa;
+
+    private String telefone;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -67,12 +73,10 @@ public class Usuario implements UserDetails {
     public void preUpdate() {
         this.ultimaAtualizacao = LocalDateTime.now();
     }
-
-    // Transforma o perfil do usuário em uma permissão do Spring Security
-    // Permite proteger totas pelo perfil
+    
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + this.perfil.name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.perfil.getNome()));
     }
 
     @Override
