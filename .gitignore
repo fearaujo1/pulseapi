@@ -1,27 +1,46 @@
-# =========================
-# JAVA / SPRING BOOT
-# =========================
+# ==============================================================================
+# BACKEND (JAVA / SPRING BOOT)
+# ==============================================================================
 target/
 *.log
 *.class
-
-# Maven Wrapper
 .mvn/wrapper/maven-wrapper.jar
 
-# =========================
-# IDEs
-# =========================
+# Banco de dados local (H2 / SQLite)
+*.mv.db
+*.trace.db
+database.mv.db
 
-# IntelliJ
+# ==============================================================================
+# FRONTEND (REACT / VITE)
+# ==============================================================================
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.env
+frontend/.env.*
+frontend/*.local
+
+# Logs do gerenciador de pacotes do Frontend
+frontend/logs/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# ==============================================================================
+# AMBIENTE DE DESENVOLVIMENTO (IDEs / OS)
+# ==============================================================================
 .idea/
+.vscode/
 *.iml
 *.iws
 *.ipr
+.DS_Store
+Thumbs.db
 
-# VS Code
-.vscode/
-
-# Eclipse / STS
+# Configurações do Eclipse / NetBeans
 .apt_generated
 .classpath
 .factorypath
@@ -29,8 +48,6 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
-# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -38,28 +55,10 @@ target/
 /.nb-gradle/
 build/
 
-# =========================
-# FRONTEND (React/Vite)
-# =========================
-frontend/node_modules/
-frontend/dist/
-frontend/.env
-frontend/.env.*
-
-# =========================
-# SISTEMA OPERACIONAL
-# =========================
-.DS_Store
-Thumbs.db
-
-# =========================
-# BANCO DE DADOS LOCAL
-# =========================
-*.mv.db
-*.trace.db
-database.mv.db
-
-# =========================
-# OUTROS
-# =========================
+# Outros arquivos globais
 .env
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
