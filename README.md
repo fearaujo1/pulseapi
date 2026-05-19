@@ -114,3 +114,28 @@ PulseAPI/
 ├── frontend/           # Frontend (React)
 ├── pom.xml
 └── README.md
+```
+
+### ⚠️ Gestão de Ocorrências / Paradas
+
+* Registro de ocorrências vinculadas a equipamentos
+* Consulta geral e por ID
+* Consulta por equipamento
+* Atualização de ocorrência
+* Exclusão de ocorrência
+* Tipos de ocorrência:
+  - FALHA_EQUIPAMENTO
+  - PARADA_LINHA
+  - MANUTENCAO
+  - OUTRO
+
+### 🔹 Paradas / Ocorrências
+
+| Método | Endpoint                         | Descrição                           |
+| ------ | -------------------------------- | ----------------------------------- |
+| GET    | /paradas                         | Lista todas as ocorrências/paradas  |
+| GET    | /paradas/{id}                    | Busca ocorrência/parada por ID      |
+| GET    | /paradas/equipamento/{id}        | Lista ocorrências por equipamento   |
+| POST   | /paradas                         | Registra nova ocorrência/parada     |
+| PUT    | /paradas/{id}                    | Atualiza ocorrência/parada          |
+| DELETE | /paradas/{id}                    | Remove ocorrência/parada            |
