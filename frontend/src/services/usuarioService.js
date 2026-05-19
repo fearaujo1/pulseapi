@@ -1,4 +1,4 @@
-import { api } from "./api.js";
+import { api } from "./api";
 
 export const usuarioService = {
     async listar() {
@@ -7,8 +7,8 @@ export const usuarioService = {
     },
 
     async buscarPorId(id) {
-     const response = await api.get(`/usuarios/${id}`);
-     return response.data;
+        const response = await api.get(`/usuarios/${id}`);
+        return response.data;
     },
 
     async criar(payload) {
@@ -22,7 +22,7 @@ export const usuarioService = {
     },
 
     async atualizarStatus(id, status) {
-        const response = await api.patch(`/usuarios/${id}/status`, {status});
+        const response = await api.patch(`/usuarios/${id}/status`, { status });
         return response.data;
     },
 

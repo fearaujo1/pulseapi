@@ -26,10 +26,10 @@ import UserDeleteModal from "../components/users/UserDeleteModal";
 
 const perfilOptions = [
     { value: "", label: "Todos os perfis" },
-    { value: "ADMIN", label: "Administrador" },
-    { value: "GESTOR", label: "Gestor" },
-    { value: "SUPERVISOR", label: "Supervisor" },
-    { value: "OPERADOR", label: "Operador" },
+    { value: "1", label: "Administrador" },
+    { value: "2", label: "Gestor" },
+    { value: "3", label: "Supervisor" },
+    { value: "4", label: "Operador" },
 ];
 
 const statusOptions = [
@@ -67,6 +67,28 @@ function perfilClass(perfil) {
     };
 
     return classes[perfil] || "bg-slate-100 text-slate-600";
+}
+
+function perfilIdToPerfil(perfilId) {
+    const map = {
+        1: "ADMIN",
+        2: "GESTOR",
+        3: "SUPERVISOR",
+        4: "OPERADOR",
+    };
+
+    return map[Number(perfilId)] || "OPERADOR";
+}
+
+function perfilToPerfilId(perfil) {
+    const map = {
+        ADMIN: 1,
+        GESTOR: 2,
+        SUPERVISOR: 3,
+        OPERADOR: 4,
+    };
+
+    return map[perfil] || 4;
 }
 
 function statusClass(status) {
@@ -121,7 +143,18 @@ function UsuariosPage() {
         try {
             setSubmitLoading(true);
 
-            await usuarioService.criar(formData);
+            const payload = {
+                nome: formData.nome,
+                email: formData.email,
+                senhaTemporaria: formData.senhaTemporaria,
+                telefone: formData.telefone || null,
+                perfilId: Number(formData.perfilId || 4),
+            };
+
+            console.log("FORM DATA:", formData);
+            console.log("PAYLOAD CREATE:", payload);
+
+            await usuarioService.criar(payload);
 
             setIsUserModalOpen(false);
             await carregarUsuarios();
@@ -147,7 +180,8 @@ function UsuariosPage() {
             const payload = {
                 nome: formData.nome,
                 email: formData.email,
-                perfil: formData.perfil,
+                telefone: formData.telefone || null,
+                perfilId: Number(formData.perfilId || selectedUsuario?.perfilId || 4),
             };
 
             await usuarioService.atualizar(selectedUsuario.id, payload);
@@ -252,7 +286,7 @@ function UsuariosPage() {
                 usuario.nome.toLowerCase().includes(searchLower) ||
                 usuario.email.toLowerCase().includes(searchLower);
 
-            const matchPerfil = !perfilFilter || usuario.perfil === perfilFilter;
+            const matchPerfil = !perfilFilter || perfilToPerfilId(usuario.perfil) === Number(perfilFilter);
             const matchStatus = !statusFilter || usuario.status === statusFilter;
 
             return matchSearch && matchPerfil && matchStatus;
@@ -456,8 +490,11 @@ function UsuariosPage() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-5 text-sm text-slate-600">
-                                                    {usuario.email}
+                                                <td className="px-6 py-5 text-[13.5px] text-slate-600">
+                                                    <p>{usuario.email}</p>
+                                                    <p className="text-xs text-slate-500">
+                                                        {usuario.telefone || "-"}
+                                                    </p>
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${perfilClass(usuario.perfil)}`}>
