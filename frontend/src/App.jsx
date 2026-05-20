@@ -13,7 +13,7 @@ import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
 import UsuariosPage from "./pages/UsuariosPage.jsx";
 import SetupPage from "./pages/SetupPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
-
+import EventosPage from "./pages/EventosPage.jsx";
 
 function App() {
     return (
@@ -94,7 +94,7 @@ function App() {
                         path="/eventos"
                         element={
                             <ProtectedRoute>
-                                <EquipamentosPage />
+                                <EventosPage />
                             </ProtectedRoute>
                         }
                     />
