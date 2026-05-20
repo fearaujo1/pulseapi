@@ -34,7 +34,7 @@ function LoginPage() {
             if (data.usuario?.primeiroAcesso) {
                 navigate("/primeiro-acesso", { replace: true });
             } else {
-                navigate("/equipamentos", { replace: true });
+                navigate("/dashboard", { replace: true });
             }
         } catch (error) {
             console.error("Erro ao fazer login: ", error);

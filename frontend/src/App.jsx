@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
 import UsuariosPage from "./pages/UsuariosPage.jsx";
 import SetupPage from "./pages/SetupPage.jsx";
+import DashboardPage from "./pages/DashboardPage.jsx";
 
 
 function App() {
@@ -48,7 +49,7 @@ function App() {
                         path="/dashboard"
                         element={
                             <ProtectedRoute>
-                                <EquipamentosPage />
+                                <DashboardPage />
                             </ProtectedRoute>
                         }
                     />
@@ -125,7 +126,7 @@ function App() {
                         }
                     />
 
-                    <Route path="*" element={<Navigate to="/equipamentos" replace />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
             </BrowserRouter>
         </AuthProvider>
