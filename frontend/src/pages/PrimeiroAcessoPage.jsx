@@ -52,7 +52,7 @@ function PrimeiroAcessoPage() {
             toast.success("Senha alterada com sucesso. Faça login novamente.");
 
             logout();
-            navigate("/login");
+            navigate("/login", { replace: true });
         } catch (error) {
             console.error("Erro ao primeiro acesso:", error);
             console.error("Resposta:", error.response?.data);
