@@ -7,13 +7,19 @@ import {
     Plus,
     Search,
     Wrench,
+    Pencil,
+    Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Topbar from "../components/layout/Topbar";
 import SummaryCard from "../components/equipment/SummaryCard";
 import CustomFilterSelect from "../components/equipment/CustomFilterSelect";
+import EventoFormModal from "../components/events/EventoFormModal";
+import EventoDeleteModal from "../components/events/EventoDeleteModal";
+import { equipamentosService } from "../services/equipamentosService";
 import { paradasService } from "../services/paradasService";
+
 
 const tipoOptions = [
     { value: "", label: "Todos os tipos" },
@@ -52,6 +58,27 @@ function EventosPage() {
     const [search, setSearch] = useState("");
     const [tipoFilter, setTipoFilter] = useState("");
 
+    const [equipamentos, setEquipamentos] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedEvento, setSelectedEvento] = useState(null);
+    const [submitLoading, setSubmitLoading] = useState(false);
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [eventoToDelete, setEventoToDelete] = useState(null);
+
+    async function carregarEquipamentos() {
+        try {
+            const data = await equipamentosService.listar();
+            setEquipamentos(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Erro ao carregar equipamentos:", error);
+            console.error("Resposta:", error.response?.data);
+            toast.error("Erro ao carregar equipamentos.");
+            setEquipamentos([]);
+        }
+    }
+
     async function carregarEventos() {
         try {
             setLoading(true);
@@ -70,7 +97,117 @@ function EventosPage() {
 
     useEffect(() => {
         carregarEventos();
+        carregarEquipamentos()
     }, []);
+
+    function handleNovoEvento() {
+        setSelectedEvento(null);
+        setIsModalOpen(true);
+    }
+
+    function handleEditEvento(evento) {
+        setSelectedEvento(evento);
+        setIsModalOpen(true);
+    }
+
+    async function handleCreateEvento(formData) {
+        try {
+            setSubmitLoading(true);
+
+            const payload = {
+                titulo: formData.titulo,
+                descricao: formData.descricao,
+                tipo: formData.tipo,
+                equipamentoId: Number(formData.equipamentoId),
+            };
+
+            await paradasService.criar(payload);
+
+            setIsModalOpen(false);
+            await carregarEventos();
+
+            toast.success("Ocorrência criada com sucesso!");
+        } catch (error) {
+            console.error("Erro ao criar ocorrência:", error);
+            console.error("Resposta:", error.response?.data);
+
+            toast.error(
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                "Erro ao criar ocorrência."
+            );
+        } finally {
+            setSubmitLoading(false);
+        }
+    }
+
+    async function handleUpdateEvento(formData) {
+        try {
+            setSubmitLoading(true);
+
+            const payload = {
+                titulo: formData.titulo,
+                descricao: formData.descricao,
+                tipo: formData.tipo,
+                equipamentoId: Number(formData.equipamentoId),
+            };
+
+            await paradasService.atualizar(selectedEvento.id, payload);
+
+            setIsModalOpen(false);
+            setSelectedEvento(null);
+
+            await carregarEventos();
+
+            toast.success("Ocorrência atualizada com sucesso!");
+        } catch (error) {
+            console.error("Erro ao atualizar ocorrência:", error);
+            console.error("Resposta:", error.response?.data);
+
+            toast.error(
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                "Erro ao atualizar ocorrência."
+            );
+        } finally {
+            setSubmitLoading(false);
+        }
+    }
+
+    function handleDeleteEvento(evento) {
+        setEventoToDelete(evento);
+        setIsDeleteModalOpen(true);
+    }
+
+    async function handleConfirmDeleteEvento() {
+        if (!eventoToDelete?.id) return;
+
+        try {
+            setDeleteLoading(true);
+
+            await paradasService.deletar(eventoToDelete.id);
+
+            setEventos((prev) =>
+                prev.filter((evento) => evento.id !== eventoToDelete.id)
+            );
+
+            setIsDeleteModalOpen(false);
+            setEventoToDelete(null);
+
+            toast.success("Ocorrência excluída com sucesso!");
+        } catch (error) {
+            console.error("Erro ao excluir ocorrência:", error);
+            console.error("Resposta:", error.response?.data);
+
+            toast.error(
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                "Erro ao excluir ocorrência."
+            );
+        } finally {
+            setDeleteLoading(false);
+        }
+    }
 
     const eventosFiltrados = useMemo(() => {
         const searchLower = search.trim().toLowerCase();
@@ -110,7 +247,10 @@ function EventosPage() {
                         </p>
                     </div>
 
-                    <button className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[15px] flex items-center gap-2 shadow-sm">
+                    <button
+                        onClick={handleNovoEvento}
+                        className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[15px] flex items-center gap-2 shadow-sm"
+                    >
                         <Plus size={15} />
                         Nova Ocorrência
                     </button>
@@ -217,27 +357,43 @@ function EventosPage() {
                                             </td>
 
                                             <td className="px-6 py-5">
-                          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${tipoClass(evento.tipo)}`}>
-                            {tipoLabel(evento.tipo)}
-                          </span>
+                                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${tipoClass(evento.tipo)}`}>
+                                                    {tipoLabel(evento.tipo)}
+                                                </span>
                                             </td>
 
                                             <td className="px-6 py-5 text-[13.5px] text-slate-600">
                                                 <div className="flex items-center gap-2">
                                                     <Factory size={15} />
                                                     <span>
-                              {evento.equipamentoNome || "-"}{" "}
+                                                        {evento.equipamentoNome || "-"}{" "}
                                                         {evento.equipamentoCodigo ? `(${evento.equipamentoCodigo})` : ""}
-                            </span>
+                                                    </span>
                                                 </div>
                                             </td>
 
-                                            <td className="px-6 py-5 text-[13.5px] text-slate-600 max-w-[360px] truncate">
-                                                {evento.descricao || "-"}
+                                            <td className="px-6 py-5 align-top">
+                                                <DescriptionCell text={evento.descricao} />
                                             </td>
 
                                             <td className="px-6 py-5 text-[13.5px] text-slate-600">
-                                                Em breve
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleEditEvento(evento)}
+                                                        className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
+                                                        title="Editar"
+                                                    >
+                                                        <Pencil size={16} />
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => handleDeleteEvento(evento)}
+                                                        className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -248,8 +404,53 @@ function EventosPage() {
                     </div>
                 </section>
             </main>
+            <EventoFormModal
+                isOpen={isModalOpen}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedEvento(null);
+                }}
+                onSubmit={selectedEvento ? handleUpdateEvento : handleCreateEvento}
+                loading={submitLoading}
+                mode={selectedEvento ? "edit" : "create"}
+                initialData={selectedEvento}
+                equipamentos={equipamentos}
+            />
+            
+            <EventoDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setEventoToDelete(null);
+                }}
+                onConfirm={handleConfirmDeleteEvento}
+                loading={deleteLoading}
+                evento={eventoToDelete}
+            />
         </div>
+
     );
 }
+
+
+function DescriptionCell({ text }) {
+    const [expanded, setExpanded] = useState(false);
+
+    if (!text) return "-";
+
+    return (
+        <button
+            type="button"
+            onClick={() => setExpanded((prev) => !prev)}
+            className={`max-w-[360px] text-left text-[13.5px] text-slate-600 hover:text-blue-600 ${
+                expanded ? "" : "line-clamp-3"
+            }`}
+            title={expanded ? "Clique para recolher" : "Clique para visualizar tudo"}
+        >
+            {text}
+        </button>
+    );
+}
+
 
 export default EventosPage;
