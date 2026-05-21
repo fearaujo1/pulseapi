@@ -15,6 +15,7 @@ import {
 
 import Topbar from "../components/layout/Topbar";
 import SummaryCard from "../components/equipment/SummaryCard";
+import { useNavigate } from "react-router-dom";
 
 const linhas = [
     {
@@ -60,6 +61,9 @@ function DashboardPage() {
     const metaDia = 10000;
     const refugos = 123;
     const linhasRodando = linhas.filter((l) => l.status === "RODANDO").length;
+
+    const navigate = useNavigate();
+
 
     return (
         <div className="min-h-screen bg-[#f5f7fb]">
@@ -180,7 +184,11 @@ function DashboardPage() {
                     </div>
                 </section>
 
-                <button className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl hover:bg-blue-700 transition">
+                <button
+                    onClick={() => navigate("/registrar-parada")}
+                    className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl hover:bg-blue-700 transition"
+                    title="Registrar ocorrência"
+                >
                     <Plus size={28} />
                 </button>
             </main>

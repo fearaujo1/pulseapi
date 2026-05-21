@@ -13,6 +13,8 @@ import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
 import UsuariosPage from "./pages/UsuariosPage.jsx";
 import SetupPage from "./pages/SetupPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
+import EventosPage from "./pages/EventosPage.jsx";
+import RegistrarParadaPage from "./pages/RegistrarParadaPage.jsx";
 
 
 function App() {
@@ -94,7 +96,7 @@ function App() {
                         path="/eventos"
                         element={
                             <ProtectedRoute>
-                                <EquipamentosPage />
+                                <EventosPage />
                             </ProtectedRoute>
                         }
                     />
@@ -123,6 +125,15 @@ function App() {
                             <AdminRoute>
                                 <UsuariosPage />
                             </AdminRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/registrar-parada"
+                        element={
+                            <ProtectedRoute>
+                                <RegistrarParadaPage />
+                            </ProtectedRoute>
                         }
                     />
 
