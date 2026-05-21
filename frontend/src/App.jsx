@@ -6,6 +6,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
 import SetupRoute from "./routes/SetupRoute";
 import InitialRoute from "./routes/InitialRoute";
+import RoleRoute from "./routes/RoleRoute";
 
 import EquipamentosPage from "./pages/EquipamentosPage";
 import LoginPage from "./pages/LoginPage";
@@ -95,9 +96,9 @@ function App() {
                     <Route
                         path="/eventos"
                         element={
-                            <ProtectedRoute>
+                            <RoleRoute allowedProfiles={["ADMIN", "GESTOR", "SUPERVISOR"]}>
                                 <EventosPage />
-                            </ProtectedRoute>
+                            </RoleRoute>
                         }
                     />
 
@@ -122,9 +123,9 @@ function App() {
                     <Route
                         path="/usuarios"
                         element={
-                            <AdminRoute>
+                            <RoleRoute allowedProfiles={["ADMIN"]}>
                                 <UsuariosPage />
-                            </AdminRoute>
+                            </RoleRoute>
                         }
                     />
 
