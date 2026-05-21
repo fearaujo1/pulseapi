@@ -11,19 +11,34 @@ import {
     Wifi,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 const menuItems = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { label: "OPs", icon: FileText, path: "/ops" },
     { label: "Linhas/Estações", icon: Factory, path: "/linhas" },
     { label: "Produtos/Processos", icon: Package, path: "/produtos" },
-    { label: "Eventos", icon: CircleAlert, path: "/eventos" },
+    { label: "Eventos", icon: CircleAlert, path: "/eventos", hideForOperator: true },
     { label: "Histórico", icon: ChartColumn, path: "/historico" },
-    { label: "Usuários", icon: Users, path: "/usuarios" },
-    { label: "Configurações", icon: Settings, path: "/configuracoes" },
+    { label: "Usuários", icon: Users, path: "/usuarios", adminOnly: true },
+    { label: "Configurações", icon: Settings, path: "/configuracoes", adminOnly: true },
 ];
 
 function Sidebar({isOpen, onClose}) {
+
+    const { usuario } = useAuth();
+
+    function canSeeItem(item, perfil) {
+        if (item.adminOnly) {
+            return perfil === "ADMIN";
+        }
+
+        if (item.hideForOperator) {
+            return perfil !== "OPERADOR";
+        }
+
+        return true;
+    }
 
     return (
         <>
@@ -66,7 +81,9 @@ function Sidebar({isOpen, onClose}) {
                 </div>
 
                 <nav className="flex-1">
-                    {menuItems.map((item) => {
+                    {menuItems
+                        .filter((item) =>canSeeItem(item, usuario?.perfilId))
+                        .map((item) => {
                         const Icon = item.icon;
 
                         return (

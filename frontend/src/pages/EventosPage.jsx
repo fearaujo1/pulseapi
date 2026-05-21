@@ -19,6 +19,7 @@ import EventoFormModal from "../components/events/EventoFormModal";
 import EventoDeleteModal from "../components/events/EventoDeleteModal";
 import { equipamentosService } from "../services/equipamentosService";
 import { paradasService } from "../services/paradasService";
+import { useAuth } from "../contexts/AuthContext";
 
 
 const tipoOptions = [
@@ -66,6 +67,12 @@ function EventosPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [eventoToDelete, setEventoToDelete] = useState(null);
+
+    const { usuario } = useAuth();
+
+    const podeGerenciarEventos = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(
+        usuario?.perfil
+    );
 
     async function carregarEquipamentos() {
         try {
@@ -377,23 +384,29 @@ function EventosPage() {
                                             </td>
 
                                             <td className="px-6 py-5 text-[13.5px] text-slate-600">
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => handleEditEvento(evento)}
-                                                        className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
-                                                        title="Editar"
-                                                    >
-                                                        <Pencil size={16} />
-                                                    </button>
+                                                {podeGerenciarEventos && (
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => handleEditEvento(evento)}
+                                                            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
+                                                            title="Editar"
+                                                        >
+                                                            <Pencil size={16} />
+                                                        </button>
 
-                                                    <button
-                                                        onClick={() => handleDeleteEvento(evento)}
-                                                        className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
-                                                        title="Excluir"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
+                                                        <button
+                                                            onClick={() => handleDeleteEvento(evento)}
+                                                            className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
+                                                            title="Excluir"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {!podeGerenciarEventos && (
+                                                    <span className="text-[13px] text-slate-400">Somente visualização</span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
