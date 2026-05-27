@@ -1,5 +1,6 @@
 package com.pulseapi.dto.parada;
 
+import com.pulseapi.entity.StatusParada;
 import com.pulseapi.entity.TipoParada;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -18,6 +19,9 @@ public class ParadaRequestDTO {
 
     @NotNull(message = "O tipo é obrigatório.")
     private TipoParada tipo;
+
+    @NotNull(message = "O status é obrigatório.")
+    private StatusParada status;
 
     @NotNull(message = "O equipamento é obrigatório.")
     private Long equipamentoId;

@@ -21,7 +21,7 @@ public class EquipamentoService {
         this.equipamentoRepository = equipamentoRepository;
     }
 
-    public EquipamentoResponseDTO criar(EquipamentoRequestDTO dto) {
+    public EquipamentoResponseDTO cadastrar(EquipamentoRequestDTO dto) {
         if (equipamentoRepository.existsByCodigo(dto.getCodigo())) {
             throw new BusinessException("Já existe um equipamento com esse código");
         }

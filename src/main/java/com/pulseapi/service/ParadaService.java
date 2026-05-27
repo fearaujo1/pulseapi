@@ -23,7 +23,7 @@ public class ParadaService {
         this.equipamentoRepository = equipamentoRepository;
     }
 
-    public ParadaResponseDTO criar(ParadaRequestDTO dto) {
+    public ParadaResponseDTO registrarParada(ParadaRequestDTO dto) {
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com ID: " + dto.getEquipamentoId()));
 
@@ -31,6 +31,7 @@ public class ParadaService {
                 .titulo(dto.getTitulo())
                 .descricao(dto.getDescricao())
                 .tipo(dto.getTipo())
+                .status(dto.getStatus())
                 .equipamento(equipamento)
                 .build();
 
@@ -75,6 +76,7 @@ public class ParadaService {
         parada.setDescricao(dto.getDescricao());
         parada.setTipo(dto.getTipo());
         parada.setEquipamento(equipamento);
+        parada.setStatus(dto.getStatus());
 
         Parada atualizada = paradaRepository.save(parada);
 
@@ -94,6 +96,7 @@ public class ParadaService {
                 parada.getTitulo(),
                 parada.getDescricao(),
                 parada.getTipo(),
+                parada.getStatus(),
                 parada.getEquipamento() != null ? parada.getEquipamento().getId() : null,
                 parada.getEquipamento() != null ? parada.getEquipamento().getNome() : null,
                 parada.getEquipamento() != null ? parada.getEquipamento().getCodigo() : null
