@@ -11,7 +11,7 @@ export const equipamentosService = {
         return response.data;
     },
 
-    async criar(payload) {
+    async cadastrar(payload) {
         const response = await api.post(`/equipamentos`, payload);
         return response.data;
     },

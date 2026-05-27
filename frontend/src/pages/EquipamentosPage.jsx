@@ -147,7 +147,7 @@ function EquipamentosPage() {
     async function handleCreateEquipamento(formData) {
         try {
             setSubmitLoading(true);
-            await  equipamentosService.criar(formData);
+            await  equipamentosService.cadastrar(formData);
             setIsModalOpen(false);
             await carregarEquipamentos();
             toast.success("Criado com sucesso!");

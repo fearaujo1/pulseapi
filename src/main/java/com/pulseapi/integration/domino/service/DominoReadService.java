@@ -1,6 +1,7 @@
 package com.pulseapi.integration.domino.service;
 // Pasta responsável pelas regras da integração
-
+//Service principal da integração.
+//      Monta comandos, chama o CodenetClient, usa o parser e retorna DTOs.
 import com.pulseapi.integration.domino.client.CodenetClient;
 import com.pulseapi.integration.domino.dto.*;
 import com.pulseapi.integration.domino.parser.CodenetResponseParser;
@@ -177,19 +178,48 @@ public class DominoReadService {
     }
 
     public DominoRawResponseDTO imprimirTexto(String ip, int porta, int timeout, String texto) {
+        try {
+            byte[] payload = texto.getBytes(StandardCharsets.US_ASCII);
 
-        byte[] payload = texto.getBytes(StandardCharsets.US_ASCII);
+            ByteArrayOutputStream command = new ByteArrayOutputStream();
+
+            command.write(ESC);
+            command.write(0x4F); // O
+            command.write(0x51); // Q - Download label without save
+
+            command.write(payload);
+
+            command.write(EOT);
+
+            byte[] response = codenetClient.send(ip, porta, timeout, command.toByteArray());
+
+            return new DominoRawResponseDTO(
+                    responseParser.isAck(response),
+                    responseParser.isNak(response),
+                    responseParser.toHex(response),
+                    responseParser.toAscii(response)
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao enviar mensagem OQ para impressora Domino", e);
+        }
+    }
+
+    public DominoRawResponseDTO configurarFifo(String ip, int porta, int timeout) {
+
+        String config = "0200301001000000";
+        // 02 = STX
+        // 0  = ASCII
+        // 03 = ETX
+        // 0100 = tamanho máximo
+        // 1 = ACK/NAK ligado
 
         ByteArrayOutputStream command = new ByteArrayOutputStream();
 
         command.write(ESC);
         command.write(0x4F); // O
-        command.write(0x45); // E (send data)
-
-        for (byte b : payload) {
-            command.write(b);
-        }
-
+        command.write(0x50); // P
+        command.writeBytes(config.getBytes(StandardCharsets.US_ASCII));
         command.write(EOT);
 
         byte[] response = codenetClient.send(ip, porta, timeout, command.toByteArray());
@@ -200,5 +230,63 @@ public class DominoReadService {
                 responseParser.toHex(response),
                 responseParser.toAscii(response)
         );
+    }
+
+    public DominoRawResponseDTO carregarMensagem(String ip, int porta, int timeout, String nomeMensagem) {
+        try {
+            byte[] payload = nomeMensagem.getBytes(StandardCharsets.US_ASCII);
+
+            ByteArrayOutputStream command = new ByteArrayOutputStream();
+
+            command.write(ESC);
+            command.write(0x4F); // O
+            command.write(0x4E); // N - carregar mensagem por nome variável
+            command.write(payload);
+            command.write(EOT);
+
+            byte[] response = codenetClient.send(ip, porta, timeout, command.toByteArray());
+
+            return new DominoRawResponseDTO(
+                    responseParser.isAck(response),
+                    responseParser.isNak(response),
+                    responseParser.toHex(response),
+                    responseParser.toAscii(response)
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao carregar mensagem Domino", e);
+        }
+    }
+
+    public DominoRawResponseDTO enviarDadoExterno(String ip, int porta, int timeout, String texto) {
+        try {
+
+            byte[] payload = texto.getBytes(StandardCharsets.US_ASCII);
+
+            ByteArrayOutputStream command = new ByteArrayOutputStream();
+
+
+            command.write(0x02); // STX
+            command.write(payload);
+            command.write(0x03); // ETX
+
+
+            byte[] response = codenetClient.send(
+                    ip,
+                    porta,
+                    timeout,
+                    command.toByteArray()
+            );
+
+            return new DominoRawResponseDTO(
+                    responseParser.isAck(response),
+                    responseParser.isNak(response),
+                    responseParser.toHex(response),
+                    responseParser.toAscii(response)
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao enviar dado externo EDC TCP", e);
+        }
     }
 }

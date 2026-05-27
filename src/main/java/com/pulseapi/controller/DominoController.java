@@ -18,7 +18,7 @@ public class DominoController {
     }
 
     @GetMapping("/teste-conexao")
-    public DominoConnectionTestResponseDTO testarConexao(
+    protected DominoConnectionTestResponseDTO testarConexao(
             @RequestParam String ip,
             @RequestParam(defaultValue = "7000") int porta,
             @RequestParam(defaultValue = "3000") int timeout

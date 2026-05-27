@@ -1,5 +1,15 @@
 package com.pulseapi.integration.domino.parser;
 //Pasta responsável por interpretar resposta.
+/*
+Classe que interpreta respostas brutas da impressora.
+        Converte bytes para:
+
+        HEX
+        ASCII
+        ACK
+        NAK
+        texto limpo
+*/
 
 import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
@@ -8,13 +18,17 @@ import java.nio.charset.StandardCharsets;
 public class CodenetResponseParser {
 
     public boolean isAck(byte[] response) {
-        return response != null && response.length > 0 && response[0] == 0x06;
-    }
+        if (response == null || response.length == 0) {
+            return false;
+        }
 
+        String ascii = toAscii(response).trim();
+
+        return response[0] == 0x06 || ascii.equalsIgnoreCase("ACK");
+    }
     public boolean isNak(byte[] response) {
         return response != null && response.length > 0 && response[0] == 0x15;
     }
-
     public String toHex(byte[] response) {
         if (response == null || response.length == 0) {
             return "";
@@ -26,14 +40,12 @@ public class CodenetResponseParser {
         }
         return sb.toString().trim();
     }
-
     public String toAscii(byte[] response) {
         if (response == null || response.length == 0) {
             return "";
         }
         return new String(response, StandardCharsets.US_ASCII);
     }
-
     public String cleanAscii(byte[] response) {
         if (response == null || response.length == 0) {
             return "";

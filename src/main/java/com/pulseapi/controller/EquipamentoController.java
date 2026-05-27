@@ -24,8 +24,8 @@ public class EquipamentoController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')")
     @PostMapping
-    public ResponseEntity<EquipamentoResponseDTO> criar(@RequestBody @Valid EquipamentoRequestDTO dto) {
-        EquipamentoResponseDTO response = equipamentoService.criar(dto);
+    public ResponseEntity<EquipamentoResponseDTO> cadastrar(@RequestBody @Valid EquipamentoRequestDTO dto) {
+        EquipamentoResponseDTO response = equipamentoService.cadastrar(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

@@ -62,6 +62,8 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login",  "/setup/**").permitAll()
+                        .requestMatchers("/domino/**").permitAll()
+                        .requestMatchers("/equipamentos/*/domino/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);

@@ -51,17 +51,66 @@ public class EquipamentoDominoController {
     }
 
     @PostMapping("/imprimir")
-    public DominoRawResponseDTO imprimir (
+    public DominoRawResponseDTO imprimir(
             @PathVariable Long id,
             @RequestBody DominoPrintRequestDTO request
     ) {
-        Equipamento eq = getEquipamento(id);
+        Equipamento equipamento = getEquipamento(id);
+
+        int porta = equipamento.getPorta() != null ? equipamento.getPorta() : 7000;
 
         return dominoReadService.imprimirTexto(
-                eq.getIp(),
-                eq.getPorta() != null ? eq.getPorta() : 7000,
+                equipamento.getIp(),
+                porta,
                 3000,
                 request.getMensagem()
         );
     }
+
+
+    @PostMapping("/fifo/configurar")
+    public DominoRawResponseDTO configurarFifo(@PathVariable Long id) {
+        Equipamento equipamento = getEquipamento(id);
+
+        int porta = equipamento.getPorta() != null ? equipamento.getPorta() : 7000;
+
+        return dominoReadService.configurarFifo(
+                equipamento.getIp(),
+                porta,
+                3000
+        );
+    }
+
+    @PostMapping("/mensagem/carregar")
+    public DominoRawResponseDTO carregarMensagem(
+            @PathVariable Long id,
+            @RequestParam String nome
+    ) {
+        Equipamento equipamento = getEquipamento(id);
+
+        int porta = equipamento.getPorta() != null ? equipamento.getPorta() : 7000;
+
+        return dominoReadService.carregarMensagem(
+                equipamento.getIp(),
+                porta,
+                3000,
+                nome
+        );
+    }
+
+    @PostMapping("/edc")
+    public DominoRawResponseDTO enviarEdc(
+            @PathVariable Long id,
+            @RequestBody DominoPrintRequestDTO request
+    ) {
+        Equipamento equipamento = getEquipamento(id);
+
+        return dominoReadService.enviarDadoExterno(
+                equipamento.getIp(),
+                16000,
+                3000,
+                request.getMensagem()
+        );
+    }
+
 }

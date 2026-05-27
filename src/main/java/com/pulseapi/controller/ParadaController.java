@@ -41,8 +41,8 @@ public class ParadaController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')")
     @PostMapping
-    public ResponseEntity<ParadaResponseDTO> criar(@RequestBody @Valid ParadaRequestDTO dto) {
-        ParadaResponseDTO response = paradaService.criar(dto);
+    public ResponseEntity<ParadaResponseDTO> cadastrar(@RequestBody @Valid ParadaRequestDTO dto) {
+        ParadaResponseDTO response = paradaService.registrarParada(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
