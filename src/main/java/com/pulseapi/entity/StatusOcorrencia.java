@@ -1,6 +1,6 @@
 package com.pulseapi.entity;
 
-public enum StatusParada {
+public enum StatusOcorrencia {
     ABERTA,
     EM_ANALISE,
     EM_ATENDIMENTO,

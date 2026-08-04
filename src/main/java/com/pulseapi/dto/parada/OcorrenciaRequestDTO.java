@@ -1,7 +1,7 @@
 package com.pulseapi.dto.parada;
 
-import com.pulseapi.entity.StatusParada;
-import com.pulseapi.entity.TipoParada;
+import com.pulseapi.entity.StatusOcorrencia;
+import com.pulseapi.entity.TipoOcorrencia;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ParadaRequestDTO {
+public class OcorrenciaRequestDTO {
 
     @NotBlank(message = "O título é obrigatório.")
     private String titulo;
@@ -18,10 +18,7 @@ public class ParadaRequestDTO {
     private String descricao;
 
     @NotNull(message = "O tipo é obrigatório.")
-    private TipoParada tipo;
-
-    @NotNull(message = "O status é obrigatório.")
-    private StatusParada status;
+    private TipoOcorrencia tipo;
 
     @NotNull(message = "O equipamento é obrigatório.")
     private Long equipamentoId;
