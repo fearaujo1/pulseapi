@@ -1,5 +1,5 @@
 package com.pulseapi.controller;
-
+/*
 import com.pulseapi.integration.domino.dto.*;
 import com.pulseapi.integration.domino.service.DominoReadService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -62,3 +62,4 @@ public class DominoController {
         return dominoReadService.buscarAlertas(ip, porta, timeout);
     }
 }
+ */

@@ -1,8 +1,9 @@
-package com.pulseapi.integration.domino.teste;
+package com.pulseapi.integration.domino.parser;
 
 import com.pulseapi.integration.domino.dto.DominoStatusResponse;
 
 import java.nio.charset.StandardCharsets;
+import com.pulseapi.integration.domino.dto.DominoStatusResponse;
 
 public class DominoStatusParser {
 

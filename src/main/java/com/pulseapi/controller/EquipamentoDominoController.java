@@ -1,5 +1,5 @@
 package com.pulseapi.controller;
-
+/*
 import com.pulseapi.entity.Equipamento;
 import com.pulseapi.integration.domino.service.DominoReadService;
 import com.pulseapi.integration.domino.dto.*;
@@ -15,7 +15,7 @@ public class EquipamentoDominoController {
 
     public EquipamentoDominoController(
             EquipamentoRepository equipamentoRepository,
-            DominoReadService dominoReadService
+            // DominoReadService dominoReadService
     ) {
         this.equipamentoRepository = equipamentoRepository;
         this.dominoReadService = dominoReadService;
@@ -114,3 +114,4 @@ public class EquipamentoDominoController {
     }
 
 }
+*/

@@ -1,4 +1,4 @@
-package com.pulseapi.integration.domino.teste;
+package com.pulseapi.integration.domino.dto;
 
 public record DominoStatusResponse(
         String codigoStatus,
