@@ -74,9 +74,9 @@ function PrimeiroAcessoPage() {
                     <Factory size={42} className="text-white" />
                 </div>
 
-                <h1 className="text-4xl font-bold text-slate-950">Primeiro Acesso</h1>
+                <h1 className="text-3xl font-bold text-slate-950">Primeiro Acesso</h1>
 
-                <p className="mt-3 text-xl text-slate-600">
+                <p className="mt-3 text-slate-600">
                     Olá, {usuario?.nome || "usuário"}. Defina uma nova senha para continuar.
                 </p>
             </div>
@@ -95,7 +95,7 @@ function PrimeiroAcessoPage() {
                                 placeholder="Digite sua nova senha"
                                 value={novaSenha}
                                 onChange={(e) => setNovaSenha(e.target.value)}
-                                className="w-full bg-transparent outline-none text-lg text-slate-700 placeholder:text-slate-400"
+                                className="w-full bg-transparent outline-none text-l text-slate-700 placeholder:text-slate-400"
                             />
                         </div>
                     </div>
@@ -112,7 +112,7 @@ function PrimeiroAcessoPage() {
                                 placeholder="Confirme sua nova senha"
                                 value={confirmarSenha}
                                 onChange={(e) => setConfirmarSenha(e.target.value)}
-                                className="w-full bg-transparent outline-none text-lg text-slate-700 placeholder:text-slate-400"
+                                className="w-full bg-transparent outline-none text-l text-slate-700 placeholder:text-slate-400"
                             />
                         </div>
                     </div>
@@ -140,7 +140,7 @@ function PrimeiroAcessoPage() {
                 </form>
             </div>
 
-            <p className="mt-8 max-w-xl text-center text-lg text-slate-600">
+            <p className="mt-8 max-w-xl text-center text-slate-600">
                 © 2026 PulseAPI - Smart Production Manager. Todos os direitos reservados.
             </p>
         </div>

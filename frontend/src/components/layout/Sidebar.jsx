@@ -9,6 +9,7 @@ import {
     Users,
     Settings,
     Wifi,
+    HardDriveIcon,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -17,7 +18,7 @@ const menuItems = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { label: "OPs", icon: FileText, path: "/ops" },
     { label: "Linhas/Estações", icon: Factory, path: "/linhas" },
-    { label: "Produtos/Processos", icon: Package, path: "/produtos" },
+    { label: "Equipamentos", icon: HardDriveIcon, path: "/equipamentos" },
     { label: "Eventos", icon: CircleAlert, path: "/eventos", hideForOperator: true },
     { label: "Histórico", icon: ChartColumn, path: "/historico" },
     { label: "Usuários", icon: Users, path: "/usuarios", adminOnly: true },

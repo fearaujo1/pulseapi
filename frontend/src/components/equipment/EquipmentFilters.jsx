@@ -23,6 +23,8 @@ function EquipmentFilters({
         { value: "ATIVO", label: "Ativo" },
         { value: "INATIVO", label: "Inativo" },
         { value: "EM_MANUTENCAO", label: "Em manutenção" },
+        { value: "SEM_CONEXAO", label: "Sem conexão" },
+        { value: "PARADO", label: "Parado" },
     ];
 
     return (

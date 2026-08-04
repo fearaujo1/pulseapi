@@ -15,8 +15,8 @@ import UsuariosPage from "./pages/UsuariosPage.jsx";
 import SetupPage from "./pages/SetupPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import EventosPage from "./pages/EventosPage.jsx";
-import RegistrarParadaPage from "./pages/RegistrarParadaPage.jsx";
-
+import RegistrarOcorrenciaPage from "./pages/RegistrarOcorrenciaPage.jsx";
+import EmDesenvolvimentoPage from "./pages/EmDesenvolvimentoPage.jsx";
 
 function App() {
     return (
@@ -70,7 +70,7 @@ function App() {
                         path="/ops"
                         element={
                             <ProtectedRoute>
-                                <EquipamentosPage />
+                                <EmDesenvolvimentoPage />
                             </ProtectedRoute>
                         }
                     />
@@ -79,7 +79,7 @@ function App() {
                         path="/linhas"
                         element={
                             <ProtectedRoute>
-                                <EquipamentosPage />
+                                <EmDesenvolvimentoPage />
                             </ProtectedRoute>
                         }
                     />
@@ -88,7 +88,7 @@ function App() {
                         path="/produtos"
                         element={
                             <ProtectedRoute>
-                                <EquipamentosPage />
+                                <EmDesenvolvimentoPage />
                             </ProtectedRoute>
                         }
                     />
@@ -106,7 +106,7 @@ function App() {
                         path="/historico"
                         element={
                             <ProtectedRoute>
-                                <EquipamentosPage />
+                                <EmDesenvolvimentoPage />
                             </ProtectedRoute>
                         }
                     />
@@ -115,7 +115,7 @@ function App() {
                         path="/configuracoes"
                         element={
                             <ProtectedRoute>
-                                <EquipamentosPage />
+                                <EmDesenvolvimentoPage />
                             </ProtectedRoute>
                         }
                     />
@@ -133,7 +133,7 @@ function App() {
                         path="/registrar-parada"
                         element={
                             <ProtectedRoute>
-                                <RegistrarParadaPage />
+                                <RegistrarOcorrenciaPage />
                             </ProtectedRoute>
                         }
                     />

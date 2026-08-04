@@ -18,9 +18,41 @@ import CustomFilterSelect from "../components/equipment/CustomFilterSelect";
 import EventoFormModal from "../components/events/EventoFormModal";
 import EventoDeleteModal from "../components/events/EventoDeleteModal";
 import { equipamentosService } from "../services/equipamentosService";
-import { paradasService } from "../services/paradasService";
+import { ocorrenciaService } from "../services/ocorrenciaService.js";
 import { useAuth } from "../contexts/AuthContext";
 
+const statusOptions = [
+    { value: "", label: "Todos os status" },
+    { value: "ABERTA", label: "Aberta" },
+    { value: "EM_ANALISE", label: "Em análise" },
+    { value: "EM_ATENDIMENTO", label: "Em atendimento" },
+    { value: "RESOLVIDA", label: "Resolvida" },
+    { value: "CANCELADA", label: "Cancelada" },
+];
+
+function statusOcorrenciaLabel(status) {
+    const labels = {
+        ABERTA: "Aberta",
+        EM_ANALISE: "Em análise",
+        EM_ATENDIMENTO: "Em atendimento",
+        RESOLVIDA: "Resolvida",
+        CANCELADA: "Cancelada",
+    };
+
+    return labels[status] || status || "-";
+}
+
+function statusOcorrenciaClass(status) {
+    const classes = {
+        ABERTA: "bg-red-50 text-red-600",
+        EM_ANALISE: "bg-blue-50 text-blue-600",
+        EM_ATENDIMENTO: "bg-amber-50 text-amber-600",
+        RESOLVIDA: "bg-green-50 text-green-600",
+        CANCELADA: "bg-slate-100 text-slate-500",
+    };
+
+    return classes[status] || "bg-slate-100 text-slate-600";
+}
 
 const tipoOptions = [
     { value: "", label: "Todos os tipos" },
@@ -68,6 +100,8 @@ function EventosPage() {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [eventoToDelete, setEventoToDelete] = useState(null);
 
+    const [statusFilter, setStatusFilter] = useState("");
+
     const { usuario } = useAuth();
 
     const podeGerenciarEventos = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(
@@ -90,7 +124,7 @@ function EventosPage() {
         try {
             setLoading(true);
 
-            const data = await paradasService.listar();
+            const data = await ocorrenciaService.listar();
             setEventos(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Erro ao carregar eventos:", error);
@@ -126,9 +160,10 @@ function EventosPage() {
                 descricao: formData.descricao,
                 tipo: formData.tipo,
                 equipamentoId: Number(formData.equipamentoId),
+                status: "ABERTA",
             };
 
-            await paradasService.criar(payload);
+            await ocorrenciaService.criar(payload);
 
             setIsModalOpen(false);
             await carregarEventos();
@@ -159,7 +194,11 @@ function EventosPage() {
                 equipamentoId: Number(formData.equipamentoId),
             };
 
-            await paradasService.atualizar(selectedEvento.id, payload);
+            await ocorrenciaService.atualizar(selectedEvento.id, payload);
+
+            if (formData.status && formData.status !== selectedEvento.status) {
+                await ocorrenciaService.atualizarStatus(selectedEvento.id, formData.status);
+            }
 
             setIsModalOpen(false);
             setSelectedEvento(null);
@@ -192,7 +231,7 @@ function EventosPage() {
         try {
             setDeleteLoading(true);
 
-            await paradasService.deletar(eventoToDelete.id);
+            await ocorrenciaService.deletar(eventoToDelete.id);
 
             setEventos((prev) =>
                 prev.filter((evento) => evento.id !== eventoToDelete.id)
@@ -228,10 +267,11 @@ function EventosPage() {
                 evento.equipamentoCodigo?.toLowerCase().includes(searchLower);
 
             const matchTipo = !tipoFilter || evento.tipo === tipoFilter;
+            const matchStatus = !statusFilter || evento.status === statusFilter;
 
-            return matchSearch && matchTipo;
+            return matchSearch && matchTipo && matchStatus;
         });
-    }, [eventos, search, tipoFilter]);
+    }, [eventos, search, tipoFilter, statusFilter]);
 
     const total = eventos.length;
     const falhas = eventos.filter((e) => e.tipo === "FALHA_EQUIPAMENTO").length;
@@ -318,10 +358,10 @@ function EventosPage() {
 
                             <div className="flex gap-4 flex-wrap">
                                 <CustomFilterSelect
-                                    value={tipoFilter}
-                                    onChange={setTipoFilter}
-                                    options={tipoOptions}
-                                    placeholder="Todos os tipos"
+                                    value={statusFilter}
+                                    onChange={setStatusFilter}
+                                    options={statusOptions}
+                                    placeholder="Todos os status"
                                 />
                             </div>
                         </div>
@@ -336,6 +376,7 @@ function EventosPage() {
                                     <th className="px-6 py-4 text-sm font-semibold text-slate-600">Tipo</th>
                                     <th className="px-6 py-4 text-sm font-semibold text-slate-600">Equipamento</th>
                                     <th className="px-6 py-4 text-sm font-semibold text-slate-600">Descrição</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-600">Status</th>
                                     <th className="px-6 py-4 text-sm font-semibold text-slate-600">Ações</th>
                                 </tr>
                                 </thead>
@@ -343,13 +384,13 @@ function EventosPage() {
                                 <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-10 text-center text-slate-500">
+                                        <td colSpan="6" className="px-6 py-10 text-center text-slate-500">
                                             Carregando eventos...
                                         </td>
                                     </tr>
                                 ) : eventosFiltrados.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-10 text-center text-slate-500">
+                                        <td colSpan="6" className="px-6 py-10 text-center text-slate-500">
                                             Nenhum evento encontrado.
                                         </td>
                                     </tr>
@@ -381,6 +422,12 @@ function EventosPage() {
 
                                             <td className="px-6 py-5 align-top">
                                                 <DescriptionCell text={evento.descricao} />
+                                            </td>
+
+                                            <td className="px-6 py-5">
+                                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${statusOcorrenciaClass(evento.status)}`}>
+                                                    {statusOcorrenciaLabel(evento.status)}
+                                                </span>
                                             </td>
 
                                             <td className="px-6 py-5 text-[13.5px] text-slate-600">

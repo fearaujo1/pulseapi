@@ -6,6 +6,7 @@ const initialForm = {
     descricao: "",
     tipo: "FALHA_EQUIPAMENTO",
     equipamentoId: "",
+    status: "ABERTA",
 };
 
 const DESCRICAO_MAX_LENGTH = 255;
@@ -30,6 +31,7 @@ function EventoFormModal({
                 descricao: initialData.descricao || "",
                 tipo: initialData.tipo || "FALHA_EQUIPAMENTO",
                 equipamentoId: initialData.equipamentoId || "",
+                status: initialData.status || "ABERTA",
             });
         } else {
             setFormData(initialForm);
@@ -126,6 +128,24 @@ function EventoFormModal({
                                 ))}
                             </select>
                         </Field>
+
+                        {isEditMode && (
+                            <Field label="Status *">
+                                <select
+                                    name="status"
+                                    value={formData.status}
+                                    onChange={handleChange}
+                                    required
+                                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-blue-500 text-[13px]"
+                                >
+                                    <option value="ABERTA">Aberta</option>
+                                    <option value="EM_ANALISE">Em análise</option>
+                                    <option value="EM_ATENDIMENTO">Em atendimento</option>
+                                    <option value="RESOLVIDA">Resolvida</option>
+                                    <option value="CANCELADA">Cancelada</option>
+                                </select>
+                            </Field>
+                        )}
 
                         <Field label="Descrição">
                             <div>
