@@ -5,8 +5,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import org.springframework.stereotype.Component;
 
 // Essa classe só sabe conectar, enviar e receber bytes e fechar conexão
+@Component
 public class DominoTcpClient {
 
     private static final int CONNECTION_TIMEOUT_MS = 3000;

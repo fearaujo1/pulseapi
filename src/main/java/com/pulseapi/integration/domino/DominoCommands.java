@@ -26,4 +26,13 @@ public class DominoCommands {
                 EOT
         };
     }
+
+    public static byte[] consultarConfiguracao() {
+        return new byte[] {
+                ESC,
+                0x42,
+                QUERY,
+                EOT
+        };
+    }
 }
