@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface LayoutImpressaoRepository extends JpaRepository<LayoutImpressao, Long> {
 
-    List<LayoutImpressao> findByEquipamento(Long equipamentoId);
+    List<LayoutImpressao> findByEquipamentoId(Long equipamentoId);
 
     List<LayoutImpressao> findByEquipamentoIdAndAtivoTrue(Long equipamentoId);
 
