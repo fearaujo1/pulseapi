@@ -1,9 +1,8 @@
 package com.pulseapi.controller;
 
-import com.pulseapi.integration.domino.dto.DominoConfigurationResponse;
-import com.pulseapi.integration.domino.dto.DominoIdentityResponse;
-import com.pulseapi.integration.domino.dto.DominoStatusResponse;
+import com.pulseapi.integration.domino.dto.*;
 import com.pulseapi.integration.domino.service.EquipamentoDominoService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -47,6 +46,29 @@ public class EquipamentoDominoController {
     ) {
         return ResponseEntity.ok(
                 equipamentoDominoService.consultarConfiguracao(equipamentoId)
+        );
+    }
+
+    @GetMapping("/fifo/quantidade")
+    public ResponseEntity<DominoFifoCountResponse> consultarQuantidadeFifo(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                equipamentoDominoService.consultarQuantidadeFifo(equipamentoId)
+        );
+    }
+
+    @PostMapping("/fifo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')")
+    public ResponseEntity<DominoFifoSendResponse> enviarDadosFifo(
+            @PathVariable Long equipamentoId,
+            @RequestBody @Valid DominoFifoRequest request
+    ) {
+        return ResponseEntity.ok(
+                equipamentoDominoService.enviarDadosFifo(
+                        equipamentoId,
+                        request.dados()
+                )
         );
     }
 }

@@ -17,52 +17,14 @@ public class DominoTcpTestClient {
 
         try {
             byte[] resposta = client.enviar(
-                    host,
-                    porta,
-                    DominoCommands.consultarConfiguracao()
+                    "127.0.0.1",
+                    7000,
+                    "CONSULTAR_ATUALIZACAO_MONITOR",
+                    DominoCommands.consultarAtualizacaoMonitorLayout()
             );
 
-            System.out.println("HEX recebido: " + bytesParaHex(resposta));
-            System.out.println("ASCII recebido: " + bytesParaAsciiLegivel(resposta));
-
-            /*
-            DominoStatusResponse status =
-                    DominoStatusParser.parse(resposta);
-
-            System.out.println("Código: " + status.codigoStatus());
-            System.out.println("Jato: " + status.jato());
-            System.out.println("Horário: " + status.horarioAlteracao());
-             */
-
-            DominoConfigurationResponse configuracao = DominoConfigurationParser.parse(resposta);
-
-            System.out.println();
-            System.out.println("Configuração interpretada: ");
-            System.out.println(
-                    "Quantidade de jatos: " + configuracao.quantidadeJatos()
-            );
-            System.out.println(
-                    "Configurações dos jatos: " + configuracao.configuracoesJatos()
-            );
-            System.out.println(
-                    "Máximo de layouts: " + configuracao.maximoLayouts()
-            );
-            System.out.println(
-                    "Tamanho máximo do layout: " + configuracao.tamanhoMaximoLayout()
-            );
-            System.out.println(
-                    "Formato de código de barras: " + configuracao.formatoCodigoBarras()
-            );
-            System.out.println(
-                    "Baud rate serial: " + configuracao.baudRateSerial()
-            );
-            System.out.println(
-                    "Controle de fluxo serial: " + configuracao.controleFluxoSerial()
-            );
-            System.out.println(
-                    "Comandos de aplicação: " + configuracao.comandosAplicacao()
-            );
-
+            System.out.println("HEX: " + bytesParaHex(resposta));
+            System.out.println("ASCII: " + bytesParaAsciiLegivel(resposta));
         } catch (Exception e) {
             System.err.println("Erro na comunicação: " + e.getMessage());
             e.printStackTrace();

@@ -3,9 +3,7 @@ package com.pulseapi.integration.domino.service;
 import com.pulseapi.entity.Equipamento;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.exception.ResourceNotFoundException;
-import com.pulseapi.integration.domino.dto.DominoConfigurationResponse;
-import com.pulseapi.integration.domino.dto.DominoIdentityResponse;
-import com.pulseapi.integration.domino.dto.DominoStatusResponse;
+import com.pulseapi.integration.domino.dto.*;
 import com.pulseapi.repository.EquipamentoRepository;
 import org.springframework.stereotype.Service;
 
@@ -76,5 +74,27 @@ public class EquipamentoDominoService {
         }
 
         return equipamento;
+    }
+
+    public DominoFifoCountResponse consultarQuantidadeFifo(Long equipamentoId) {
+        Equipamento equipamento = buscarEValidar(equipamentoId);
+
+        return dominoService.consultarQuantidadeFifo(
+                equipamento.getIp(),
+                equipamento.getPorta()
+        );
+    }
+
+    public DominoFifoSendResponse enviarDadosFifo(
+            Long equipamentoId,
+            String dados
+    ) {
+        Equipamento equipamento = buscarEValidar(equipamentoId);
+
+        return dominoService.enviarDadosFifo(
+                equipamento.getIp(),
+                equipamento.getPorta(),
+                dados
+        );
     }
 }

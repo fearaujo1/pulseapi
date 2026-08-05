@@ -14,8 +14,9 @@ public class DominoTcpClient {
     private static final int CONNECTION_TIMEOUT_MS = 3000;
     private static final int READ_TIMEOUT_MS = 3000;
 
-    public byte[] enviar(String host, int porta, byte[] comando) throws IOException {
+    public byte[] enviar(String host, int porta, String nomeComando, byte[] comando) throws IOException {
         try (Socket socket = new Socket()) {
+
             socket.connect(
                     new InetSocketAddress(host, porta),
                     CONNECTION_TIMEOUT_MS
@@ -26,10 +27,24 @@ public class DominoTcpClient {
             OutputStream output = socket.getOutputStream();
             InputStream input = socket.getInputStream();
 
+            DominoLogger.logEnvio(
+                    nomeComando,
+                    host,
+                    porta,
+                    comando
+            );
+
             output.write(comando);
             output.flush();
 
-            return DominoResponseReader.ler(input);
+            byte[] resposta = DominoResponseReader.ler(input);
+
+            DominoLogger.logResposta(
+                    nomeComando,
+                    resposta
+            );
+
+            return resposta;
         }
     }
 }
