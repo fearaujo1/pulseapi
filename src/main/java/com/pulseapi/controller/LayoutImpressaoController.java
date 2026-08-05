@@ -3,11 +3,15 @@ package com.pulseapi.controller;
 import com.pulseapi.dto.layout.LayoutImpressaoRequestDTO;
 import com.pulseapi.dto.layout.LayoutImpressaoResponseDTO;
 import com.pulseapi.service.LayoutImpressaoService;
+import com.pulseapi.service.PayloadMontadorService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.pulseapi.dto.layout.MontarPayloadRequestDTO;
+import com.pulseapi.dto.layout.MontarPayloadResponseDTO;
+import com.pulseapi.service.PayloadMontadorService;
 
 import java.util.List;
 
@@ -16,11 +20,14 @@ import java.util.List;
 public class LayoutImpressaoController {
 
     private final LayoutImpressaoService layoutService;
+    private final PayloadMontadorService payloadMontadorService;
 
     public LayoutImpressaoController(
-            LayoutImpressaoService layoutService
+            LayoutImpressaoService layoutService,
+            PayloadMontadorService payloadMontadorService
     ) {
         this.layoutService = layoutService;
+        this.payloadMontadorService = payloadMontadorService;
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')")
@@ -76,5 +83,18 @@ public class LayoutImpressaoController {
     ) {
         layoutService.excluir(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')")
+    @PostMapping("/montar-payload")
+    public ResponseEntity<MontarPayloadResponseDTO> montarPayload(
+            @RequestBody @Valid MontarPayloadRequestDTO dto
+    ) {
+        return ResponseEntity.ok(
+                payloadMontadorService.montar(
+                        dto.layoutId(),
+                        dto.valores()
+                )
+        );
     }
 }

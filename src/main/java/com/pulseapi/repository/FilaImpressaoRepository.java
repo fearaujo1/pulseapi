@@ -29,4 +29,8 @@ public interface FilaImpressaoRepository
             Long equipamentoId,
             StatusFilaImpressao status
     );
+
+    Optional<FilaImpressao> findFirstByEquipamentoIdOrderByOrdemFilaDesc(
+            Long equipamentoId
+    );
 }
