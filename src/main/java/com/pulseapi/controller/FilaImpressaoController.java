@@ -2,13 +2,15 @@ package com.pulseapi.controller;
 
 import com.pulseapi.dto.fila.FilaImpressaoRequestDTO;
 import com.pulseapi.dto.fila.FilaImpressaoResponseDTO;
+import com.pulseapi.service.FilaImpressaoProcessadorService;
 import com.pulseapi.service.FilaImpressaoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
+import com.pulseapi.dto.fila.ProcessamentoFilaResponseDTO;
+import com.pulseapi.service.FilaImpressaoProcessadorService;
 import java.util.List;
 
 @RestController
@@ -16,11 +18,14 @@ import java.util.List;
 public class FilaImpressaoController {
 
     private final FilaImpressaoService filaImpressaoService;
+    private final FilaImpressaoProcessadorService processadorService;
 
     public FilaImpressaoController(
-            FilaImpressaoService filaImpressaoService
+            FilaImpressaoService filaImpressaoService,
+            FilaImpressaoProcessadorService processadorService
     ) {
         this.filaImpressaoService = filaImpressaoService;
+        this.processadorService = processadorService;
     }
 
     @PreAuthorize(
@@ -92,6 +97,18 @@ public class FilaImpressaoController {
     ) {
         return ResponseEntity.ok(
                 filaImpressaoService.cancelar(id)
+        );
+    }
+
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
+    )
+    @PostMapping("/equipamento/{equipamentoId}/processar-proximo")
+    public ResponseEntity<ProcessamentoFilaResponseDTO> processarProximo(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                processadorService.processarProximo(equipamentoId)
         );
     }
 }

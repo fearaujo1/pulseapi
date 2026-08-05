@@ -195,4 +195,39 @@ public class DominoService {
                 "Resposta inesperada da impressora durante a " + operacao + "."
         );
     }
+
+    public DominoFifoSendResponse adicionarDadosFifo(
+            String host,
+            int porta,
+            String dados
+    ) {
+        try {
+            byte[] resposta = dominoTcpClient.enviar(
+                    host,
+                    porta,
+                    "ADICIONAR_DADOS_FIFO",
+                    DominoCommands.enviarDadosFifo(dados)
+            );
+
+            validarAck(resposta, "envio ao FIFO");
+
+            int tamanho = dados.getBytes(
+                    StandardCharsets.US_ASCII
+            ).length;
+
+            return new DominoFifoSendResponse(
+                    true,
+                    dados,
+                    tamanho,
+                    "Dados adicionados ao FIFO com sucesso."
+            );
+
+        } catch (IOException | IllegalArgumentException e) {
+            throw new DominoCommunicationException(
+                    "Não foi possível adicionar dados ao FIFO: "
+                            + e.getMessage(),
+                    e
+            );
+        }
+    }
 }
