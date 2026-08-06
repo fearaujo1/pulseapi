@@ -1,5 +1,6 @@
 package com.pulseapi.service;
 
+import com.pulseapi.dto.fila.ConfirmacaoImpressaoResponseDTO;
 import com.pulseapi.dto.fila.ProcessamentoFilaResponseDTO;
 import com.pulseapi.entity.Equipamento;
 import com.pulseapi.entity.FilaImpressao;
@@ -136,5 +137,54 @@ public class FilaImpressaoProcessadorService {
         return mensagem.length() <= 1000
                 ? mensagem
                 : mensagem.substring(0, 1000);
+    }
+
+    public ConfirmacaoImpressaoResponseDTO verificarConsumo(
+            Long equipamentoId
+    ) {
+        FilaImpressao fila = filaRepository
+                .findFirstByEquipamentoIdAndStatusOrderByOrdemFilaAsc(
+                        equipamentoId,
+                        StatusFilaImpressao.ENVIADO_FIFO
+                )
+                .orElseThrow(() -> new BusinessException(
+                        "Não existe registro enviado ao FIFO aguardando confirmação."
+                ));
+
+        Equipamento equipamento = fila.getEquipamento();
+
+        validarConexaoEquipamento(equipamento);
+
+        DominoFifoCountResponse fifoAtual =
+                dominoService.consultarQuantidadeFifo(
+                        equipamento.getIp(),
+                        equipamento.getPorta()
+                );
+
+        if (fifoAtual.quantidadeItens() > 0) {
+            return new ConfirmacaoImpressaoResponseDTO(
+                    fila.getId(),
+                    equipamento.getId(),
+                    fila.getStatus(),
+                    fifoAtual.quantidadeItens(),
+                    null,
+                    "O registro ainda está aguardando consumo pela impressora."
+            );
+        }
+
+        fila.setStatus(StatusFilaImpressao.IMPRESSO);
+        fila.setImpressoEm(LocalDateTime.now());
+        fila.setMensagemErro(null);
+
+        filaRepository.save(fila);
+
+        return new ConfirmacaoImpressaoResponseDTO(
+                fila.getId(),
+                equipamento.getId(),
+                fila.getStatus(),
+                0,
+                fila.getImpressoEm(),
+                "O item foi consumido pelo FIFO e marcado como impresso."
+        );
     }
 }

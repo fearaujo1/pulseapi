@@ -1,5 +1,6 @@
 package com.pulseapi.controller;
 
+import com.pulseapi.dto.fila.ConfirmacaoImpressaoResponseDTO;
 import com.pulseapi.dto.fila.FilaImpressaoRequestDTO;
 import com.pulseapi.dto.fila.FilaImpressaoResponseDTO;
 import com.pulseapi.service.FilaImpressaoProcessadorService;
@@ -109,6 +110,18 @@ public class FilaImpressaoController {
     ) {
         return ResponseEntity.ok(
                 processadorService.processarProximo(equipamentoId)
+        );
+    }
+
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
+    )
+    @PostMapping("/equipamento/{equipamentoId}/verificar-consumo")
+    public ResponseEntity<ConfirmacaoImpressaoResponseDTO> verificarConsumo(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                processadorService.verificarConsumo(equipamentoId)
         );
     }
 }
