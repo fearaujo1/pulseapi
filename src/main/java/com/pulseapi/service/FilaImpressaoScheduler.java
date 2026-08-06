@@ -32,7 +32,8 @@ public class FilaImpressaoScheduler {
                 filaRepository.findEquipamentosIdsPorStatus(
                         Set.of(
                                 StatusFilaImpressao.PENDENTE,
-                                StatusFilaImpressao.ENVIADO_FIFO
+                                StatusFilaImpressao.ENVIADO_FIFO,
+                                StatusFilaImpressao.PRONTO_IMPRESSAO
                         )
                 );
 

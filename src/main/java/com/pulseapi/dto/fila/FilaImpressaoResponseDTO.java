@@ -18,6 +18,7 @@ public record FilaImpressaoResponseDTO(
         Integer tentativas,
         String mensagemErro,
         Long contadorAntesEnvio,
+        Long contadorCarregamento,
         Long contadorAposImpressao,
         LocalDateTime criadoEm,
         LocalDateTime enviadoEm,

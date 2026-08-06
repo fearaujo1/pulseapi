@@ -121,6 +121,7 @@ public class FilaImpressaoProcessadorService {
                 );
 
         fila.setContadorAntesEnvio(contadorAntes.quantidade());
+        fila.setContadorCarregamento(null);
         fila.setContadorAposImpressao(null);
         fila.setStatus(StatusFilaImpressao.ENVIANDO);
         fila.setMensagemErro(null);
@@ -305,110 +306,208 @@ public class FilaImpressaoProcessadorService {
     @Transactional
     public SincronizacaoFilaResponseDTO sincronizar(Long equipamentoId) {
 
-        var enviado = filaRepository
+        /*
+         * Pode existir simultaneamente:
+         *
+         * 1 item PRONTO_IMPRESSAO:
+         * será impresso no próximo pulso.
+         *
+         * 1 item ENVIADO_FIFO:
+         * será carregado na tela no próximo pulso.
+         */
+        var prontoOptional = filaRepository
+                .findFirstByEquipamentoIdAndStatusOrderByOrdemFilaAsc(
+                        equipamentoId,
+                        StatusFilaImpressao.PRONTO_IMPRESSAO
+                );
+
+        var enviadoOptional = filaRepository
                 .findFirstByEquipamentoIdAndStatusOrderByOrdemFilaAsc(
                         equipamentoId,
                         StatusFilaImpressao.ENVIADO_FIFO
                 );
 
+        FilaImpressao registroReferencia = prontoOptional
+                .orElseGet(() -> enviadoOptional.orElse(null));
+
         /*
-         * Se já existe um item enviado ao FIFO,
-         * primeiro verificamos se ele foi realmente impresso.
+         * Se não há item em processamento, verificamos se existe PENDENTE.
          */
-        if (enviado.isPresent()) {
-            FilaImpressao fila = enviado.get();
-            Equipamento equipamento = fila.getEquipamento();
-
-            validarConexaoEquipamento(equipamento);
-
-            DominoFifoCountResponse fifo =
-                    dominoService.consultarQuantidadeFifo(
-                            equipamento.getIp(),
-                            equipamento.getPorta()
+        if (registroReferencia == null) {
+            boolean possuiPendente =
+                    filaRepository.existsByEquipamentoIdAndStatus(
+                            equipamentoId,
+                            StatusFilaImpressao.PENDENTE
                     );
 
-            DominoProductCountResponse contadorAtual =
-                    dominoService.consultarContadorProduto(
-                            equipamento.getIp(),
-                            equipamento.getPorta()
-                    );
-
-            Long contadorAntes = fila.getContadorAntesEnvio();
-
-            if (contadorAntes == null) {
-                throw new BusinessException(
-                        "O registro enviado ao FIFO não possui o contador anterior ao envio."
-                );
-            }
-
-            /*
-             * O item ainda está dentro do FIFO.
-             * Portanto, ainda não foi consumido pela impressora.
-             */
-            if (fifo.quantidadeItens() > 0) {
+            if (!possuiPendente) {
                 return new SincronizacaoFilaResponseDTO(
                         equipamentoId,
-                        fila.getId(),
-                        "AGUARDANDO_CONSUMO",
-                        fila.getStatus().name(),
-                        fifo.quantidadeItens(),
-                        "O item continua no FIFO aguardando o pulso de impressão."
-                );
-            }
-
-            /*
-             * O FIFO ficou vazio, mas o contador não aumentou.
-             *
-             * Isso pode significar:
-             * - troca de layout;
-             * - limpeza manual do FIFO;
-             * - remoção do item sem impressão.
-             *
-             * Por segurança, não marcamos como IMPRESSO.
-             */
-            if (contadorAtual.quantidade() <= contadorAntes) {
-                return new SincronizacaoFilaResponseDTO(
-                        equipamentoId,
-                        fila.getId(),
-                        "CONSUMO_NAO_CONFIRMADO",
-                        fila.getStatus().name(),
+                        null,
+                        "FILA_OCIOSA",
+                        null,
                         0,
-                        "O item saiu do FIFO, mas o contador de produtos não aumentou. "
-                                + "A impressão ainda não foi confirmada."
+                        "Não existem registros pendentes ou em processamento."
                 );
             }
 
-            /*
-             * Confirmação segura:
-             * FIFO vazio + contador aumentou.
-             */
-            fila.setStatus(StatusFilaImpressao.IMPRESSO);
-            fila.setImpressoEm(LocalDateTime.now());
-            fila.setContadorAposImpressao(
-                    contadorAtual.quantidade()
-            );
-            fila.setMensagemErro(null);
-
-            filaRepository.save(fila);
+            ProcessamentoFilaResponseDTO processamento =
+                    processarProximo(equipamentoId);
 
             return new SincronizacaoFilaResponseDTO(
                     equipamentoId,
-                    fila.getId(),
-                    "CONFIRMADO_IMPRESSO",
-                    fila.getStatus().name(),
-                    0,
-                    "Impressão confirmada. O FIFO foi consumido e o contador aumentou de "
-                            + contadorAntes
-                            + " para "
-                            + contadorAtual.quantidade()
-                            + "."
+                    processamento.filaId(),
+                    "ENVIADO_AO_FIFO",
+                    processamento.status().name(),
+                    processamento.quantidadeFifoDepois(),
+                    processamento.mensagem()
             );
         }
 
+        Equipamento equipamento = registroReferencia.getEquipamento();
+
+        validarConexaoEquipamento(equipamento);
+
+        DominoFifoCountResponse fifoAtual =
+                dominoService.consultarQuantidadeFifo(
+                        equipamento.getIp(),
+                        equipamento.getPorta()
+                );
+
+        DominoProductCountResponse contadorAtual =
+                dominoService.consultarContadorProduto(
+                        equipamento.getIp(),
+                        equipamento.getPorta()
+                );
+
+        boolean confirmouImpressao = false;
+        boolean carregouNovoItem = false;
+
+        Long ultimoRegistroAlterado = null;
+        StringBuilder mensagem = new StringBuilder();
+
         /*
-         * Se não existe item aguardando confirmação,
-         * verificamos se existe algum PENDENTE.
+         * ETAPA 1:
+         * PRONTO_IMPRESSAO → IMPRESSO
+         *
+         * O item já estava na tela.
+         * Se o contador aumentou depois do carregamento,
+         * ocorreu o pulso que realmente imprimiu esse item.
          */
+        if (prontoOptional.isPresent()) {
+            FilaImpressao pronto = prontoOptional.get();
+
+            Long contadorCarregamento =
+                    pronto.getContadorCarregamento();
+
+            if (contadorCarregamento == null) {
+                pronto.setStatus(StatusFilaImpressao.ERRO);
+                pronto.setMensagemErro(
+                        "Registro PRONTO_IMPRESSAO sem contador de carregamento."
+                );
+
+                filaRepository.save(pronto);
+
+                throw new BusinessException(
+                        "O registro pronto para impressão não possui contador de carregamento."
+                );
+            }
+
+            if (contadorAtual.quantidade() > contadorCarregamento) {
+                pronto.setStatus(StatusFilaImpressao.IMPRESSO);
+                pronto.setContadorAposImpressao(
+                        contadorAtual.quantidade()
+                );
+                pronto.setImpressoEm(LocalDateTime.now());
+                pronto.setMensagemErro(null);
+
+                filaRepository.save(pronto);
+
+                confirmouImpressao = true;
+                ultimoRegistroAlterado = pronto.getId();
+
+                mensagem.append(
+                        "Item "
+                                + pronto.getId()
+                                + " confirmado como IMPRESSO. "
+                );
+            }
+        }
+
+        /*
+         * ETAPA 2:
+         * ENVIADO_FIFO → PRONTO_IMPRESSAO
+         *
+         * O FIFO precisa ter sido consumido e o contador precisa
+         * ter aumentado em relação ao momento anterior ao envio.
+         *
+         * Isso significa que ocorreu o pulso que carregou os dados
+         * na tela para a próxima impressão.
+         */
+        if (enviadoOptional.isPresent()) {
+            FilaImpressao enviado = enviadoOptional.get();
+
+            Long contadorAntes =
+                    enviado.getContadorAntesEnvio();
+
+            if (contadorAntes == null) {
+                enviado.setStatus(StatusFilaImpressao.ERRO);
+                enviado.setMensagemErro(
+                        "Registro enviado sem contador anterior ao envio."
+                );
+
+                filaRepository.save(enviado);
+
+                throw new BusinessException(
+                        "O registro enviado ao FIFO não possui contador anterior."
+                );
+            }
+
+            boolean fifoFoiConsumido =
+                    fifoAtual.quantidadeItens() == 0;
+
+            boolean contadorAumentou =
+                    contadorAtual.quantidade() > contadorAntes;
+
+            if (fifoFoiConsumido && contadorAumentou) {
+                enviado.setStatus(
+                        StatusFilaImpressao.PRONTO_IMPRESSAO
+                );
+
+                enviado.setContadorCarregamento(
+                        contadorAtual.quantidade()
+                );
+
+                enviado.setMensagemErro(null);
+
+                filaRepository.save(enviado);
+
+                carregouNovoItem = true;
+                ultimoRegistroAlterado = enviado.getId();
+
+                mensagem.append(
+                        "Item "
+                                + enviado.getId()
+                                + " carregado na tela e marcado como PRONTO_IMPRESSAO. "
+                );
+            }
+        }
+
+        /*
+         * ETAPA 3:
+         * Se não existe mais item ENVIADO_FIFO e o FIFO está vazio,
+         * podemos abastecer a impressora com o próximo PENDENTE.
+         *
+         * Pode continuar existindo um item PRONTO_IMPRESSAO.
+         * Isso é esperado: ele está na tela, enquanto o próximo
+         * ficará aguardando dentro do FIFO.
+         */
+        boolean aindaExisteEnviado =
+                filaRepository.existsByEquipamentoIdAndStatus(
+                        equipamentoId,
+                        StatusFilaImpressao.ENVIADO_FIFO
+                );
+
         boolean possuiPendente =
                 filaRepository.existsByEquipamentoIdAndStatus(
                         equipamentoId,
@@ -416,34 +515,97 @@ public class FilaImpressaoProcessadorService {
                 );
 
         /*
-         * Nenhum item enviado e nenhum item pendente:
-         * a fila está ociosa.
+         * Se acabamos de consumir o FIFO, ele está vazio.
+         * Também fazemos nova consulta para evitar usar informação desatualizada.
          */
-        if (!possuiPendente) {
-            return new SincronizacaoFilaResponseDTO(
-                    equipamentoId,
-                    null,
-                    "FILA_OCIOSA",
-                    null,
-                    0,
-                    "Não existem registros pendentes ou aguardando impressão."
-            );
+        if (!aindaExisteEnviado && possuiPendente) {
+
+            DominoFifoCountResponse fifoDepoisTransicoes =
+                    dominoService.consultarQuantidadeFifo(
+                            equipamento.getIp(),
+                            equipamento.getPorta()
+                    );
+
+            if (fifoDepoisTransicoes.quantidadeItens() == 0) {
+                ProcessamentoFilaResponseDTO processamento =
+                        processarProximo(equipamentoId);
+
+                ultimoRegistroAlterado =
+                        processamento.filaId();
+
+                mensagem.append(
+                        "Próximo item "
+                                + processamento.filaId()
+                                + " enviado ao FIFO."
+                );
+
+                return new SincronizacaoFilaResponseDTO(
+                        equipamentoId,
+                        ultimoRegistroAlterado,
+                        "ESTEIRA_AVANCADA",
+                        processamento.status().name(),
+                        processamento.quantidadeFifoDepois(),
+                        mensagem.toString().trim()
+                );
+            }
         }
 
         /*
-         * Existe um item pendente.
-         * Então enviamos o próximo ao FIFO.
+         * Nenhuma transição ocorreu.
          */
-        ProcessamentoFilaResponseDTO processamento =
-                processarProximo(equipamentoId);
+        if (!confirmouImpressao && !carregouNovoItem) {
+            String acao;
+
+            if (enviadoOptional.isPresent()
+                    && fifoAtual.quantidadeItens() > 0) {
+                acao = "AGUARDANDO_CARREGAMENTO";
+
+                mensagem.append(
+                        "O item permanece no FIFO aguardando o próximo pulso."
+                );
+
+            } else if (prontoOptional.isPresent()) {
+                acao = "AGUARDANDO_IMPRESSAO";
+
+                mensagem.append(
+                        "O item está na tela aguardando o pulso que realizará a impressão."
+                );
+
+            } else {
+                acao = "AGUARDANDO_EVENTO";
+
+                mensagem.append(
+                        "Nenhuma alteração detectada nesta sincronização."
+                );
+            }
+
+            return new SincronizacaoFilaResponseDTO(
+                    equipamentoId,
+                    registroReferencia.getId(),
+                    acao,
+                    registroReferencia.getStatus().name(),
+                    fifoAtual.quantidadeItens(),
+                    mensagem.toString().trim()
+            );
+        }
+
+        String statusFinal;
+
+        if (carregouNovoItem) {
+            statusFinal =
+                    StatusFilaImpressao.PRONTO_IMPRESSAO.name();
+        } else {
+            statusFinal =
+                    StatusFilaImpressao.IMPRESSO.name();
+        }
 
         return new SincronizacaoFilaResponseDTO(
                 equipamentoId,
-                processamento.filaId(),
-                "ENVIADO_AO_FIFO",
-                processamento.status().name(),
-                processamento.quantidadeFifoDepois(),
-                processamento.mensagem()
+                ultimoRegistroAlterado,
+                "ESTEIRA_AVANCADA",
+                statusFinal,
+                fifoAtual.quantidadeItens(),
+                mensagem.toString().trim()
         );
     }
 }

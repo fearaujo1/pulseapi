@@ -204,6 +204,7 @@ public class FilaImpressaoService {
                 fila.getTentativas(),
                 fila.getMensagemErro(),
                 fila.getContadorAntesEnvio(),
+                fila.getContadorCarregamento(),
                 fila.getContadorAposImpressao(),
                 fila.getCriadoEm(),
                 fila.getEnviadoEm(),

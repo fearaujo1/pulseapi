@@ -50,6 +50,9 @@ public class FilaImpressao {
     @Column(name = "contador_antes_envio")
     private Long contadorAntesEnvio;
 
+    @Column(name = "contador_carregamento")
+    private Long contadorCarregamento;
+
     @Column(name = "contador_apos_impressao")
     private Long contadorAposImpressao;
 
