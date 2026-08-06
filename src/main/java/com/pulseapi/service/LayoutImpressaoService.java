@@ -7,6 +7,7 @@ import com.pulseapi.dto.layout.LayoutImpressaoResponseDTO;
 import com.pulseapi.entity.*;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.exception.ResourceNotFoundException;
+import com.pulseapi.repository.CampoLayoutRepository;
 import com.pulseapi.repository.EquipamentoRepository;
 import com.pulseapi.repository.LayoutImpressaoRepository;
 import org.springframework.stereotype.Service;
@@ -22,13 +23,16 @@ public class LayoutImpressaoService {
 
     private final LayoutImpressaoRepository layoutRepository;
     private final EquipamentoRepository equipamentoRepository;
+    private final CampoLayoutRepository campoLayoutRespository;
 
     public LayoutImpressaoService(
             LayoutImpressaoRepository layoutRepository,
-            EquipamentoRepository equipamentoRepository
+            EquipamentoRepository equipamentoRepository,
+            CampoLayoutRepository campoLayoutRepository
     ) {
         this.layoutRepository = layoutRepository;
         this.equipamentoRepository = equipamentoRepository;
+        this.campoLayoutRespository = campoLayoutRepository;
     }
 
     @Transactional
@@ -110,6 +114,9 @@ public class LayoutImpressaoService {
         layout.setEquipamento(equipamento);
 
         layout.getCampos().clear();
+
+        campoLayoutRespository.deleteByLayoutId(layout.getId());
+        campoLayoutRespository.flush();
 
         for (CampoLayoutRequestDTO campoDto : dto.getCampos()) {
             layout.getCampos().add(

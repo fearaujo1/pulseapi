@@ -47,6 +47,12 @@ public class FilaImpressao {
     @Column(name = "mensagem_erro", length = 1000)
     private String mensagemErro;
 
+    @Column(name = "contador_antes_envio")
+    private Long contadorAntesEnvio;
+
+    @Column(name = "contador_apos_impressao")
+    private Long contadorAposImpressao;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm;
 

@@ -71,4 +71,40 @@ public class EquipamentoDominoController {
                 )
         );
     }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')")
+    @GetMapping("/layout-online")
+    public ResponseEntity<DominoLayoutOnlineResponse> consultarLayoutOnline(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                equipamentoDominoService.consultarLayoutOnline(equipamentoId)
+        );
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')")
+    @PostMapping("/layout-online")
+    public ResponseEntity<Void> selecionarLayout(
+            @PathVariable Long equipamentoId,
+            @RequestParam String nome
+    ) {
+        equipamentoDominoService.selecionarLayout(
+                equipamentoId,
+                nome
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/contador-produtos")
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
+    )
+    public ResponseEntity<DominoProductCountResponse> consultarContadorProduto(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                equipamentoDominoService.consultarContadorProduto(equipamentoId)
+        );
+    }
 }

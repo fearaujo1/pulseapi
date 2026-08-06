@@ -97,4 +97,37 @@ public class EquipamentoDominoService {
                 dados
         );
     }
+
+    public DominoLayoutOnlineResponse consultarLayoutOnline(Long equipamentoId) {
+        Equipamento equipamento = buscarEValidar(equipamentoId);
+
+        return dominoService.consultarLayoutOnline(
+                equipamento.getIp(),
+                equipamento.getPorta()
+        );
+    }
+
+    public void selecionarLayout(
+            Long equipamentoId,
+            String nomeLayout
+    ) {
+        Equipamento equipamento = buscarEValidar(equipamentoId);
+
+        dominoService.selecionarLayout(
+                equipamento.getIp(),
+                equipamento.getPorta(),
+                nomeLayout
+        );
+    }
+
+    public DominoProductCountResponse consultarContadorProduto(
+            Long equipamentoId
+    ) {
+        Equipamento equipamento = buscarEValidar(equipamentoId);
+
+        return dominoService.consultarContadorProduto(
+                equipamento.getIp(),
+                equipamento.getPorta()
+        );
+    }
 }

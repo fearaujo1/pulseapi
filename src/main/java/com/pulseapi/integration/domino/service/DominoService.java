@@ -2,17 +2,11 @@ package com.pulseapi.integration.domino.service;
 
 import com.pulseapi.integration.domino.DominoCommands;
 import com.pulseapi.integration.domino.DominoTcpClient;
-import com.pulseapi.integration.domino.dto.DominoConfigurationResponse;
-import com.pulseapi.integration.domino.dto.DominoFifoCountResponse;
-import com.pulseapi.integration.domino.dto.DominoIdentityResponse;
-import com.pulseapi.integration.domino.dto.DominoStatusResponse;
+import com.pulseapi.integration.domino.dto.*;
 import com.pulseapi.integration.domino.exception.DominoCommunicationException;
-import com.pulseapi.integration.domino.parser.DominoConfigurationParser;
-import com.pulseapi.integration.domino.parser.DominoFifoCountParser;
-import com.pulseapi.integration.domino.parser.DominoIdentityParser;
-import com.pulseapi.integration.domino.parser.DominoStatusParser;
+import com.pulseapi.integration.domino.parser.*;
 import org.springframework.stereotype.Service;
-import com.pulseapi.integration.domino.dto.DominoFifoSendResponse;
+
 import java.nio.charset.StandardCharsets;
 import java.io.IOException;
 
@@ -225,6 +219,76 @@ public class DominoService {
         } catch (IOException | IllegalArgumentException e) {
             throw new DominoCommunicationException(
                     "Não foi possível adicionar dados ao FIFO: "
+                            + e.getMessage(),
+                    e
+            );
+        }
+    }
+
+    public DominoLayoutOnlineResponse consultarLayoutOnline(
+            String host,
+            int porta
+    ) {
+        try {
+            byte[] resposta = dominoTcpClient.enviar(
+                    host,
+                    porta,
+                    "CONSULTAR_LAYOUT_ONLINE",
+                    DominoCommands.consultarLayoutOnline()
+            );
+
+            return DominoLayoutOnlineParser.parse(resposta);
+
+        } catch (IOException | IllegalArgumentException e) {
+            throw new DominoCommunicationException(
+                    "Não foi possível consultar o layout onlien: "
+                    + e.getMessage(),
+                    e
+            );
+        }
+    }
+
+    public void selecionarLayout(
+            String host,
+            int porta,
+            String nomeLayout
+    ) {
+        try {
+            byte[] resposta = dominoTcpClient.enviar(
+                    host,
+                    porta,
+                    "SELECIONAR_LAYOUT_" + nomeLayout,
+                    DominoCommands.selecionarLayout(nomeLayout)
+            );
+
+            validarAck(resposta, "seleção do layout " + nomeLayout);
+
+        } catch (IOException | IllegalArgumentException e) {
+            throw new DominoCommunicationException(
+                    "Não foi possível colocar o layout online: "
+                    + e.getMessage(),
+                    e
+            );
+        }
+    }
+
+    public DominoProductCountResponse consultarContadorProduto(
+            String host,
+            int porta
+    ) {
+        try {
+            byte[] resposta = dominoTcpClient.enviar(
+                    host,
+                    porta,
+                    "CONSULTAR_CONTADOR_PRODUTO_1",
+                    DominoCommands.consultarContadorProduto1()
+            );
+
+            return DominoProductCountParser.parse(resposta);
+
+        } catch (IOException | IllegalArgumentException e) {
+            throw new DominoCommunicationException(
+                    "Não foi possível consultar o contador de produtos: "
                             + e.getMessage(),
                     e
             );

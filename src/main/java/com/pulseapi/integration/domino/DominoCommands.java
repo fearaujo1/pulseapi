@@ -123,4 +123,70 @@ public class DominoCommands {
                 EOT
         };
     }
+
+    // Layout com o nome TESTE_FIFO será montando assim: ESC ON 1 10 TESTE_FIFO EOT
+    public static byte[] selecionarLayout(String nomeLayout) {
+        if (nomeLayout == null || nomeLayout.isBlank()) {
+            throw new IllegalArgumentException(
+                    "O nome do layout não pode estar vazio."
+            );
+        }
+
+        byte[] nomeBytes = nomeLayout
+                .trim()
+                .getBytes(StandardCharsets.US_ASCII);
+
+        if (nomeBytes.length < 1 || nomeBytes.length > 50) {
+            throw new IllegalArgumentException(
+                    "O nome do layout deve possuir entre 1 e 50 caracteres."
+            );
+        }
+
+        byte[] tamanhoBytes = String
+                .format("%02d", nomeBytes.length)
+                .getBytes(StandardCharsets.US_ASCII);
+
+        byte[] comando = new  byte[
+                1 + 2 + 1 + 2 + nomeBytes.length + 1
+        ];
+
+        int indice = 0;
+
+        comando[indice++] = ESC;
+        comando[indice++] = 0x4F; // O
+        comando[indice++] = 0x4E; // N
+        comando[indice++] = 0x31;  // Cabeçote 1
+
+        comando[indice++] = tamanhoBytes[0];
+        comando[indice++] = tamanhoBytes[1];
+
+        for (byte valor : nomeBytes) {
+            comando[indice++] = valor;
+        }
+
+        comando[indice++] = EOT;
+
+        return comando;
+    }
+
+    public static byte[] consultarLayoutOnline() {
+        return new byte[]{
+                ESC,
+                0x4F, // O
+                0x4E, // N
+                0x31, // Cabeçote 1
+                QUERY,
+                EOT
+        };
+    }
+
+    public static byte[] consultarContadorProduto1() {
+        return new byte[]{
+                ESC,
+                0x54, // T
+                0x31, // contador 1
+                QUERY,
+                EOT
+        };
+    }
 }

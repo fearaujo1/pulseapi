@@ -1,8 +1,6 @@
 package com.pulseapi.controller;
 
-import com.pulseapi.dto.fila.ConfirmacaoImpressaoResponseDTO;
-import com.pulseapi.dto.fila.FilaImpressaoRequestDTO;
-import com.pulseapi.dto.fila.FilaImpressaoResponseDTO;
+import com.pulseapi.dto.fila.*;
 import com.pulseapi.service.FilaImpressaoProcessadorService;
 import com.pulseapi.service.FilaImpressaoService;
 import jakarta.validation.Valid;
@@ -10,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.pulseapi.dto.fila.ProcessamentoFilaResponseDTO;
 import com.pulseapi.service.FilaImpressaoProcessadorService;
 import java.util.List;
 
@@ -122,6 +119,18 @@ public class FilaImpressaoController {
     ) {
         return ResponseEntity.ok(
                 processadorService.verificarConsumo(equipamentoId)
+        );
+    }
+
+    @PostMapping("/equipamento/{equipamentoId}/sincronizar")
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
+    )
+    public ResponseEntity<SincronizacaoFilaResponseDTO> sincronizar(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                processadorService.sincronizar(equipamentoId)
         );
     }
 }

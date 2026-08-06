@@ -203,6 +203,8 @@ public class FilaImpressaoService {
                 fila.getOrdemFila(),
                 fila.getTentativas(),
                 fila.getMensagemErro(),
+                fila.getContadorAntesEnvio(),
+                fila.getContadorAposImpressao(),
                 fila.getCriadoEm(),
                 fila.getEnviadoEm(),
                 fila.getImpressoEm()
