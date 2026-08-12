@@ -1,22 +1,28 @@
 package com.pulseapi.controller;
 
 import com.pulseapi.integration.domino.dto.*;
+import com.pulseapi.integration.domino.service.DominoHistoricoService;
 import com.pulseapi.integration.domino.service.EquipamentoDominoService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/equipamentos/{equipamentoId}/domino")
 public class EquipamentoDominoController {
 
     private final EquipamentoDominoService equipamentoDominoService;
+    private final DominoHistoricoService dominoHistoricoService;
 
     public EquipamentoDominoController(
-            EquipamentoDominoService equipamentoDominoService
+            EquipamentoDominoService equipamentoDominoService,
+            DominoHistoricoService dominoHistoricoService
     ) {
         this.equipamentoDominoService = equipamentoDominoService;
+        this.dominoHistoricoService = dominoHistoricoService;
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')")
@@ -105,6 +111,18 @@ public class EquipamentoDominoController {
     ) {
         return ResponseEntity.ok(
                 equipamentoDominoService.consultarContadorProduto(equipamentoId)
+        );
+    }
+
+    @GetMapping("/historico")
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
+    )
+    public ResponseEntity<List<DominoHistoricoResponseDTO>> listarHistorico(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                dominoHistoricoService.listarPorEquipamento(equipamentoId)
         );
     }
 }

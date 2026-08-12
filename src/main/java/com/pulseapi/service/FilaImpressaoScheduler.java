@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Component
@@ -17,6 +18,8 @@ public class FilaImpressaoScheduler {
 
     private final FilaImpressaoRepository filaRepository;
     private final FilaImpressaoProcessadorService processadorService;
+
+    private final Set<Long> equipamentosEmProcessamento = ConcurrentHashMap.newKeySet();
 
     public FilaImpressaoScheduler(
             FilaImpressaoRepository filaRepository,
@@ -38,6 +41,11 @@ public class FilaImpressaoScheduler {
                 );
 
         for (Long equipamentoId : equipamentosIds) {
+
+            if(!equipamentosEmProcessamento.add(equipamentoId)) {
+                continue;
+            }
+
             try {
                 processadorService.sincronizar(equipamentoId);
             } catch (Exception e) {
@@ -46,6 +54,8 @@ public class FilaImpressaoScheduler {
                         equipamentoId,
                         e.getMessage()
                 );
+            } finally {
+                equipamentosEmProcessamento.remove(equipamentoId);
             }
         }
     }

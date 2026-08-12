@@ -7,7 +7,6 @@ import com.pulseapi.integration.domino.dto.*;
 import com.pulseapi.repository.EquipamentoRepository;
 import org.springframework.stereotype.Service;
 
-// buscar o equipamento e validar os dados necessários antes de chamar a integração.
 @Service
 public class EquipamentoDominoService {
 
@@ -25,28 +24,65 @@ public class EquipamentoDominoService {
     public DominoIdentityResponse consultarIdentidade(Long equipamentoId) {
         Equipamento equipamento = buscarEValidar(equipamentoId);
 
-        return dominoService.consultarIdentidade(
-                equipamento.getIp(),
-                equipamento.getPorta()
-        );
+        return dominoService.consultarIdentidade(equipamento);
     }
 
     public DominoStatusResponse consultarStatus(Long equipamentoId) {
         Equipamento equipamento = buscarEValidar(equipamentoId);
 
-        return dominoService.consultarStatus(
-                equipamento.getIp(),
-                equipamento.getPorta()
-        );
+        return dominoService.consultarStatus(equipamento);
     }
 
     public DominoConfigurationResponse consultarConfiguracao(Long equipamentoId) {
         Equipamento equipamento = buscarEValidar(equipamentoId);
 
-        return dominoService.consultarConfiguracao(
-                equipamento.getIp(),
-                equipamento.getPorta()
+        return dominoService.consultarConfiguracao(equipamento);
+    }
+
+    public DominoFifoCountResponse consultarQuantidadeFifo(Long equipamentoId) {
+        Equipamento equipamento = buscarEValidar(equipamentoId);
+
+        return dominoService.consultarQuantidadeFifo(equipamento);
+    }
+
+    public DominoFifoSendResponse enviarDadosFifo(
+            Long equipamentoId,
+            String dados
+    ) {
+        Equipamento equipamento = buscarEValidar(equipamentoId);
+
+        return dominoService.enviarDadosFifo(
+                equipamento,
+                dados
         );
+    }
+
+    public DominoLayoutOnlineResponse consultarLayoutOnline(
+            Long equipamentoId
+    ) {
+        Equipamento equipamento = buscarEValidar(equipamentoId);
+
+        return dominoService.consultarLayoutOnline(equipamento);
+    }
+
+    public void selecionarLayout(
+            Long equipamentoId,
+            String nomeLayout
+    ) {
+        Equipamento equipamento = buscarEValidar(equipamentoId);
+
+        dominoService.selecionarLayout(
+                equipamento,
+                nomeLayout
+        );
+    }
+
+    public DominoProductCountResponse consultarContadorProduto(
+            Long equipamentoId
+    ) {
+        Equipamento equipamento = buscarEValidar(equipamentoId);
+
+        return dominoService.consultarContadorProduto(equipamento);
     }
 
     private Equipamento buscarEValidar(Long equipamentoId) {
@@ -74,60 +110,5 @@ public class EquipamentoDominoService {
         }
 
         return equipamento;
-    }
-
-    public DominoFifoCountResponse consultarQuantidadeFifo(Long equipamentoId) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
-
-        return dominoService.consultarQuantidadeFifo(
-                equipamento.getIp(),
-                equipamento.getPorta()
-        );
-    }
-
-    public DominoFifoSendResponse enviarDadosFifo(
-            Long equipamentoId,
-            String dados
-    ) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
-
-        return dominoService.enviarDadosFifo(
-                equipamento.getIp(),
-                equipamento.getPorta(),
-                dados
-        );
-    }
-
-    public DominoLayoutOnlineResponse consultarLayoutOnline(Long equipamentoId) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
-
-        return dominoService.consultarLayoutOnline(
-                equipamento.getIp(),
-                equipamento.getPorta()
-        );
-    }
-
-    public void selecionarLayout(
-            Long equipamentoId,
-            String nomeLayout
-    ) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
-
-        dominoService.selecionarLayout(
-                equipamento.getIp(),
-                equipamento.getPorta(),
-                nomeLayout
-        );
-    }
-
-    public DominoProductCountResponse consultarContadorProduto(
-            Long equipamentoId
-    ) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
-
-        return dominoService.consultarContadorProduto(
-                equipamento.getIp(),
-                equipamento.getPorta()
-        );
     }
 }

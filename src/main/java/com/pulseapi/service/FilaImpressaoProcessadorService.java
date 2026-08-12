@@ -59,8 +59,7 @@ public class FilaImpressaoProcessadorService {
          */
         DominoLayoutOnlineResponse layoutAtual =
                 dominoService.consultarLayoutOnline(
-                        equipamento.getIp(),
-                        equipamento.getPorta()
+                        equipamento
                 );
 
         /*
@@ -69,8 +68,7 @@ public class FilaImpressaoProcessadorService {
          */
         if (!layoutEsperado.equals(layoutAtual.nome())) {
             dominoService.selecionarLayout(
-                    equipamento.getIp(),
-                    equipamento.getPorta(),
+                    equipamento,
                     layoutEsperado
             );
 
@@ -79,8 +77,7 @@ public class FilaImpressaoProcessadorService {
              */
             DominoLayoutOnlineResponse layoutConfirmado =
                     dominoService.consultarLayoutOnline(
-                            equipamento.getIp(),
-                            equipamento.getPorta()
+                            equipamento
                     );
 
             if (!layoutEsperado.equals(layoutConfirmado.nome())) {
@@ -98,8 +95,7 @@ public class FilaImpressaoProcessadorService {
          */
         DominoFifoCountResponse fifoAntes =
                 dominoService.consultarQuantidadeFifo(
-                        equipamento.getIp(),
-                        equipamento.getPorta()
+                        equipamento
                 );
 
         /*
@@ -116,8 +112,7 @@ public class FilaImpressaoProcessadorService {
 
         DominoProductCountResponse contadorAntes =
                 dominoService.consultarContadorProduto(
-                        equipamento.getIp(),
-                        equipamento.getPorta()
+                        equipamento
                 );
 
         fila.setContadorAntesEnvio(contadorAntes.quantidade());
@@ -131,15 +126,13 @@ public class FilaImpressaoProcessadorService {
 
         try {
             dominoService.adicionarDadosFifo(
-                    equipamento.getIp(),
-                    equipamento.getPorta(),
+                    equipamento,
                     fila.getPayloadMontado()
             );
 
             DominoFifoCountResponse fifoDepois =
                     dominoService.consultarQuantidadeFifo(
-                            equipamento.getIp(),
-                            equipamento.getPorta()
+                            equipamento
                     );
 
             fila.setStatus(StatusFilaImpressao.ENVIADO_FIFO);
@@ -221,14 +214,12 @@ public class FilaImpressaoProcessadorService {
 
         DominoFifoCountResponse fifoAtual =
                 dominoService.consultarQuantidadeFifo(
-                        equipamento.getIp(),
-                        equipamento.getPorta()
+                        equipamento
                 );
 
         DominoProductCountResponse contadorAtual =
                 dominoService.consultarContadorProduto(
-                        equipamento.getIp(),
-                        equipamento.getPorta()
+                        equipamento
                 );
 
         Long contadorAntes = fila.getContadorAntesEnvio();
@@ -370,14 +361,12 @@ public class FilaImpressaoProcessadorService {
 
         DominoFifoCountResponse fifoAtual =
                 dominoService.consultarQuantidadeFifo(
-                        equipamento.getIp(),
-                        equipamento.getPorta()
+                        equipamento
                 );
 
         DominoProductCountResponse contadorAtual =
                 dominoService.consultarContadorProduto(
-                        equipamento.getIp(),
-                        equipamento.getPorta()
+                        equipamento
                 );
 
         boolean confirmouImpressao = false;
@@ -522,8 +511,7 @@ public class FilaImpressaoProcessadorService {
 
             DominoFifoCountResponse fifoDepoisTransicoes =
                     dominoService.consultarQuantidadeFifo(
-                            equipamento.getIp(),
-                            equipamento.getPorta()
+                            equipamento
                     );
 
             if (fifoDepoisTransicoes.quantidadeItens() == 0) {

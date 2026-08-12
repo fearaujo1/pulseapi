@@ -34,7 +34,7 @@ public final class DominoLogger {
         log.info("========================================");
     }
 
-    private static String bytesParaHex(byte[] bytes) {
+    public static String bytesParaHex(byte[] bytes) {
 
         StringBuilder sb = new StringBuilder();
 
@@ -45,7 +45,7 @@ public final class DominoLogger {
         return sb.toString().trim();
     }
 
-    private static String bytesParaAscii(byte[] bytes) {
+    public static String bytesParaAscii(byte[] bytes) {
 
         StringBuilder sb = new StringBuilder();
 
