@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState} from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, Cpu, CheckCircle2, Wrench, Factory } from "lucide-react";
 import Topbar from "../components/layout/Topbar";
 import SummaryCard from "../components/equipment/SummaryCard";
@@ -15,7 +16,9 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 
 function EquipamentosPage() {
 
+    const navigate = useNavigate();
     const { usuario } = useAuth();
+
 
     const podeCriar = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)
     const podeEditar = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)
@@ -245,6 +248,10 @@ function EquipamentosPage() {
         setIsDeleteModalOpen(true);
     }
 
+    function handleIntegracao(equipamento) {
+        navigate(`/equipamentos/${equipamento.id}/integracao`);
+    }
+
     function handleSort(field) {
         if (sortField === field) {
             setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -365,6 +372,7 @@ function EquipamentosPage() {
                                     equipamentos={equipamentosPaginados}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
+                                    onIntegracao={handleIntegracao}
                                     onSort={handleSort}
                                     sortField={sortField}
                                     sortDirection={sortDirection}
@@ -376,6 +384,7 @@ function EquipamentosPage() {
                                     equipamentos={equipamentosPaginados}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
+                                    onIntegracao={handleIntegracao}
                                     canEdit={podeEditar}
                                     canDelete={podeExcluir}
                                 />

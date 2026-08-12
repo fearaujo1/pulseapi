@@ -17,6 +17,7 @@ import DashboardPage from "./pages/DashboardPage.jsx";
 import EventosPage from "./pages/EventosPage.jsx";
 import RegistrarOcorrenciaPage from "./pages/RegistrarOcorrenciaPage.jsx";
 import EmDesenvolvimentoPage from "./pages/EmDesenvolvimentoPage.jsx";
+import EquipamentoIntegracaoPage from "./pages/EquipamentoIntegracaoPage.jsx";
 
 function App() {
     return (
@@ -136,6 +137,11 @@ function App() {
                                 <RegistrarOcorrenciaPage />
                             </ProtectedRoute>
                         }
+                    />
+
+                    <Route
+                        path="/equipamentos/:id/integracao"
+                        element={<EquipamentoIntegracaoPage />}
                     />
 
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
