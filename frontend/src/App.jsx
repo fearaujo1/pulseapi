@@ -18,6 +18,7 @@ import EventosPage from "./pages/EventosPage.jsx";
 import RegistrarOcorrenciaPage from "./pages/RegistrarOcorrenciaPage.jsx";
 import EmDesenvolvimentoPage from "./pages/EmDesenvolvimentoPage.jsx";
 import EquipamentoIntegracaoPage from "./pages/EquipamentoIntegracaoPage.jsx";
+import FilaImpressaoPage from "./pages/FilaImpressaoPage";
 
 function App() {
     return (
@@ -142,6 +143,11 @@ function App() {
                     <Route
                         path="/equipamentos/:id/integracao"
                         element={<EquipamentoIntegracaoPage />}
+                    />
+
+                    <Route
+                        path="/fila-impressao"
+                        element={<FilaImpressaoPage />}
                     />
 
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
