@@ -3,8 +3,10 @@ package com.pulseapi.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name="ocorrencias")
+@Table(name = "ocorrencias")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,14 +30,30 @@ public class Ocorrencia {
     @Column(nullable = false)
     private StatusOcorrencia status;
 
-    @ManyToOne
-    @JoinColumn(name = "FK_equipamento_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "FK_equipamento_id", nullable = false)
     private Equipamento equipamento;
+
+    @Column(name = "criado_em", nullable = false, updatable = false)
+    private LocalDateTime criadoEm;
+
+    @Column(name = "atualizado_em", nullable = false)
+    private LocalDateTime atualizadoEm;
 
     @PrePersist
     public void prePersist() {
         if (this.status == null) {
             this.status = StatusOcorrencia.ABERTA;
         }
+
+        LocalDateTime agora = LocalDateTime.now();
+
+        this.criadoEm = agora;
+        this.atualizadoEm = agora;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.atualizadoEm = LocalDateTime.now();
     }
 }
