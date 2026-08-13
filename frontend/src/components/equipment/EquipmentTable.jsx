@@ -1,10 +1,11 @@
 import StatusBadge from "./StatusBadge";
-import { Pencil, Trash2, ArrowUpDown } from "lucide-react";
+import { Pencil, Trash2, ArrowUpDown, Cable } from "lucide-react";
 
 function EquipmentTable({
                             equipamentos = [],
                             onEdit,
                             onDelete,
+                            onIntegracao,
                             onSort,
                             sortField,
                             sortDirection,
@@ -98,6 +99,14 @@ function EquipmentTable({
 
                                 <td className="px-6 py-5">
                                     <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => onIntegracao(equipamento)}
+                                            className="p-2 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50 transition"
+                                            title="Integração"
+                                        >
+                                            <Cable size={16} />
+                                        </button>
+
                                         {canEdit && (
                                             <button
                                                 onClick={() => onEdit(equipamento)}

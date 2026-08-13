@@ -1,117 +1,128 @@
 package com.pulseapi.controller;
-/*
-import com.pulseapi.entity.Equipamento;
-import com.pulseapi.integration.domino.service.DominoReadService;
+
 import com.pulseapi.integration.domino.dto.*;
-import com.pulseapi.repository.EquipamentoRepository;
+import com.pulseapi.integration.domino.service.DominoHistoricoService;
+import com.pulseapi.integration.domino.service.EquipamentoDominoService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/equipamentos/{id}/domino")
+@RequestMapping("/equipamentos/{equipamentoId}/domino")
 public class EquipamentoDominoController {
 
-    private final EquipamentoRepository equipamentoRepository;
-    private final DominoReadService dominoReadService;
+    private final EquipamentoDominoService equipamentoDominoService;
+    private final DominoHistoricoService dominoHistoricoService;
 
     public EquipamentoDominoController(
-            EquipamentoRepository equipamentoRepository,
-            // DominoReadService dominoReadService
+            EquipamentoDominoService equipamentoDominoService,
+            DominoHistoricoService dominoHistoricoService
     ) {
-        this.equipamentoRepository = equipamentoRepository;
-        this.dominoReadService = dominoReadService;
+        this.equipamentoDominoService = equipamentoDominoService;
+        this.dominoHistoricoService = dominoHistoricoService;
     }
 
-    private Equipamento getEquipamento(Long id) {
-        return equipamentoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Equipamento não encontrado"));
-    }
-
-    @GetMapping("/status")
-    public DominoStatusResponseDTO status(@PathVariable Long id) {
-        Equipamento eq = getEquipamento(id);
-        return dominoReadService.buscarStatus(eq.getIp(), eq.getPorta(), 3000);
-    }
-
-    @GetMapping("/status-atual")
-    public DominoCurrentStatusResponseDTO statusAtual(@PathVariable Long id) {
-        Equipamento eq = getEquipamento(id);
-        return dominoReadService.buscarStatusAtual(eq.getIp(), eq.getPorta(), 3000);
-    }
-
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')")
     @GetMapping("/identidade")
-    public DominoIdentityResponseDTO identidade(@PathVariable Long id) {
-        Equipamento eq = getEquipamento(id);
-        return dominoReadService.buscarIdentidade(eq.getIp(), eq.getPorta(), 3000);
-    }
-
-    @GetMapping("/alertas")
-    public DominoAlertResponseDTO alertas(@PathVariable Long id) {
-        Equipamento eq = getEquipamento(id);
-        return dominoReadService.buscarAlertas(eq.getIp(), eq.getPorta(), 3000);
-    }
-
-    @PostMapping("/imprimir")
-    public DominoRawResponseDTO imprimir(
-            @PathVariable Long id,
-            @RequestBody DominoPrintRequestDTO request
+    public ResponseEntity<DominoIdentityResponse> consultarIdentidade(
+            @PathVariable Long equipamentoId
     ) {
-        Equipamento equipamento = getEquipamento(id);
-
-        int porta = equipamento.getPorta() != null ? equipamento.getPorta() : 7000;
-
-        return dominoReadService.imprimirTexto(
-                equipamento.getIp(),
-                porta,
-                3000,
-                request.getMensagem()
+        return ResponseEntity.ok(
+                equipamentoDominoService.consultarIdentidade(equipamentoId)
         );
     }
 
-
-    @PostMapping("/fifo/configurar")
-    public DominoRawResponseDTO configurarFifo(@PathVariable Long id) {
-        Equipamento equipamento = getEquipamento(id);
-
-        int porta = equipamento.getPorta() != null ? equipamento.getPorta() : 7000;
-
-        return dominoReadService.configurarFifo(
-                equipamento.getIp(),
-                porta,
-                3000
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')")
+    @GetMapping("/status")
+    public ResponseEntity<DominoStatusResponse> consultarStatus(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                equipamentoDominoService.consultarStatus(equipamentoId)
         );
     }
 
-    @PostMapping("/mensagem/carregar")
-    public DominoRawResponseDTO carregarMensagem(
-            @PathVariable Long id,
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')")
+    @GetMapping("/configuracao")
+    public ResponseEntity<DominoConfigurationResponse> consultarConfiguracao(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                equipamentoDominoService.consultarConfiguracao(equipamentoId)
+        );
+    }
+
+    @GetMapping("/fifo/quantidade")
+    public ResponseEntity<DominoFifoCountResponse> consultarQuantidadeFifo(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                equipamentoDominoService.consultarQuantidadeFifo(equipamentoId)
+        );
+    }
+
+    @PostMapping("/fifo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')")
+    public ResponseEntity<DominoFifoSendResponse> enviarDadosFifo(
+            @PathVariable Long equipamentoId,
+            @RequestBody @Valid DominoFifoRequest request
+    ) {
+        return ResponseEntity.ok(
+                equipamentoDominoService.enviarDadosFifo(
+                        equipamentoId,
+                        request.dados()
+                )
+        );
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')")
+    @GetMapping("/layout-online")
+    public ResponseEntity<DominoLayoutOnlineResponse> consultarLayoutOnline(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                equipamentoDominoService.consultarLayoutOnline(equipamentoId)
+        );
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')")
+    @PostMapping("/layout-online")
+    public ResponseEntity<Void> selecionarLayout(
+            @PathVariable Long equipamentoId,
             @RequestParam String nome
     ) {
-        Equipamento equipamento = getEquipamento(id);
-
-        int porta = equipamento.getPorta() != null ? equipamento.getPorta() : 7000;
-
-        return dominoReadService.carregarMensagem(
-                equipamento.getIp(),
-                porta,
-                3000,
+        equipamentoDominoService.selecionarLayout(
+                equipamentoId,
                 nome
         );
+
+        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/edc")
-    public DominoRawResponseDTO enviarEdc(
-            @PathVariable Long id,
-            @RequestBody DominoPrintRequestDTO request
+    @GetMapping("/contador-produtos")
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
+    )
+    public ResponseEntity<DominoProductCountResponse> consultarContadorProduto(
+            @PathVariable Long equipamentoId
     ) {
-        Equipamento equipamento = getEquipamento(id);
-
-        return dominoReadService.enviarDadoExterno(
-                equipamento.getIp(),
-                16000,
-                3000,
-                request.getMensagem()
+        return ResponseEntity.ok(
+                equipamentoDominoService.consultarContadorProduto(equipamentoId)
         );
     }
 
+    @GetMapping("/historico")
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
+    )
+    public ResponseEntity<List<DominoHistoricoResponseDTO>> listarHistorico(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                dominoHistoricoService.listarPorEquipamento(equipamentoId)
+        );
+    }
 }
-*/

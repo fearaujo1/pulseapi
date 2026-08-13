@@ -41,11 +41,11 @@ function Topbar() {
 
     return (
         <>
-            <header className="h-20 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between shadow-sm">
+            <header className="sticky top-0 z-30 h-20 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => setIsSidebarOpen(true)}
-                        className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 transition"
+                        className="lg:hidden rounded-xl p-2 text-slate-600 hover:bg-slate-100 transition"
                         title="Abrir menu"
                     >
                         <Menu size={22} />

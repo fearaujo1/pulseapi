@@ -1,7 +1,14 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Cable } from "lucide-react";
 import StatusBadge from "./StatusBadge.jsx"
 
-function EquipmentCards({ equipamentos = [], onEdit, onDelete, canEdit = true, canDelete = true}) {
+function EquipmentCards({
+                            equipamentos = [],
+                            onEdit,
+                            onDelete,
+                            onIntegracao,
+                            canEdit = true,
+                            canDelete = true
+}) {
     if (equipamentos.length === 0) {
         return (
             <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">
@@ -80,7 +87,15 @@ function EquipmentCards({ equipamentos = [], onEdit, onDelete, canEdit = true, c
                         </div>
                     </div>
 
-                    <div className="mt-6 flex items-center justiy-end gap-2">
+                    <div className="mt-6 flex items-center justify-end gap-2">
+                        <button
+                            onClick={() => onIntegracao(equipamento)}
+                            className="p-2 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50 transition"
+                            title="Integração"
+                        >
+                            <Cable size={16} />
+                        </button>
+
                         {canEdit && (
                             <button
                                 onClick={() => onEdit(equipamento)}
