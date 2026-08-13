@@ -1,12 +1,19 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import {
+    BrowserRouter,
+    Navigate,
+    Route,
+    Routes,
+} from "react-router-dom";
+
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
-import AdminRoute from "./routes/AdminRoute";
 import SetupRoute from "./routes/SetupRoute";
 import InitialRoute from "./routes/InitialRoute";
 import RoleRoute from "./routes/RoleRoute";
+
+import AppLayout from "./components/layout/AppLayout.jsx";
 
 import EquipamentosPage from "./pages/EquipamentosPage";
 import LoginPage from "./pages/LoginPage";
@@ -19,11 +26,14 @@ import RegistrarOcorrenciaPage from "./pages/RegistrarOcorrenciaPage.jsx";
 import EmDesenvolvimentoPage from "./pages/EmDesenvolvimentoPage.jsx";
 import EquipamentoIntegracaoPage from "./pages/EquipamentoIntegracaoPage.jsx";
 import FilaImpressaoPage from "./pages/FilaImpressaoPage";
+import LayoutsImpressaoPage from "./pages/LayoutsImpressaoPage.jsx";
+import NovaImpressaoPage from "./pages/NovaImpressaoPage.jsx";
 
 function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
+
                 <Toaster
                     position="top-right"
                     toastOptions={{
@@ -37,7 +47,15 @@ function App() {
                 />
 
                 <Routes>
-                    <Route path="/" element={<InitialRoute />} />
+
+                    {/* ==================================== */}
+                    {/* ROTAS PÚBLICAS / CONFIGURAÇÃO       */}
+                    {/* ==================================== */}
+
+                    <Route
+                        path="/"
+                        element={<InitialRoute />}
+                    />
 
                     <Route
                         path="/setup"
@@ -47,110 +65,223 @@ function App() {
                             </SetupRoute>
                         }
                     />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/primeiro-acesso" element={<PrimeiroAcessoPage />} />
 
                     <Route
-                        path="/dashboard"
+                        path="/login"
+                        element={<LoginPage />}
+                    />
+
+                    <Route
+                        path="/primeiro-acesso"
+                        element={<PrimeiroAcessoPage />}
+                    />
+
+
+                    {/* ==================================== */}
+                    {/* ÁREA INTERNA DO SISTEMA              */}
+                    {/*                                     */}
+                    {/* AppLayout reserva 270px à esquerda  */}
+                    {/* para a Sidebar no desktop.           */}
+                    {/*                                     */}
+                    {/* Cada página continua possuindo      */}
+                    {/* sua própria Topbar.                  */}
+                    {/* ==================================== */}
+
+                    <Route
                         element={
                             <ProtectedRoute>
-                                <DashboardPage />
+                                <AppLayout />
                             </ProtectedRoute>
                         }
-                    />
+                    >
+
+                        {/* ================================ */}
+                        {/* ROTAS GERAIS                     */}
+                        {/* ================================ */}
+
+                        <Route
+                            path="/dashboard"
+                            element={<DashboardPage />}
+                        />
+
+                        <Route
+                            path="/equipamentos"
+                            element={<EquipamentosPage />}
+                        />
+
+                        <Route
+                            path="/equipamentos/:id/integracao"
+                            element={<EquipamentoIntegracaoPage />}
+                        />
+
+                        <Route
+                            path="/producoes"
+                            element={<EmDesenvolvimentoPage />}
+                        />
+
+                        <Route
+                            path="/ops"
+                            element={<EmDesenvolvimentoPage />}
+                        />
+
+                        <Route
+                            path="/linhas"
+                            element={<EmDesenvolvimentoPage />}
+                        />
+
+                        <Route
+                            path="/produtos"
+                            element={<EmDesenvolvimentoPage />}
+                        />
+
+                        {/*
+                            OPERADOR pode criar impressão.
+
+                            O POST /fila-impressao permite:
+                            ADMIN / GESTOR / SUPERVISOR / OPERADOR
+                        */}
+                        <Route
+                            path="/fila-impressao/nova"
+                            element={<NovaImpressaoPage />}
+                        />
+
+                        <Route
+                            path="/registrar-parada"
+                            element={<RegistrarOcorrenciaPage />}
+                        />
+
+
+                        {/* ================================ */}
+                        {/* ADMIN / GESTOR / SUPERVISOR      */}
+                        {/* ================================ */}
+
+                        <Route
+                            path="/eventos"
+                            element={
+                                <RoleRoute
+                                    allowedProfiles={[
+                                        "ADMIN",
+                                        "GESTOR",
+                                        "SUPERVISOR",
+                                    ]}
+                                >
+                                    <EventosPage />
+                                </RoleRoute>
+                            }
+                        />
+
+                        {/*
+                            Por enquanto a tela usa
+                            GET /fila-impressao,
+                            que é uma listagem GLOBAL.
+
+                            OPERADOR será incluído depois,
+                            quando filtrarmos pela linha dele.
+                        */}
+                        <Route
+                            path="/fila-impressao"
+                            element={
+                                <RoleRoute
+                                    allowedProfiles={[
+                                        "ADMIN",
+                                        "GESTOR",
+                                        "SUPERVISOR",
+                                    ]}
+                                >
+                                    <FilaImpressaoPage />
+                                </RoleRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/layouts-impressao"
+                            element={
+                                <RoleRoute
+                                    allowedProfiles={[
+                                        "ADMIN",
+                                        "GESTOR",
+                                        "SUPERVISOR",
+                                    ]}
+                                >
+                                    <LayoutsImpressaoPage />
+                                </RoleRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/relatorios"
+                            element={
+                                <RoleRoute
+                                    allowedProfiles={[
+                                        "ADMIN",
+                                        "GESTOR",
+                                        "SUPERVISOR",
+                                    ]}
+                                >
+                                    <EmDesenvolvimentoPage />
+                                </RoleRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/historico"
+                            element={
+                                <RoleRoute
+                                    allowedProfiles={[
+                                        "ADMIN",
+                                        "GESTOR",
+                                        "SUPERVISOR",
+                                    ]}
+                                >
+                                    <EmDesenvolvimentoPage />
+                                </RoleRoute>
+                            }
+                        />
+
+
+                        {/* ================================ */}
+                        {/* ADMIN                            */}
+                        {/* ================================ */}
+
+                        <Route
+                            path="/usuarios"
+                            element={
+                                <RoleRoute
+                                    allowedProfiles={["ADMIN"]}
+                                >
+                                    <UsuariosPage />
+                                </RoleRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/configuracoes"
+                            element={
+                                <RoleRoute
+                                    allowedProfiles={["ADMIN"]}
+                                >
+                                    <EmDesenvolvimentoPage />
+                                </RoleRoute>
+                            }
+                        />
+
+                    </Route>
+
+
+                    {/* ==================================== */}
+                    {/* FALLBACK                             */}
+                    {/* ==================================== */}
 
                     <Route
-                        path="/equipamentos"
+                        path="*"
                         element={
-                            <ProtectedRoute>
-                                <EquipamentosPage />
-                            </ProtectedRoute>
+                            <Navigate
+                                to="/dashboard"
+                                replace
+                            />
                         }
                     />
 
-                    <Route
-                        path="/ops"
-                        element={
-                            <ProtectedRoute>
-                                <EmDesenvolvimentoPage />
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/linhas"
-                        element={
-                            <ProtectedRoute>
-                                <EmDesenvolvimentoPage />
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/produtos"
-                        element={
-                            <ProtectedRoute>
-                                <EmDesenvolvimentoPage />
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/eventos"
-                        element={
-                            <RoleRoute allowedProfiles={["ADMIN", "GESTOR", "SUPERVISOR"]}>
-                                <EventosPage />
-                            </RoleRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/historico"
-                        element={
-                            <ProtectedRoute>
-                                <EmDesenvolvimentoPage />
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/configuracoes"
-                        element={
-                            <ProtectedRoute>
-                                <EmDesenvolvimentoPage />
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/usuarios"
-                        element={
-                            <RoleRoute allowedProfiles={["ADMIN"]}>
-                                <UsuariosPage />
-                            </RoleRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/registrar-parada"
-                        element={
-                            <ProtectedRoute>
-                                <RegistrarOcorrenciaPage />
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/equipamentos/:id/integracao"
-                        element={<EquipamentoIntegracaoPage />}
-                    />
-
-                    <Route
-                        path="/fila-impressao"
-                        element={<FilaImpressaoPage />}
-                    />
-
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
             </BrowserRouter>
         </AuthProvider>

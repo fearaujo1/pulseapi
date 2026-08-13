@@ -6,17 +6,20 @@ import {
     Printer,
     Search,
     XCircle,
+    Plus,
 } from "lucide-react";
 import toast from "react-hot-toast";
-
 import Topbar from "../components/layout/Topbar";
 import SummaryCard from "../components/equipment/SummaryCard";
 import { filaImpressaoService } from "../services/filaImpressaoService";
 import { equipamentosService } from "../services/equipamentosService";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import FilaImpressaoDetalhesModal from "../components/fila/FilaImpressaoDetalhesModal.jsx";
+import { useNavigate } from "react-router-dom";
 
 function FilaImpressaoPage() {
+
+    const navigate = useNavigate();
     const { usuario } = useAuth();
 
     const podeCancelar = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(
@@ -202,14 +205,26 @@ function FilaImpressaoPage() {
             <Topbar />
 
             <main className="p-4 md:p-6">
-                <section className="mb-6">
-                    <h1 className="text-3xl md:text-4xl font-bold text-slate-950">
-                        Fila de Impressão
-                    </h1>
+                <section className="mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-bold text-slate-950">
+                            Fila de Impressão
+                        </h1>
 
-                    <p className="mt-1 text-[16px] text-slate-600">
-                        Acompanhamento dos dados enviados às codificadoras
-                    </p>
+                        <p className="mt-1 text-[16px] text-slate-600">
+                            Acompanhamento dos dados enviados às codificadoras
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={() =>
+                            navigate("/fila-impressao/nova")
+                        }
+                        className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[15px] flex items-center gap-2 shadow-sm"
+                    >
+                        <Plus size={16} />
+                        Nova Impressão
+                    </button>
                 </section>
 
                 <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5 mb-6">
