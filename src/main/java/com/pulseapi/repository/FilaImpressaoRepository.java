@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -44,5 +45,23 @@ public interface FilaImpressaoRepository
        """)
     Set<Long> findEquipamentosIdsPorStatus(
             @Param("status") Set<StatusFilaImpressao> status
+    );
+
+    @Query("""
+    SELECT f
+    FROM FilaImpressao f
+    WHERE f.criadoEm >= :dataInicial
+      AND f.criadoEm <= :dataFinal
+      AND (:equipamentoId IS NULL OR f.equipamento.id = :equipamentoId)
+      AND (:status IS NULL OR f.status = :status)
+      AND (:layoutId IS NULL OR f.layout.id = :layoutId)
+    ORDER BY f.criadoEm DESC
+    """)
+    List<FilaImpressao> buscarParaRelatorio(
+            @Param("dataInicial") LocalDateTime dataInicial,
+            @Param("dataFinal") LocalDateTime dataFinal,
+            @Param("equipamentoId") Long equipamentoId,
+            @Param("status") StatusFilaImpressao status,
+            @Param("layoutId") Long layoutId
     );
 }

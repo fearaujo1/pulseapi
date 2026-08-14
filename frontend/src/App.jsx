@@ -28,6 +28,7 @@ import EquipamentoIntegracaoPage from "./pages/EquipamentoIntegracaoPage.jsx";
 import FilaImpressaoPage from "./pages/FilaImpressaoPage";
 import LayoutsImpressaoPage from "./pages/LayoutsImpressaoPage.jsx";
 import NovaImpressaoPage from "./pages/NovaImpressaoPage.jsx";
+import RelatoriosPage from "./pages/RelatoriosPage.jsx";
 
 function App() {
     return (
@@ -218,7 +219,7 @@ function App() {
                                         "SUPERVISOR",
                                     ]}
                                 >
-                                    <EmDesenvolvimentoPage />
+                                    <RelatoriosPage />
                                 </RoleRoute>
                             }
                         />

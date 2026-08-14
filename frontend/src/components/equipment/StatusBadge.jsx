@@ -2,7 +2,7 @@ import { statusMap } from "../../utils/statusMap.js";
 
 function StatusBadge({ status }) {
     const config = statusMap[status] || {
-        label: status | "Desconhecido",
+        label: status || "Desconhecido",
         className: "bg-gray-100 text-gray-700 border border-gray-200",
     };
 
