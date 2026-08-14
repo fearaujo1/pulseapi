@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Factory, Mail, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -12,6 +12,17 @@ function LoginPage() {
     const [senha, setSenha] = useState('');
     const [lembrar, setLembrar] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const emailLembrado =
+            localStorage.getItem("emailLembrado");
+
+        if (emailLembrado) {
+            setEmail(emailLembrado);
+            setLembrar(true);
+        }
+    }, []);
+
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -31,6 +42,17 @@ function LoginPage() {
             
             toast.success("Login realizado com sucesso!");
 
+            if (lembrar) {
+                localStorage.setItem(
+                    "emailLembrado",
+                    email
+                );
+            } else {
+                localStorage.removeItem(
+                    "emailLembrado"
+                );
+            }
+
             if (data.usuario?.primeiroAcesso) {
                 navigate("/primeiro-acesso", { replace: true });
             } else {
@@ -40,8 +62,13 @@ function LoginPage() {
             console.error("Erro ao fazer login: ", error);
             console.error("Resposta: ", error.response?.data);
 
+            if(error.response?.status === 401) {
+                toast.error("E-mail ou senha incorretos.");
+                return;
+            }
+
             toast.error(
-                error.response?.data.detail ||
+                error.response?.data?.detail ||
                 error.response?.data?.message ||
                 "E-mail ou senha inválidos."
             );
