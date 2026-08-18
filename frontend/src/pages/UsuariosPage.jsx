@@ -23,6 +23,7 @@ import CustomFilterSelect from "../components/equipment/CustomFilterSelect";
 import { usuarioService } from "../services/usuarioService";
 import toast from "react-hot-toast";
 import UserDeleteModal from "../components/users/UserDeleteModal";
+import { configuracaoService} from "../services/configuracaoService.js";
 
 const perfilOptions = [
     { value: "", label: "Todos os perfis" },
@@ -118,6 +119,8 @@ function UsuariosPage() {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [usuarioToDelete, setUsuarioToDelete] = useState(null);
 
+    // Tratamento de turnos
+    const [turnos, setTurnos] = useState([]);
 
     async function carregarUsuarios() {
         try {
@@ -149,6 +152,7 @@ function UsuariosPage() {
                 senhaTemporaria: formData.senhaTemporaria,
                 telefone: formData.telefone || null,
                 perfilId: Number(formData.perfilId || 4),
+                turnoIds: Number(formData.perfilId) === 4 ? formData.turnoIds || [] : [],
             };
 
             console.log("FORM DATA:", formData);
@@ -182,6 +186,7 @@ function UsuariosPage() {
                 email: formData.email,
                 telefone: formData.telefone || null,
                 perfilId: Number(formData.perfilId || selectedUsuario?.perfilId || 4),
+                turnoIds: Number(formData.perfilId) === 4 ? formData.turnoIds || [] : [],
             };
 
             await usuarioService.atualizar(selectedUsuario.id, payload);
@@ -275,6 +280,7 @@ function UsuariosPage() {
 
     useEffect(() => {
         carregarUsuarios();
+        carregarTurnos();
     }, []);
 
     const usuariosFiltrados = useMemo(() => {
@@ -311,6 +317,23 @@ function UsuariosPage() {
             dateStyle: "short",
             timeStyle: "short",
         });
+    }
+
+
+    async function carregarTurnos() {
+        try {
+            const data = await configuracaoService.listarTurnos();
+
+            setTurnos(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Erro ao carregar turnos: ", error);
+
+            toast.error(
+                "Erro ao carregar turnos."
+            );
+
+            setTurnos([]);
+        }
     }
 
     return (
@@ -445,12 +468,13 @@ function UsuariosPage() {
 
                         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                             <div className="overflow-x-auto">
-                                <table className="w-full min-w-[1100px]">
+                                <table className="w-full min-w-[1250px]">
                                     <thead className="bg-slate-50 border-b border-slate-200">
                                         <tr className="text-left">
                                             <th className="px-6 py-4 text-sm font-semibold text-slate-600">Usuário</th>
                                             <th className="px-6 py-4 text-sm font-semibold text-slate-600">Contato</th>
                                             <th className="px-6 py-4 text-sm font-semibold text-slate-600">Perfil</th>
+                                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">Turnos</th>
                                             <th className="px-6 py-4 text-sm font-semibold text-slate-600">Status</th>
                                             <th className="px-6 py-4 text-sm font-semibold text-slate-600">Última Atualização</th>
                                             <th className="px-6 py-4 text-sm font-semibold text-slate-600">Cadastro</th>
@@ -461,13 +485,13 @@ function UsuariosPage() {
                                     <tbody>
                                     {loading ? (
                                         <tr>
-                                            <td colSpan="7" className="px-6 py-10 text-center text-slate-500">
+                                            <td colSpan="8" className="px-6 py-10 text-center text-slate-500">
                                                 Carregando usuários...
                                             </td>
                                         </tr>
                                     ) : usuariosFiltrados.length === 0 ? (
                                         <tr>
-                                            <td colSpan="7" className="px-6 py-10 text-center text-slate-500">
+                                            <td colSpan="8" className="px-6 py-10 text-center text-slate-500">
                                                 Nenhum usuário encontrado.
                                             </td>
                                         </tr>
@@ -500,6 +524,30 @@ function UsuariosPage() {
                                                     <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${perfilClass(usuario.perfil)}`}>
                                                         {perfilLabel(usuario.perfil)}
                                                     </span>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    {usuario.perfil === "OPERADOR" ? (
+                                                        usuario.turnos?.length > 0 ? (
+                                                            <div className="flex flex-wrap gap-1.5">
+                                                                {usuario.turnos.map((turno) => (
+                                                                    <span
+                                                                        key={turno.id}
+                                                                        className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700"
+                                                                    >
+                                                                        {turno.nome}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-amber-600">
+                                                                Sem turno
+                                                            </span>
+                                                        )
+                                                    ) : (
+                                                        <span className="text-xs text-slate-400">
+                                                            Não se aplica
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${statusClass(usuario.status)}`}>
@@ -569,6 +617,7 @@ function UsuariosPage() {
                 loading={submitLoading}
                 mode={selectedUsuario ? "edit" : "create"}
                 initialData={selectedUsuario}
+                turnos={turnos}
             />
             <UserDeleteModal
                 isOpen={isDeleteModalOpen}

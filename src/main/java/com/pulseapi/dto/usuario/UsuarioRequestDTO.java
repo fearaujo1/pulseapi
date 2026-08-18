@@ -1,11 +1,13 @@
 package com.pulseapi.dto.usuario;
 
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -14,15 +16,18 @@ public class UsuarioRequestDTO {
     @NotBlank(message = "O nome é obrigatório")
     private String nome;
 
-    @Email(message = "Email Inválido")
-    @NotBlank(message = "O Email é obrigatório")
+    @Email(message = "Email inválido")
+    @NotBlank(message = "O email é obrigatório")
     private String email;
 
     @NotBlank(message = "A senha temporária é obrigatória.")
     private String senhaTemporaria;
 
     private String telefone;
-    
+
     @NotNull(message = "O perfil é obrigatório")
     private Long perfilId;
+
+    //Um usuário pode possuir nenhum ou vários turnos.
+    private Set<Long> turnoIds = new HashSet<>();
 }

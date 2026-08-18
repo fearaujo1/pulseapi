@@ -43,7 +43,7 @@ public class OcorrenciaController {
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')")
     @PostMapping
     public ResponseEntity<OcorrenciaResponseDTO> cadastrar(@RequestBody @Valid OcorrenciaRequestDTO dto) {
-        OcorrenciaResponseDTO response = ocorrenciaService.registrarParada(dto);
+        OcorrenciaResponseDTO response = ocorrenciaService.registrarOcorrencia(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

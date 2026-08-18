@@ -55,8 +55,8 @@ function RegistrarOcorrenciaPage() {
         }));
     }
 
-    async function handleSubmit(e) {
-        e.preventDefault();
+    async function handleSubmit(equipamento) {
+        equipamento.preventDefault();
 
         if (!formData.equipamentoId) {
             toast.error("Selecione um equipamento.");
