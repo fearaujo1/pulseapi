@@ -1,10 +1,9 @@
 package com.pulseapi.controller;
 
-import com.pulseapi.dto.configuracao.ConfiguracaoGeralRequestDTO;
-import com.pulseapi.dto.configuracao.ConfiguracaoGeralResponseDTO;
-import com.pulseapi.dto.configuracao.TurnoRequestDTO;
-import com.pulseapi.dto.configuracao.TurnoResponseDTO;
+import com.pulseapi.dto.configuracao.*;
 import com.pulseapi.entity.Empresa;
+import com.pulseapi.entity.TipoNotificacao;
+import com.pulseapi.service.ConfiguracaoNotificacaoService;
 import com.pulseapi.service.ConfiguracaoSistemaService;
 import com.pulseapi.service.EmpresaService;
 import com.pulseapi.service.TurnoService;
@@ -22,16 +21,18 @@ public class ConfiguracaoController {
     private final EmpresaService empresaService;
     private final TurnoService turnoService;
     private final ConfiguracaoSistemaService configuracaoSistemaService;
-
+    private final ConfiguracaoNotificacaoService configuracaoNotificacaoService;
 
     public ConfiguracaoController(
             EmpresaService empresaService,
             TurnoService turnoService,
-            ConfiguracaoSistemaService configuracaoSistemaService
+            ConfiguracaoSistemaService configuracaoSistemaService,
+            ConfiguracaoNotificacaoService configuracaoNotificacaoService
     ) {
         this.empresaService = empresaService;
         this.turnoService = turnoService;
         this.configuracaoSistemaService = configuracaoSistemaService;
+        this.configuracaoNotificacaoService = configuracaoNotificacaoService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -129,6 +130,33 @@ public class ConfiguracaoController {
 
         return ResponseEntity.ok(
                 configuracaoSistemaService.atualizar(dto)
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/notificacoes")
+    public ResponseEntity<List<ConfiguracaoNotificacaoResponseDTO>>
+    listarConfiguracoesNotificacao() {
+
+        return ResponseEntity.ok(
+                configuracaoNotificacaoService.listar()
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/notificacoes/{tipo}")
+    public ResponseEntity<ConfiguracaoNotificacaoResponseDTO>
+    atualizarConfiguracaoNotificacao(
+
+            @PathVariable TipoNotificacao tipo,
+
+            @RequestBody
+            @Valid
+            ConfiguracaoNotificacaoUpdateDTO dto
+    ) {
+
+        return ResponseEntity.ok(
+                configuracaoNotificacaoService.atualizar(tipo, dto)
         );
     }
 }
