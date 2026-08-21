@@ -1,0 +1,17 @@
+package com.pulseapi.entity;
+
+public enum TipoNotificacao {
+
+    PRODUCAO_INICIADA,
+    PRODUCAO_CONCLUIDA,
+
+    EQUIPAMENTO_SEM_CONEXAO,
+    EQUIPAMENTO_RECONECTADO,
+
+    NOVA_OCORRENCIA,
+    OCORRENCIA_CRITICA,
+
+    ERRO_IMPRESSAO,
+    IMPRESSAO_CONCLUIDA
+}
+

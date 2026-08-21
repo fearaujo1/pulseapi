@@ -25,7 +25,7 @@ public class OcorrenciaService {
         this.equipamentoRepository = equipamentoRepository;
     }
 
-    public OcorrenciaResponseDTO registrarParada(OcorrenciaRequestDTO dto) {
+    public OcorrenciaResponseDTO registrarOcorrencia(OcorrenciaRequestDTO dto) {
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com ID: " + dto.getEquipamentoId()));
 

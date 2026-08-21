@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { X, User, Mail, Lock, ChevronDown, Info } from "lucide-react";
+import {
+    X,
+    User,
+    Mail,
+    Lock,
+    ChevronDown,
+    Info,
+    Clock3,
+    Check,
+} from "lucide-react";
 
 const initialForm = {
     nome: "",
@@ -7,6 +16,7 @@ const initialForm = {
     telefone: "",
     senhaTemporaria: "",
     perfilId: 4,
+    turnoIds: [],
 };
 
 function perfilToPerfilId(perfil) {
@@ -27,58 +37,173 @@ function UserFormModal({
                            loading = false,
                            initialData = null,
                            mode = "create",
+                           turnos = [],
                        }) {
-    const [formData, setFormData] = useState(initialForm);
+    const [formData, setFormData] =
+        useState(initialForm);
 
-    const isEditMode = mode === "edit";
+    const isEditMode =
+        mode === "edit";
+
+    const isOperador =
+        Number(formData.perfilId) === 4;
+
+
+    // =====================================================
+    // CARREGAR DADOS
+    // =====================================================
 
     useEffect(() => {
         if (initialData) {
+
             setFormData({
-                nome: initialData.nome || "",
-                email: initialData.email || "",
-                telefone: initialData.telefone || "",
+                nome:
+                    initialData.nome || "",
+
+                email:
+                    initialData.email || "",
+
+                telefone:
+                    initialData.telefone || "",
+
                 senhaTemporaria: "",
+
                 perfilId:
                     initialData.perfilId ||
-                    perfilToPerfilId(initialData.perfil) ||
+                    perfilToPerfilId(
+                        initialData.perfil
+                    ) ||
                     4,
-            });
-        } else {
-            setFormData(initialForm);
-        }
-    }, [initialData, isOpen]);
 
-    if (!isOpen) return null;
+                turnoIds:
+                    initialData.turnos?.map(
+                        (turno) =>
+                            turno.id
+                    ) || [],
+            });
+
+        } else {
+            setFormData({
+                ...initialForm,
+                turnoIds: [],
+            });
+        }
+
+    }, [
+        initialData,
+        isOpen,
+    ]);
+
+
+    if (!isOpen) {
+        return null;
+    }
+
+
+    // =====================================================
+    // CAMPOS
+    // =====================================================
 
     function handleChange(e) {
-        const { name, value } = e.target;
+        const {
+            name,
+            value,
+        } = e.target;
+
+        if (name === "perfilId") {
+
+            const novoPerfil =
+                Number(value);
+
+            setFormData((prev) => ({
+                ...prev,
+
+                perfilId:
+                novoPerfil,
+
+                /*
+                 * Se deixar de ser OPERADOR,
+                 * removemos os turnos associados.
+                 */
+                turnoIds:
+                    novoPerfil === 4
+                        ? prev.turnoIds
+                        : [],
+            }));
+
+            return;
+        }
 
         setFormData((prev) => ({
             ...prev,
-            [name]: name === "perfilId" ? Number(value) : value,
+            [name]: value,
         }));
     }
 
+
+    // =====================================================
+    // TURNOS
+    // =====================================================
+
+    function toggleTurno(turnoId) {
+
+        setFormData((prev) => {
+
+            const selecionado =
+                prev.turnoIds.includes(
+                    turnoId
+                );
+
+            return {
+                ...prev,
+
+                turnoIds:
+                    selecionado
+
+                        ? prev.turnoIds.filter(
+                            (id) =>
+                                id !== turnoId
+                        )
+
+                        : [
+                            ...prev.turnoIds,
+                            turnoId,
+                        ],
+            };
+        });
+    }
+
+
+    // =====================================================
+    // SUBMIT
+    // =====================================================
+
     function handleSubmit(e) {
         e.preventDefault();
+
         onSubmit(formData);
     }
 
 
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-            <div className="w-full max-w-3xl rounded-[28px] bg-white shadow-2xl">
+
+            <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[28px] bg-white shadow-2xl">
+
+                {/* CABEÇALHO */}
+
                 <div className="flex items-start justify-between px-8 pt-8">
+
                     <div>
                         <h2 className="text-[20px] font-bold text-slate-900">
-                            {isEditMode ? "Editar Usuário" : "Novo Usuário"}
+                            {isEditMode
+                                ? "Editar Usuário"
+                                : "Novo Usuário"}
                         </h2>
 
                         <p className="mt-2 text-[13px] text-slate-500">
                             {isEditMode
-                                ? "Atualize as informações do usuário"
+                                ? "Atualize as informações e os turnos do usuário"
                                 : "Cadastre um usuário e defina seu perfil de acesso"}
                         </p>
                     </div>
@@ -86,130 +211,394 @@ function UserFormModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"
+                        disabled={loading}
+                        className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
                     >
                         <X size={22} />
                     </button>
+
                 </div>
 
-                <form onSubmit={handleSubmit} className="px-8 pb-8 pt-6">
+
+                <form
+                    onSubmit={handleSubmit}
+                    className="px-8 pb-8 pt-6"
+                >
+
+                    {/* DADOS */}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        {/* NOME */}
+
                         <div>
                             <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
                                 Nome completo *
                             </label>
 
-                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 outline-none focus-within:border-blue-500">
-                                <User size={17} className="text-slate-400" />
+                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 focus-within:border-blue-500">
+
+                                <User
+                                    size={17}
+                                    className="text-slate-400"
+                                />
+
                                 <input
                                     name="nome"
-                                    value={formData.nome}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.nome
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                     placeholder="Ex: João Silva"
                                     className="w-full bg-transparent outline-none text-[13px]"
                                     required
                                 />
+
                             </div>
                         </div>
+
+
+                        {/* EMAIL */}
 
                         <div>
                             <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
                                 E-mail *
                             </label>
 
-                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 outline-none focus-within:border-blue-500">
-                                <Mail size={17} className="text-slate-400" />
+                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 focus-within:border-blue-500">
+
+                                <Mail
+                                    size={17}
+                                    className="text-slate-400"
+                                />
+
                                 <input
                                     type="email"
                                     name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.email
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                     placeholder="usuario@empresa.com"
                                     className="w-full bg-transparent outline-none text-[13px]"
                                     required
                                 />
+
                             </div>
                         </div>
+
+
+                        {/* TELEFONE */}
 
                         <div>
                             <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
                                 Telefone
                             </label>
 
-                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 outline-none focus-within:border-blue-500">
+                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 focus-within:border-blue-500">
+
                                 <input
                                     name="telefone"
-                                    value={formData.telefone}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.telefone
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                     placeholder="Ex: (43) 99999-9999"
                                     className="w-full bg-transparent outline-none text-[13px]"
                                 />
+
                             </div>
                         </div>
 
+
+                        {/* SENHA */}
+
                         {!isEditMode && (
                             <div>
+
                                 <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
                                     Senha temporária *
                                 </label>
 
-                                <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 outline-none focus-within:border-blue-500">
-                                    <Lock size={17} className="text-slate-400" />
+                                <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 focus-within:border-blue-500">
+
+                                    <Lock
+                                        size={17}
+                                        className="text-slate-400"
+                                    />
+
                                     <input
                                         type="password"
                                         name="senhaTemporaria"
-                                        value={formData.senhaTemporaria}
-                                        onChange={handleChange}
-                                        placeholder="Ex: 12345"
+                                        value={
+                                            formData.senhaTemporaria
+                                        }
+                                        onChange={
+                                            handleChange
+                                        }
+                                        placeholder="Senha temporária"
                                         className="w-full bg-transparent outline-none text-[13px]"
                                         required
                                     />
+
                                 </div>
                             </div>
                         )}
 
+
+                        {/* PERFIL */}
+
                         <div>
+
                             <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
                                 Perfil *
                             </label>
 
                             <div className="relative">
+
                                 <select
                                     name="perfilId"
-                                    value={formData.perfilId}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.perfilId
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                     className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-blue-500 text-[13px]"
                                     required
                                 >
-                                    <option value="4">Operador</option>
-                                    <option value="3">Supervisor</option>
-                                    <option value="2">Gestor</option>
-                                    <option value="1">Administrador</option>
+                                    <option value="4">
+                                        Operador
+                                    </option>
+
+                                    <option value="3">
+                                        Supervisor
+                                    </option>
+
+                                    <option value="2">
+                                        Gestor
+                                    </option>
+
+                                    <option value="1">
+                                        Administrador
+                                    </option>
                                 </select>
 
                                 <ChevronDown
                                     size={17}
                                     className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
                                 />
+
                             </div>
                         </div>
+
                     </div>
 
-                    <div className="mt-8 rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                        <div className="flex gap-3">
-                            <Info className="mt-0.5 text-blue-600" size={20} />
-                            <div>
-                                <p className="text-[14.5px] font-semibold text-blue-700">
-                                    Primeiro acesso:
-                                </p>
-                                <p className="mt-1 text-[12.5px] text-blue-700/90">
-                                    O usuário deverá alterar a senha temporária no primeiro login.
-                                </p>
+
+                    {/* ====================================== */}
+                    {/* TURNOS DO OPERADOR                     */}
+                    {/* ====================================== */}
+
+                    {isOperador && (
+                        <div className="mt-7">
+
+                            <div className="flex items-start gap-3 mb-4">
+
+                                <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                    <Clock3 size={19} />
+                                </div>
+
+                                <div>
+                                    <p className="text-[14.5px] font-bold text-slate-900">
+                                        Turnos do Operador
+                                    </p>
+
+                                    <p className="mt-1 text-[12.5px] text-slate-500">
+                                        Selecione um ou mais turnos permitidos para este usuário.
+                                    </p>
+                                </div>
+
                             </div>
+
+
+                            {turnos.length === 0 ? (
+
+                                <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50 p-5">
+
+                                    <p className="text-[13px] font-semibold text-amber-700">
+                                        Nenhum turno configurado.
+                                    </p>
+
+                                    <p className="mt-1 text-[12px] text-amber-600">
+                                        Cadastre os turnos em Configurações antes de associá-los ao operador.
+                                    </p>
+
+                                </div>
+
+                            ) : (
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                                    {turnos.map(
+                                        (turno) => {
+
+                                            const selecionado =
+                                                formData.turnoIds.includes(
+                                                    turno.id
+                                                );
+
+                                            return (
+                                                <button
+                                                    key={
+                                                        turno.id
+                                                    }
+                                                    type="button"
+                                                    disabled={
+                                                        !turno.ativo
+                                                    }
+                                                    onClick={() =>
+                                                        toggleTurno(
+                                                            turno.id
+                                                        )
+                                                    }
+                                                    className={`
+                                                        text-left
+                                                        rounded-2xl
+                                                        border
+                                                        p-4
+                                                        transition
+
+                                                        ${
+                                                        selecionado
+                                                            ? "border-blue-500 bg-blue-50"
+                                                            : "border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50"
+                                                    }
+
+                                                        ${
+                                                        !turno.ativo
+                                                            ? "opacity-50 cursor-not-allowed"
+                                                            : ""
+                                                    }
+                                                    `}
+                                                >
+
+                                                    <div className="flex items-start justify-between gap-3">
+
+                                                        <div>
+
+                                                            <div className="flex items-center gap-2">
+
+                                                                <p className="text-[13.5px] font-bold text-slate-900">
+                                                                    {
+                                                                        turno.nome
+                                                                    }
+                                                                </p>
+
+                                                                {!turno.ativo && (
+                                                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                                                                        Inativo
+                                                                    </span>
+                                                                )}
+
+                                                            </div>
+
+                                                            <p className="mt-1 text-[12px] text-slate-500">
+                                                                {formatarHora(
+                                                                    turno.horaInicio
+                                                                )}
+                                                                {" → "}
+                                                                {formatarHora(
+                                                                    turno.horaFim
+                                                                )}
+                                                            </p>
+
+                                                        </div>
+
+
+                                                        <div
+                                                            className={`
+                                                                h-5
+                                                                w-5
+                                                                shrink-0
+                                                                rounded-md
+                                                                border
+                                                                flex
+                                                                items-center
+                                                                justify-center
+
+                                                                ${
+                                                                selecionado
+                                                                    ? "border-blue-600 bg-blue-600 text-white"
+                                                                    : "border-slate-300"
+                                                            }
+                                                            `}
+                                                        >
+                                                            {selecionado && (
+                                                                <Check
+                                                                    size={13}
+                                                                />
+                                                            )}
+                                                        </div>
+
+                                                    </div>
+
+                                                </button>
+                                            );
+                                        }
+                                    )}
+
+                                </div>
+                            )}
+
+
+                            {formData.turnoIds.length > 0 && (
+                                <p className="mt-3 text-xs text-blue-600 font-medium">
+                                    {formData.turnoIds.length} turno(s) selecionado(s)
+                                </p>
+                            )}
+
                         </div>
-                    </div>
+                    )}
+
+
+                    {/* PRIMEIRO ACESSO */}
+
+                    {!isEditMode && (
+                        <div className="mt-8 rounded-2xl border border-blue-200 bg-blue-50 p-5">
+
+                            <div className="flex gap-3">
+
+                                <Info
+                                    className="mt-0.5 text-blue-600"
+                                    size={20}
+                                />
+
+                                <div>
+                                    <p className="text-[14.5px] font-semibold text-blue-700">
+                                        Primeiro acesso
+                                    </p>
+
+                                    <p className="mt-1 text-[12.5px] text-blue-700/90">
+                                        O usuário deverá alterar a senha temporária no primeiro login.
+                                    </p>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    )}
+
+
+                    {/* BOTÕES */}
 
                     <div className="mt-8 flex justify-end gap-3">
+
                         <button
                             type="button"
                             onClick={onClose}
@@ -226,13 +615,32 @@ function UserFormModal({
                         >
                             {loading
                                 ? "Salvando..."
-                                : isEditMode ? "Salvar Alterações" : "Criar Usuário"}
+                                : isEditMode
+                                    ? "Salvar Alterações"
+                                    : "Criar Usuário"}
                         </button>
+
                     </div>
+
                 </form>
+
             </div>
+
         </div>
     );
+}
+
+
+function formatarHora(hora) {
+    if (!hora) {
+        return "--:--";
+    }
+
+    return String(hora)
+        .substring(
+            0,
+            5
+        );
 }
 
 export default UserFormModal;

@@ -29,6 +29,9 @@ import FilaImpressaoPage from "./pages/FilaImpressaoPage";
 import LayoutsImpressaoPage from "./pages/LayoutsImpressaoPage.jsx";
 import NovaImpressaoPage from "./pages/NovaImpressaoPage.jsx";
 import RelatoriosPage from "./pages/RelatoriosPage.jsx";
+import ConfiguracoesPage from "./pages/ConfiguracoesPage.jsx";
+import ConfirmDeleteModal from "./components/equipment/ConfirmDeleteModal.jsx";
+
 
 function App() {
     return (
@@ -261,7 +264,7 @@ function App() {
                                 <RoleRoute
                                     allowedProfiles={["ADMIN"]}
                                 >
-                                    <EmDesenvolvimentoPage />
+                                    <ConfiguracoesPage />
                                 </RoleRoute>
                             }
                         />

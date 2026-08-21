@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 @Table(name = "usuarios")
@@ -55,6 +57,28 @@ public class Usuario implements UserDetails {
     @Column(name = "ultima_atualizacao")
     private LocalDateTime ultimaAtualizacao;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "usuario_turno",
+            joinColumns = @JoinColumn(
+                    name = "usuario_id"
+            ),
+            inverseJoinColumns = @JoinColumn(
+                    name = "turno_id"
+            ),
+            uniqueConstraints = {
+                    @UniqueConstraint(
+                            columnNames = {
+                                    "usuario_id",
+                                    "turno_id"
+                            }
+                    )
+            }
+    )
+
+    @Builder.Default
+    private Set<Turno> turnos = new HashSet<>();
+
     @PrePersist
     public void prePersist() {
         this.dataCadastro = LocalDateTime.now();
@@ -92,11 +116,6 @@ public class Usuario implements UserDetails {
     @Override
     public boolean isAccountNonExpired() {
         return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return this.status != StatusUsuario.BLOQUEADO;
     }
 
     @Override

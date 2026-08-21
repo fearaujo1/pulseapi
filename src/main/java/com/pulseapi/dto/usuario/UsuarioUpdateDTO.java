@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Getter
 @Setter
 public class UsuarioUpdateDTO {
@@ -21,4 +24,6 @@ public class UsuarioUpdateDTO {
 
     @NotNull(message = "O perfil é obrigatório.")
     private Long perfilId;
+
+    private Set<Long> turnoIds = new HashSet<>();
 }
