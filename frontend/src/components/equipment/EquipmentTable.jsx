@@ -1,4 +1,4 @@
-import StatusBadge from "../common/StatusBadge.jsx";
+import StatusBadge from "./StatusBadge";
 import { Pencil, Trash2, ArrowUpDown, Cable } from "lucide-react";
 
 function EquipmentTable({
