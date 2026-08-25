@@ -1,4 +1,4 @@
-import StatusBadge from "./StatusBadge";
+import StatusBadge from "../common/StatusBadge.jsx";
 import { Pencil, Trash2, ArrowUpDown, Cable } from "lucide-react";
 
 function EquipmentTable({
@@ -28,7 +28,7 @@ function EquipmentTable({
                     <tr className="text-left">
                         <th
                             onClick={() => onSort("nome")}
-                            className="px-6 py-4 text-sm font-semibold text-slate-600"
+                            className="cursor-pointer select-none px-6 py-4 text-sm font-semibold text-slate-600"
                         >
                             <div className="flex items-center gap-2">
                                 Nome {renderSortIcon("nome")}
@@ -55,7 +55,7 @@ function EquipmentTable({
                     <tbody>
                     {equipamentos.length === 0 ? (
                         <tr>
-                            <td colSpan="10" className="px-6 py-10 text-center text-slate-500">
+                            <td colSpan="9" className="px-6 py-10 text-center text-slate-500">
                                 Nenhum equipamento encontrado.
                             </td>
                         </tr>

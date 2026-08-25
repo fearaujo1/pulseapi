@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Factory, Lock, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { authService } from "../services/authService";
 import { useAuth } from "../contexts/AuthContext";
+import { Lock } from "lucide-react";
+import AuthLayout from "../components/auth/AuthLayout";
+import AuthField from "../components/auth/AuthField";
+import PasswordRequirements from "../components/auth/PasswordRequirements";
 
 function PrimeiroAcessoPage() {
     const navigate = useNavigate();
@@ -20,7 +23,11 @@ function PrimeiroAcessoPage() {
         const temNumero = /\d/.test(senha);
         const temEspecial = /[^A-Za-z0-9]/.test(senha);
 
-        return temMinimo && temMaiuscula && temMinuscula && temNumero&& temEspecial;
+        return temMinimo &&
+            temMaiuscula &&
+            temMinuscula &&
+            temNumero &&
+            temEspecial;
     }
 
     async function handleSubmit(event) {
@@ -68,82 +75,49 @@ function PrimeiroAcessoPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center justify-center px-4">
-            <div className="mb-10 flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-3xl bg-blue-600 flex items-center justify-center shadow-sm mb-6">
-                    <Factory size={42} className="text-white" />
-                </div>
+        <AuthLayout
+            title="Primeiro Acesso"
+            description={`Olá, ${
+                usuario?.nome || "usuário"
+            }. Defina uma nova senha para continuar.`}
+        >
+            <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+            >
+                <AuthField
+                    label="Nova Senha"
+                    icon={Lock}
+                    type="password"
+                    placeholder="Digite sua nova senha"
+                    value={novaSenha}
+                    onChange={setNovaSenha}
+                    autoComplete="new-password"
+                    disabled={loading}
+                />
 
-                <h1 className="text-3xl font-bold text-slate-950">Primeiro Acesso</h1>
+                <AuthField
+                    label="Confirmar Senha"
+                    icon={Lock}
+                    type="password"
+                    placeholder="Confirme sua nova senha"
+                    value={confirmarSenha}
+                    onChange={setConfirmarSenha}
+                    autoComplete="new-password"
+                    disabled={loading}
+                />
 
-                <p className="mt-3 text-slate-600">
-                    Olá, {usuario?.nome || "usuário"}. Defina uma nova senha para continuar.
-                </p>
-            </div>
+                <PasswordRequirements />
 
-            <div className="w-full max-w-xl rounded-3xl bg-white border border-slate-200 shadow-2xl p-8">
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-5">
-                        <label className="mb-2 block text-lg font-semibold text-slate-900">
-                            Nova Senha
-                        </label>
-
-                        <div className="h-14 rounded-2xl bg-slate-100 flex items-center gap-3 px-4 focus-within:ring-2 focus-within:ring-blue-500">
-                            <Lock size={22} className="text-slate-400" />
-                            <input
-                                type="password"
-                                placeholder="Digite sua nova senha"
-                                value={novaSenha}
-                                onChange={(e) => setNovaSenha(e.target.value)}
-                                className="w-full bg-transparent outline-none text-l text-slate-700 placeholder:text-slate-400"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mb-6">
-                        <label className="mb-2 block text-lg font-semibold text-slate-900">
-                            Confirmar Senha
-                        </label>
-
-                        <div className="h-14 rounded-2xl bg-slate-100 flex items-center gap-3 px-4 focus-within:ring-2 focus-within:ring-blue-500">
-                            <Lock size={22} className="text-slate-400" />
-                            <input
-                                type="password"
-                                placeholder="Confirme sua nova senha"
-                                value={confirmarSenha}
-                                onChange={(e) => setConfirmarSenha(e.target.value)}
-                                className="w-full bg-transparent outline-none text-l text-slate-700 placeholder:text-slate-400"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                        <div className="flex gap-3">
-                            <CheckCircle2 size={20} className="text-blue-600 mt-0.5" />
-                            <div>
-                                <p className="font-semibold text-blue-700">Critérios da senha:</p>
-                                <p className="mt-1 text-blue-700/90">
-                                    Mínimo de 8 caracteres, letra maiúscula, letra minúscula,
-                                    número e caractere especial.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-14 rounded-xl bg-blue-600 text-white text-lg font-semibold hover:bg-blue-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {loading ? "Alterando..." : "Alterar Senha"}
-                    </button>
-                </form>
-            </div>
-
-            <p className="mt-8 max-w-xl text-center text-slate-600">
-                © 2026 PulseAPI - Smart Production Manager. Todos os direitos reservados.
-            </p>
-        </div>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="h-14 w-full rounded-xl bg-blue-600 text-lg font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                    {loading ? "Alterando..." : "Alterar Senha"}
+                </button>
+            </form>
+        </AuthLayout>
     );
 }
 

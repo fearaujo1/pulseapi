@@ -3,86 +3,25 @@ import {
     AlertTriangle,
     CircleAlert,
     ClipboardList,
-    Factory,
     Plus,
-    Search,
     Wrench,
-    Pencil,
-    Trash2,
 } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 import toast from "react-hot-toast";
-
 import Topbar from "../components/layout/Topbar";
-import SummaryCard from "../components/equipment/SummaryCard";
-import CustomFilterSelect from "../components/equipment/CustomFilterSelect";
-import EventoFormModal from "../components/events/EventoFormModal";
-import EventoDeleteModal from "../components/events/EventoDeleteModal";
 import { equipamentosService } from "../services/equipamentosService";
 import { ocorrenciaService } from "../services/ocorrenciaService.js";
-import { useAuth } from "../contexts/AuthContext";
 
-const statusOptions = [
-    { value: "", label: "Todos os status" },
-    { value: "ABERTA", label: "Aberta" },
-    { value: "EM_ANALISE", label: "Em análise" },
-    { value: "EM_ATENDIMENTO", label: "Em atendimento" },
-    { value: "RESOLVIDA", label: "Resolvida" },
-    { value: "CANCELADA", label: "Cancelada" },
-];
+import EventoFilters from "../components/events/EventoFilters.jsx"
+import EventoFormModal from "../components/events/EventoFormModal";
+import EventoTable from "../components/events/EventoTable.jsx";
+import EventoDetailsModal from "../components/events/EventoDetailsModal";
 
-function statusOcorrenciaLabel(status) {
-    const labels = {
-        ABERTA: "Aberta",
-        EM_ANALISE: "Em análise",
-        EM_ATENDIMENTO: "Em atendimento",
-        RESOLVIDA: "Resolvida",
-        CANCELADA: "Cancelada",
-    };
-
-    return labels[status] || status || "-";
-}
-
-function statusOcorrenciaClass(status) {
-    const classes = {
-        ABERTA: "bg-red-50 text-red-600",
-        EM_ANALISE: "bg-blue-50 text-blue-600",
-        EM_ATENDIMENTO: "bg-amber-50 text-amber-600",
-        RESOLVIDA: "bg-green-50 text-green-600",
-        CANCELADA: "bg-slate-100 text-slate-500",
-    };
-
-    return classes[status] || "bg-slate-100 text-slate-600";
-}
-
-const tipoOptions = [
-    { value: "", label: "Todos os tipos" },
-    { value: "FALHA_EQUIPAMENTO", label: "Falha de equipamento" },
-    { value: "PARADA_LINHA", label: "Parada de linha" },
-    { value: "MANUTENCAO", label: "Manutenção" },
-    { value: "OUTRO", label: "Outro" },
-];
-
-function tipoLabel(tipo) {
-    const labels = {
-        FALHA_EQUIPAMENTO: "Falha de equipamento",
-        PARADA_LINHA: "Parada de linha",
-        MANUTENCAO: "Manutenção",
-        OUTRO: "Outro",
-    };
-
-    return labels[tipo] || tipo;
-}
-
-function tipoClass(tipo) {
-    const classes = {
-        FALHA_EQUIPAMENTO: "bg-red-50 text-red-600",
-        PARADA_LINHA: "bg-amber-50 text-amber-600",
-        MANUTENCAO: "bg-blue-50 text-blue-600",
-        OUTRO: "bg-slate-100 text-slate-600",
-    };
-
-    return classes[tipo] || "bg-slate-100 text-slate-600";
-}
+import Pagination from "../components/common/Pagination.jsx"
+import SummaryCard from "../components/common/SummaryCard.jsx";
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal.jsx";
+import PageHeader from "../components/common/PageHeader";
+import ContentCard from "../components/common/ContentCard";
 
 function EventosPage() {
     const [eventos, setEventos] = useState([]);
@@ -99,6 +38,13 @@ function EventosPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [eventoToDelete, setEventoToDelete] = useState(null);
+
+    // PAGINAÇÃO
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
+    // MODAL SOBRE INFO DE OCORRÊNCIAS
+    const [selectedEventoDetails, setSelectedEventoDetails] = useState(null);
 
     const [statusFilter, setStatusFilter] = useState("");
 
@@ -273,6 +219,34 @@ function EventosPage() {
         });
     }, [eventos, search, tipoFilter, statusFilter]);
 
+    const totalPages = Math.ceil(
+        eventosFiltrados.length / itemsPerPage
+    );
+
+    const eventosPaginados = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+
+        return eventosFiltrados.slice(startIndex, endIndex);
+    }, [eventosFiltrados, currentPage]);
+
+    // Força o retorno a primeira página quando os filtros mudarem
+    useEffect(() => {
+       setCurrentPage(1);
+    }, [search, tipoFilter, statusFilter]);
+
+    // Proteção para exclusões
+    useEffect(() => {
+        if (totalPages === 0) {
+            setCurrentPage(1);
+            return;
+        }
+
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
     const total = eventos.length;
     const falhas = eventos.filter((e) => e.tipo === "FALHA_EQUIPAMENTO").length;
     const paradas = eventos.filter((e) => e.tipo === "PARADA_LINHA").length;
@@ -283,25 +257,21 @@ function EventosPage() {
             <Topbar />
 
             <main className="p-4 md:p-6">
-                <section className="mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-slate-950">
-                            Eventos e Ocorrências
-                        </h1>
-
-                        <p className="mt-1 text-[16px] text-slate-600">
-                            Registro e acompanhamento de ocorrências, falhas e paradas de produção
-                        </p>
-                    </div>
-
-                    <button
-                        onClick={handleNovoEvento}
-                        className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[15px] flex items-center gap-2 shadow-sm"
-                    >
-                        <Plus size={15} />
-                        Nova Ocorrência
-                    </button>
-                </section>
+                <PageHeader
+                    title="Eventos e Ocorrências"
+                    description="Registro e acompanhamento de ocorrências, falhas e paradas de produção"
+                >
+                    {podeGerenciarEventos && (
+                        <button
+                            type="button"
+                            onClick={handleNovoEvento}
+                            className="flex h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                        >
+                            <Plus size={15} />
+                            Nova Ocorrência
+                        </button>
+                    )}
+                </PageHeader>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
                     <SummaryCard
@@ -337,147 +307,57 @@ function EventosPage() {
                     />
                 </section>
 
-                <section className="rounded-[28px] border border-slate-200 bg-white shadow-sm p-6 md:p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-                        <h2 className="text-[24px] md:text-xl font-bold text-slate-950">
-                            Lista de Eventos ({eventosFiltrados.length})
-                        </h2>
-                    </div>
-
+                <ContentCard title={`Lista de Eventos (${eventosFiltrados.length})`}>
                     <div className="mb-6">
-                        <div className="flex flex-col xl:flex-row gap-4">
-                            <div className="flex items-center gap-3 flex-1 h-14 rounded-2xl bg-slate-50 border border-slate-200 px-4 transition-all duration-200 focus-within:border-blue-500 focus-within:bg-white">
-                                <Search size={18} className="text-slate-400" />
-                                <input
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Buscar por título, descrição ou equipamento..."
-                                    className="w-full bg-transparent outline-none text-[16px] placeholder:text-slate-400"
-                                />
-                            </div>
-
-                            <div className="flex gap-4 flex-wrap">
-                                <CustomFilterSelect
-                                    value={statusFilter}
-                                    onChange={setStatusFilter}
-                                    options={statusOptions}
-                                    placeholder="Todos os status"
-                                />
-                            </div>
-                        </div>
+                        <EventoFilters
+                            search={search}
+                            onSearchChange={setSearch}
+                            tipoFilter={tipoFilter}
+                            onTipoChange={setTipoFilter}
+                            statusFilter={statusFilter}
+                            onStatusChange={setStatusFilter}
+                        />
                     </div>
 
-                    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1000px]">
-                                <thead className="bg-slate-50 border-b border-slate-200">
-                                <tr className="text-left">
-                                    <th className="px-6 py-4 text-sm font-semibold text-slate-600">Título</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-slate-600">Tipo</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-slate-600">Equipamento</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-slate-600">Descrição</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-slate-600">Status</th>
-                                    <th className="px-6 py-4 text-sm font-semibold text-slate-600">Ações</th>
-                                </tr>
-                                </thead>
+                    <EventoTable
+                        eventos={eventosPaginados}
+                        loading={loading}
+                        onView={setSelectedEventoDetails}
+                        onEdit={handleEditEvento}
+                        onDelete={handleDeleteEvento}
+                        canManage={podeGerenciarEventos}
+                    />
 
-                                <tbody>
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan="6" className="px-6 py-10 text-center text-slate-500">
-                                            Carregando eventos...
-                                        </td>
-                                    </tr>
-                                ) : eventosFiltrados.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="6" className="px-6 py-10 text-center text-slate-500">
-                                            Nenhum evento encontrado.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    eventosFiltrados.map((evento) => (
-                                        <tr
-                                            key={evento.id}
-                                            className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
-                                        >
-                                            <td className="px-6 py-5 text-[13.5px] text-slate-600">
-                                                {evento.titulo || "-"}
-                                            </td>
-
-                                            <td className="px-6 py-5">
-                                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${tipoClass(evento.tipo)}`}>
-                                                    {tipoLabel(evento.tipo)}
-                                                </span>
-                                            </td>
-
-                                            <td className="px-6 py-5 text-[13.5px] text-slate-600">
-                                                <div className="flex items-center gap-2">
-                                                    <Factory size={15} />
-                                                    <span>
-                                                        {evento.equipamentoNome || "-"}{" "}
-                                                        {evento.equipamentoCodigo ? `(${evento.equipamentoCodigo})` : ""}
-                                                    </span>
-                                                </div>
-                                            </td>
-
-                                            <td className="px-6 py-5 align-top">
-                                                <DescriptionCell text={evento.descricao} />
-                                            </td>
-
-                                            <td className="px-6 py-5">
-                                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${statusOcorrenciaClass(evento.status)}`}>
-                                                    {statusOcorrenciaLabel(evento.status)}
-                                                </span>
-                                            </td>
-
-                                            <td className="px-6 py-5 text-[13.5px] text-slate-600">
-                                                {podeGerenciarEventos && (
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            onClick={() => handleEditEvento(evento)}
-                                                            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
-                                                            title="Editar"
-                                                        >
-                                                            <Pencil size={16} />
-                                                        </button>
-
-                                                        <button
-                                                            onClick={() => handleDeleteEvento(evento)}
-                                                            className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
-                                                            title="Excluir"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                )}
-
-                                                {!podeGerenciarEventos && (
-                                                    <span className="text-[13px] text-slate-400">Somente visualização</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
+                    {!loading && (
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
+                    )}
+                </ContentCard>
             </main>
-            <EventoFormModal
-                isOpen={isModalOpen}
-                onClose={() => {
-                    setIsModalOpen(false);
-                    setSelectedEvento(null);
-                }}
-                onSubmit={selectedEvento ? handleUpdateEvento : handleCreateEvento}
-                loading={submitLoading}
-                mode={selectedEvento ? "edit" : "create"}
-                initialData={selectedEvento}
-                equipamentos={equipamentos}
-            />
+            {isModalOpen && (
+                <EventoFormModal
+                    key={selectedEvento?.id ?? "novo-evento"}
+                    isOpen={isModalOpen}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setSelectedEvento(null);
+                    }}
+                    onSubmit={
+                        selectedEvento
+                            ? handleUpdateEvento
+                            : handleCreateEvento
+                    }
+                    loading={submitLoading}
+                    mode={selectedEvento ? "edit" : "create"}
+                    initialData={selectedEvento}
+                    equipamentos={equipamentos}
+                />
+            )}
             
-            <EventoDeleteModal
+            <ConfirmDeleteModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => {
                     setIsDeleteModalOpen(false);
@@ -485,32 +365,30 @@ function EventosPage() {
                 }}
                 onConfirm={handleConfirmDeleteEvento}
                 loading={deleteLoading}
-                evento={eventoToDelete}
+                title="Excluir Ocorrência"
+                description="Confirme a exclusão desta ocorrência."
+                warningMessage="A ocorrência será removida do histórico de eventos."
+                itemLabel="Ocorrência selecionada"
+                itemName={eventoToDelete?.titulo}
+                details={[
+                    {
+                        label: "Equipamento",
+                        value: eventoToDelete?.equipamentoNome,
+                    },
+                    {
+                        label: "Tipo",
+                        value: eventoToDelete?.tipo,
+                    },
+                ]}
+                confirmText="Excluir Ocorrência"
+            />
+
+            <EventoDetailsModal
+                evento={selectedEventoDetails}
+                onClose={() => setSelectedEventoDetails(null)}
             />
         </div>
 
     );
 }
-
-
-function DescriptionCell({ text }) {
-    const [expanded, setExpanded] = useState(false);
-
-    if (!text) return "-";
-
-    return (
-        <button
-            type="button"
-            onClick={() => setExpanded((prev) => !prev)}
-            className={`max-w-[360px] text-left text-[13.5px] text-slate-600 hover:text-blue-600 ${
-                expanded ? "" : "line-clamp-3"
-            }`}
-            title={expanded ? "Clique para recolher" : "Clique para visualizar tudo"}
-        >
-            {text}
-        </button>
-    );
-}
-
-
 export default EventosPage;

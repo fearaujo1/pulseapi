@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     X,
     User,
@@ -10,26 +10,6 @@ import {
     Check,
 } from "lucide-react";
 
-const initialForm = {
-    nome: "",
-    email: "",
-    telefone: "",
-    senhaTemporaria: "",
-    perfilId: 4,
-    turnoIds: [],
-};
-
-function perfilToPerfilId(perfil) {
-    const map = {
-        ADMIN: 1,
-        GESTOR: 2,
-        SUPERVISOR: 3,
-        OPERADOR: 4,
-    };
-
-    return map[perfil] || 4;
-}
-
 function UserFormModal({
                            isOpen,
                            onClose,
@@ -39,60 +19,15 @@ function UserFormModal({
                            mode = "create",
                            turnos = [],
                        }) {
-    const [formData, setFormData] =
-        useState(initialForm);
+    const [formData, setFormData] = useState(() =>
+        criarFormInicial(initialData)
+    );
 
     const isEditMode =
         mode === "edit";
 
     const isOperador =
         Number(formData.perfilId) === 4;
-
-
-    // =====================================================
-    // CARREGAR DADOS
-    // =====================================================
-
-    useEffect(() => {
-        if (initialData) {
-
-            setFormData({
-                nome:
-                    initialData.nome || "",
-
-                email:
-                    initialData.email || "",
-
-                telefone:
-                    initialData.telefone || "",
-
-                senhaTemporaria: "",
-
-                perfilId:
-                    initialData.perfilId ||
-                    perfilToPerfilId(
-                        initialData.perfil
-                    ) ||
-                    4,
-
-                turnoIds:
-                    initialData.turnos?.map(
-                        (turno) =>
-                            turno.id
-                    ) || [],
-            });
-
-        } else {
-            setFormData({
-                ...initialForm,
-                turnoIds: [],
-            });
-        }
-
-    }, [
-        initialData,
-        isOpen,
-    ]);
 
 
     if (!isOpen) {
@@ -641,6 +576,21 @@ function formatarHora(hora) {
             0,
             5
         );
+}
+
+function criarFormInicial(initialData) {
+    return {
+        nome: initialData?.nome || "",
+        email: initialData?.email || "",
+        telefone: initialData?.telefone || "",
+        senhaTemporaria: "",
+        perfilId: initialData?.perfilId
+            ? String(initialData.perfilId)
+            : "4",
+        turnoIds: Array.isArray(initialData?.turnos)
+            ? initialData.turnos.map((turno) => turno.id)
+            : [],
+    };
 }
 
 export default UserFormModal;

@@ -1,13 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
-const initialForm = {
-    titulo: "",
-    descricao: "",
-    tipo: "FALHA_EQUIPAMENTO",
-    equipamentoId: "",
-    status: "ABERTA",
-};
 
 const DESCRICAO_MAX_LENGTH = 255;
 
@@ -20,23 +13,11 @@ function EventoFormModal({
                              initialData = null,
                              equipamentos = [],
                          }) {
-    const [formData, setFormData] = useState(initialForm);
+    const [formData, setFormData] = useState(() =>
+        criarFormInicial(initialData)
+    );
 
     const isEditMode = mode === "edit";
-
-    useEffect(() => {
-        if (initialData) {
-            setFormData({
-                titulo: initialData.titulo || "",
-                descricao: initialData.descricao || "",
-                tipo: initialData.tipo || "FALHA_EQUIPAMENTO",
-                equipamentoId: initialData.equipamentoId || "",
-                status: initialData.status || "ABERTA",
-            });
-        } else {
-            setFormData(initialForm);
-        }
-    }, [initialData, isOpen]);
 
     if (!isOpen) return null;
 
@@ -225,6 +206,18 @@ function Field({ label, children }) {
             {children}
         </div>
     );
+}
+
+function criarFormInicial(initialData) {
+    return {
+        titulo: initialData?.titulo || "",
+        descricao: initialData?.descricao || "",
+        tipo: initialData?.tipo || "FALHA_EQUIPAMENTO",
+        equipamentoId: initialData?.equipamentoId
+            ? String(initialData.equipamentoId)
+            : "",
+        status: initialData?.status || "ABERTA",
+    };
 }
 
 export default EventoFormModal;

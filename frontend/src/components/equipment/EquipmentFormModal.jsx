@@ -1,19 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Info, X, ChevronDown } from "lucide-react";
-
-const initialForm = {
-    codigo: "",
-    nome: "",
-    tipo: "",
-    fabricante: "",
-    modelo: "",
-    numeroSerie: "",
-    setor: "",
-    status: "ATIVO",
-    ip: "",
-    porta: "",
-    protocolo: "",
-};
 
 function EquipmentFormModal({
                                 isOpen,
@@ -22,27 +8,10 @@ function EquipmentFormModal({
                                 initialData = null,
                                 mode = "create",
                             }) {
-    const [formData, setFormData] = useState(initialForm);
+    const [formData, setFormData] = useState(() =>
+        criarFormInicial(initialData)
+    );
 
-    useEffect(() => {
-        if (initialData) {
-            setFormData({
-                codigo: initialData.codigo || "",
-                nome: initialData.nome || "",
-                tipo: initialData.tipo || "",
-                fabricante: initialData.fabricante || "",
-                modelo: initialData.modelo || "",
-                numeroSerie: initialData.numeroSerie || "",
-                setor: initialData.setor || "",
-                status: initialData.status || "ATIVO",
-                ip: initialData.ip || "",
-                porta: initialData.porta || "",
-                protocolo: initialData.protocolo || "",
-            });
-        } else {
-            setFormData(initialForm);
-        }
-    }, [initialData, isOpen]);
 
     if (!isOpen) return null;
 
@@ -266,3 +235,18 @@ function EquipmentFormModal({
 }
 
 export default EquipmentFormModal;
+
+function criarFormInicial(initialData) {
+    return {
+        codigo: initialData?.codigo || "",
+        nome: initialData?.nome || "",
+        tipo: initialData?.tipo || "",
+        fabricante: initialData?.fabricante || "",
+        modelo: initialData?.modelo || "",
+        numeroSerie: initialData?.numeroSerie || "",
+        setor: initialData?.setor || "",
+        ip: initialData?.ip || "",
+        porta: initialData?.porta || "",
+        protocolo: initialData?.protocolo || "",
+    };
+}

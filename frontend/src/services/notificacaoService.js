@@ -16,7 +16,7 @@ export const notificacaoService = {
         return response.data;
     },
 
-    async marcarComoLida() {
+    async marcarComoLida(id) {
         const response = await api.patch(`/notificacoes/${id}/lida`);
         return response.data;
     },

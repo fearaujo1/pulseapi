@@ -12,12 +12,12 @@ import {
 import toast from "react-hot-toast";
 
 import Topbar from "../components/layout/Topbar";
-import SummaryCard from "../components/equipment/SummaryCard";
+import SummaryCard from "../components/common/SummaryCard.jsx";
 
 import { relatorioService } from "../services/relatorioService";
 import { equipamentosService } from "../services/equipamentosService";
 import { layoutImpressaoService } from "../services/layoutImpressaoService";
-import StatusBadge from "../components/equipment/StatusBadge.jsx";
+import StatusBadge from "../components/common/StatusBadge.jsx";
 
 function RelatoriosPage() {
     const hoje = new Date().toISOString().split("T")[0];
@@ -87,40 +87,35 @@ function RelatoriosPage() {
 
                 if (equipamentoId) {
                     data =
-                        await layoutImpressaoService
-                            .listarPorEquipamento(
-                                equipamentoId,
-                            );
+                        await layoutImpressaoService.listarPorEquipamento(
+                            equipamentoId
+                        );
                 } else {
                     data =
-                        await layoutImpressaoService
-                            .listar();
+                        await layoutImpressaoService.listar();
                 }
 
                 const ativos = Array.isArray(data)
-                    ? data.filter(
-                        (layout) => layout.ativo
-                    )
+                    ? data.filter((layout) => layout.ativo)
                     : [];
 
                 setLayouts(ativos);
 
-                /*
-                 * Se o layout selecionado não pertence
-                 * mais ao equipamento escolhido,
-                 * limpamos o filtro
-                 */
-                if (
-                    layoutId &&
-                    !ativos.some(
+                setLayoutId((currentLayoutId) => {
+                    if (!currentLayoutId) {
+                        return "";
+                    }
+
+                    const layoutAindaExiste = ativos.some(
                         (layout) =>
                             String(layout.id) ===
-                            String(layoutId)
-                    )
-                ) {
-                    setLayoutId("");
-                }
+                            String(currentLayoutId)
+                    );
 
+                    return layoutAindaExiste
+                        ? currentLayoutId
+                        : "";
+                });
             } catch (error) {
                 console.error(
                     "Erro ao carregar layouts:",

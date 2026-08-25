@@ -5,81 +5,20 @@ import {
     UserX,
     Shield,
     Plus,
-    Search,
-    Mail,
-    Phone,
-    Clock,
-    Calendar,
-    Pencil,
-    KeyRound,
-    Trash2,
-    Filter,
 } from "lucide-react";
-import UserFormModal from "../components/users/UserFormModal";
-
-import Topbar from "../components/layout/Topbar";
-import SummaryCard from "../components/equipment/SummaryCard";
-import CustomFilterSelect from "../components/equipment/CustomFilterSelect";
-import { usuarioService } from "../services/usuarioService";
 import toast from "react-hot-toast";
-import UserDeleteModal from "../components/users/UserDeleteModal";
+import Topbar from "../components/layout/Topbar";
+import { usuarioService } from "../services/usuarioService";
 import { configuracaoService} from "../services/configuracaoService.js";
+import UserFormModal from "../components/users/UserFormModal";
+import UserFilters from "../components/users/UserFilters";
+import UserTable from "../components/users/UserTable";
 
-const perfilOptions = [
-    { value: "", label: "Todos os perfis" },
-    { value: "1", label: "Administrador" },
-    { value: "2", label: "Gestor" },
-    { value: "3", label: "Supervisor" },
-    { value: "4", label: "Operador" },
-];
-
-const statusOptions = [
-    { value: "", label: "Todos os status" },
-    { value: "ATIVO", label: "Ativo" },
-    { value: "INATIVO", label: "Inativo" },
-];
-
-function getInitials(nome) {
-    return nome
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase();
-}
-
-function perfilLabel(perfil) {
-    const labels = {
-        ADMIN: "Administrador",
-        GESTOR: "Gestor",
-        SUPERVISOR: "Supervisor",
-        OPERADOR: "Operador",
-    };
-
-    return labels[perfil] || perfil;
-}
-
-function perfilClass(perfil) {
-    const classes = {
-        ADMIN: "bg-red-50 text-red-600",
-        GESTOR: "bg-purple-50 text-purple-600",
-        SUPERVISOR: "bg-green-50 text-green-600",
-        OPERADOR: "bg-blue-50 text-blue-600",
-    };
-
-    return classes[perfil] || "bg-slate-100 text-slate-600";
-}
-
-function perfilIdToPerfil(perfilId) {
-    const map = {
-        1: "ADMIN",
-        2: "GESTOR",
-        3: "SUPERVISOR",
-        4: "OPERADOR",
-    };
-
-    return map[Number(perfilId)] || "OPERADOR";
-}
+import SummaryCard from "../components/common/SummaryCard.jsx";
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal.jsx";
+import Pagination from "../components/common/Pagination.jsx";
+import PageHeader from "../components/common/PageHeader";
+import ContentCard from "../components/common/ContentCard";
 
 function perfilToPerfilId(perfil) {
     const map = {
@@ -92,11 +31,6 @@ function perfilToPerfilId(perfil) {
     return map[perfil] || 4;
 }
 
-function statusClass(status) {
-    return status === "ATIVO"
-        ? "bg-green-50 text-green-600"
-        : "bg-slate-100 text-slate-500";
-}
 
 function UsuariosPage() {
     const [activeTab, setActiveTab] = useState("usuarios");
@@ -118,6 +52,10 @@ function UsuariosPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [usuarioToDelete, setUsuarioToDelete] = useState(null);
+
+    // PAGINAÇÃO
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
 
     // Tratamento de turnos
     const [turnos, setTurnos] = useState([]);
@@ -299,25 +237,38 @@ function UsuariosPage() {
         });
     }, [usuarios, search, perfilFilter, statusFilter]);
 
+    const totalPages = Math.ceil(
+        usuariosFiltrados.length / itemsPerPage
+    );
+
+    const usuariosPaginados = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+
+        return usuariosFiltrados.slice(startIndex, endIndex);
+    }, [usuariosFiltrados, currentPage]);
+
+    // Força o retorno a primeira página quando os filtros mudarem
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, perfilFilter, statusFilter]);
+
+    // Proteção para exclusões
+    useEffect(() => {
+        if (totalPages === 0) {
+            setCurrentPage(1);
+            return;
+        }
+
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
     const total = usuarios.length;
     const ativos = usuarios.filter((u) => u.status === "ATIVO").length;
     const inativos = usuarios.filter((u) => u.status === "INATIVO").length;
     const perfis = new Set(usuarios.map((u) => u.perfil)).size;
-
-    function formatarData(data) {
-        if (!data) return "-";
-
-        return new Date(data).toLocaleDateString("pt-BR");
-    }
-
-    function formatarDataHora(data) {
-        if (!data) return "-";
-
-        return new Date(data).toLocaleString("pt-BR", {
-            dateStyle: "short",
-            timeStyle: "short",
-        });
-    }
 
 
     async function carregarTurnos() {
@@ -341,34 +292,30 @@ function UsuariosPage() {
             <Topbar />
 
             <main className="p-4 md:p-6">
-                <section className="mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-slate-950">
-                            Usuários e Permissões
-                        </h1>
-                        <p className="mt-1 text-[16px] text-slate-600">
-                            Gerencie usuários, perfis e controle de acesso
-                        </p>
-                    </div>
+                <PageHeader
+                    title="Usuários e Permissões"
+                    description="Gerencie usuários, perfis e controle de acesso"
+                >
+                    <button
+                        type="button"
+                        className="flex h-12 items-center gap-3 rounded-2xl border border-blue-200 bg-white px-6 font-semibold text-blue-600 transition hover:bg-blue-50"
+                    >
+                        <Shield size={20} />
+                        Novo Perfil
+                    </button>
 
-                    <div className="flex gap-3">
-                        <button className="h-12 px-6 rounded-2xl border border-blue-200 bg-white text-blue-600 font-semibold flex items-center gap-3">
-                            <Shield size={20} />
-                            Novo Perfil
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                setSelectedUsuario(null);
-                                setIsUserModalOpen(true);
-                            }}
-                            className="h-12 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-3 shadow-sm"
-                        >
-                            <Plus size={20} />
-                            Novo Usuário
-                        </button>
-                    </div>
-                </section>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setSelectedUsuario(null);
+                            setIsUserModalOpen(true);
+                        }}
+                        className="flex h-12 items-center gap-3 rounded-2xl bg-blue-600 px-6 font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                    >
+                        <Plus size={20} />
+                        Novo Usuário
+                    </button>
+                </PageHeader>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
                     <SummaryCard
@@ -382,7 +329,7 @@ function UsuariosPage() {
                     <SummaryCard
                         title="Usuários Ativos"
                         value={ativos}
-                        subtitle={`${Math.round((ativos / total) * 100)}% do total`}
+                        subtitle={`${total > 0 ? Math.round((ativos / total) * 100) : 0}% do total`}
                         icon={<UserCheck size={34} className="text-green-600" />}
                         className="border-green-200 bg-green-50"
                     />
@@ -429,197 +376,65 @@ function UsuariosPage() {
                 </section>
 
                 {activeTab === "usuarios" && (
-                    <section className="rounded-[28px] border border-slate-200 bg-white shadow-sm p-6 md:p-6">
-                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-                            <h2 className="text-[24px] md:text-xl font-bold text-slate-950">
-                                Lista de Usuários
-                            </h2>
-                        </div>
-
+                    <ContentCard title="Lista de Usuários">
                         <div className="mb-6">
-                            <div className="flex flex-col xl:flex-row gap-4">
-                                <div className="flex items-center gap-3 flex-1 h-12 rounded-2xl bg-slate-50 border border-slate-200 px-4 transition-all duration-200 focus-within:border-blue-500 focus-within:bg-white">
-                                    <Search size={18} className="text-slate-400" />
-                                    <input
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        placeholder="Buscar por nome ou e-mail..."
-                                        className="w-full bg-transparent outline-none text-[13.5px] placeholder:text-slate-400"
-                                    />
-                                </div>
-
-                                <div className="flex gap-4 flex-wrap">
-                                    <CustomFilterSelect
-                                        value={perfilFilter}
-                                        onChange={setPerfilFilter}
-                                        options={perfilOptions}
-                                        placeholder="Todos os perfis"
-                                    />
-
-                                    <CustomFilterSelect
-                                        value={statusFilter}
-                                        onChange={setStatusFilter}
-                                        options={statusOptions}
-                                        placeholder="Todos os status"
-                                    />
-                                </div>
-                            </div>
+                            <UserFilters
+                                search={search}
+                                onSearchChange={setSearch}
+                                perfilFilter={perfilFilter}
+                                onPerfilChange={setPerfilFilter}
+                                statusFilter={statusFilter}
+                                onStatusChange={setStatusFilter}
+                            />
                         </div>
 
-                        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[1250px]">
-                                    <thead className="bg-slate-50 border-b border-slate-200">
-                                        <tr className="text-left">
-                                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">Usuário</th>
-                                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">Contato</th>
-                                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">Perfil</th>
-                                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">Turnos</th>
-                                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">Status</th>
-                                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">Última Atualização</th>
-                                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">Cadastro</th>
-                                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">Ações</th>
-                                        </tr>
-                                    </thead>
+                        <UserTable
+                            usuarios={usuariosPaginados}
+                            loading={loading}
+                            onEdit={handleEditUsuario}
+                            onToggleStatus={handleToggleStatusUsuario}
+                            onDelete={handleDeleteUsuario}
+                        />
 
-                                    <tbody>
-                                    {loading ? (
-                                        <tr>
-                                            <td colSpan="8" className="px-6 py-10 text-center text-slate-500">
-                                                Carregando usuários...
-                                            </td>
-                                        </tr>
-                                    ) : usuariosFiltrados.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="8" className="px-6 py-10 text-center text-slate-500">
-                                                Nenhum usuário encontrado.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        usuariosFiltrados.map((usuario) => (
-                                            <tr
-                                                key={usuario.id}
-                                                className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
-                                            >
-                                                <td className="px-6 py-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 font-semibold flex items-center justify-center text-xs">
-                                                            {getInitials(usuario.nome)}
-                                                        </div>
-
-                                                        <div className="leading-tight">
-                                                            <p className="font-medium text-slate-800 text-sm">
-                                                                {usuario.nome}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 text-[13.5px] text-slate-600">
-                                                    <p>{usuario.email}</p>
-                                                    <p className="text-xs text-slate-500">
-                                                        {usuario.telefone || "-"}
-                                                    </p>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${perfilClass(usuario.perfil)}`}>
-                                                        {perfilLabel(usuario.perfil)}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    {usuario.perfil === "OPERADOR" ? (
-                                                        usuario.turnos?.length > 0 ? (
-                                                            <div className="flex flex-wrap gap-1.5">
-                                                                {usuario.turnos.map((turno) => (
-                                                                    <span
-                                                                        key={turno.id}
-                                                                        className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700"
-                                                                    >
-                                                                        {turno.nome}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-xs text-amber-600">
-                                                                Sem turno
-                                                            </span>
-                                                        )
-                                                    ) : (
-                                                        <span className="text-xs text-slate-400">
-                                                            Não se aplica
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${statusClass(usuario.status)}`}>
-                                                        {usuario.status === "ATIVO" ? "Ativo" : "Inativo"}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-5 text-sm text-slate-600">
-                                                    {formatarDataHora(usuario.ultimaAtualizacao)}
-                                                </td>
-                                                <td className="px-6 py-5 text-sm text-slate-600">
-                                                    {formatarData(usuario.dataCadastro)}
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            onClick={() => handleEditUsuario(usuario)}
-                                                            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
-                                                        >
-                                                            <Pencil size={16} />
-                                                        </button>
-
-                                                        <button
-                                                            onClick={() => handleToggleStatusUsuario(usuario)}
-                                                            className="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition"
-                                                            title={usuario.status === "ATIVO" ? "Inativar usuário" : "Ativar usuário"}
-                                                        >
-                                                            <KeyRound size={16} />
-                                                        </button>
-
-                                                        <button
-                                                            onClick={() => handleDeleteUsuario(usuario)}
-                                                            className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
-                                                            title="Excluir"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </section>
+                        {!loading && (
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                            />
+                        )}
+                    </ContentCard>
                 )}
 
                 {activeTab === "perfis" && (
-                    <section className="rounded-[28px] border border-slate-200 bg-white shadow-sm p-8">
-                        <h2 className="text-[24px] font-bold text-slate-950">
-                            Perfis e Permissões
-                        </h2>
-                        <p className="mt-2 text-slate-500">
-                            Próxima etapa: montar cards de perfis e matriz de permissões.
-                        </p>
-                    </section>
+                    <ContentCard
+                        title="Perfis e Permissões"
+                        subtitle="Próxima etapa: montar cards de perfis e matriz de permissões."
+                    />
                 )}
             </main>
-            <UserFormModal
-                isOpen={isUserModalOpen}
-                onClose={() => {
-                    setIsUserModalOpen(false);
-                    setSelectedUsuario(null);
-                }}
-                onSubmit={selectedUsuario ? handleUpdateUsuario : handleCreateUsuario}
-                loading={submitLoading}
-                mode={selectedUsuario ? "edit" : "create"}
-                initialData={selectedUsuario}
-                turnos={turnos}
-            />
-            <UserDeleteModal
+
+            {isUserModalOpen && (
+                <UserFormModal
+                    key={selectedUsuario?.id ?? "novo-usuario"}
+                    isOpen={isUserModalOpen}
+                    onClose={() => {
+                        setIsUserModalOpen(false);
+                        setSelectedUsuario(null);
+                    }}
+                    onSubmit={
+                        selectedUsuario
+                            ? handleUpdateUsuario
+                            : handleCreateUsuario
+                    }
+                    loading={submitLoading}
+                    mode={selectedUsuario ? "edit" : "create"}
+                    initialData={selectedUsuario}
+                    turnos={turnos}
+                />
+            )}
+
+            <ConfirmDeleteModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => {
                     setIsDeleteModalOpen(false);
@@ -627,7 +442,22 @@ function UsuariosPage() {
                 }}
                 onConfirm={handleConfirmDeleteUsuario}
                 loading={deleteLoading}
-                usuario={usuarioToDelete}
+                title="Excluir usuário"
+                description="Confirme a exclusão deste usuário do sistema."
+                warningMessage="O usuário será removido permanentemente do sistema."
+                itemLabel="Usuário selecionado"
+                itemName={usuarioToDelete?.nome}
+                details={[
+                    {
+                        label: "E-mail",
+                        value: usuarioToDelete?.email,
+                    },
+                    {
+                        label: "Perfil",
+                        value: usuarioToDelete?.perfil,
+                    },
+                ]}
+                confirmText="Excluir Usuário"
             />
         </div>
     );

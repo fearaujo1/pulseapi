@@ -1,5 +1,5 @@
 import { Pencil, Trash2, Cable } from "lucide-react";
-import StatusBadge from "./StatusBadge.jsx"
+import StatusBadge from "../common/StatusBadge.jsx"
 
 function EquipmentCards({
                             equipamentos = [],
@@ -19,7 +19,7 @@ function EquipmentCards({
 
     return (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {equipamentos.map((equipamento, index) =>
+            {equipamentos.map((equipamento) =>
                 <div
                     key={equipamento.id}
                     className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"

@@ -1,4 +1,6 @@
 import { X } from "lucide-react";
+import StatusBadge from "../common/StatusBadge";
+import { filaStatusMap } from "./filaStatusMap";
 
 function FilaImpressaoDetalhesModal({
                                         item,
@@ -90,7 +92,10 @@ function FilaImpressaoDetalhesModal({
                             </p>
 
                             <div className="mt-2">
-                                <FilaStatusBadge status={item.status} />
+                                <StatusBadge
+                                    status={item.status}
+                                    statusMap={filaStatusMap}
+                                />
                             </div>
                         </div>
                     </div>
@@ -210,54 +215,6 @@ function CounterCard({
                 {value ?? "-"}
             </p>
         </div>
-    );
-}
-
-function FilaStatusBadge({
-                             status,
-                         }) {
-    const styles = {
-        PENDENTE:
-            "bg-amber-50 text-amber-700",
-
-        ENVIANDO:
-            "bg-blue-50 text-blue-700",
-
-        ENVIADO_FIFO:
-            "bg-violet-50 text-violet-700",
-
-        PRONTO_IMPRESSAO:
-            "bg-indigo-50 text-indigo-700",
-
-        IMPRESSO:
-            "bg-green-50 text-green-700",
-
-        ERRO:
-            "bg-red-50 text-red-700",
-
-        CANCELADO:
-            "bg-slate-100 text-slate-600",
-    };
-
-    const labels = {
-        PENDENTE: "Pendente",
-        ENVIANDO: "Enviando",
-        ENVIADO_FIFO: "Enviado ao FIFO",
-        PRONTO_IMPRESSAO: "Pronto para impressão",
-        IMPRESSO: "Impresso",
-        ERRO: "Erro",
-        CANCELADO: "Cancelado",
-    };
-
-    return (
-        <span
-            className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                styles[status] ||
-                "bg-slate-100 text-slate-600"
-            }`}
-        >
-            {labels[status] || status || "-"}
-        </span>
     );
 }
 
