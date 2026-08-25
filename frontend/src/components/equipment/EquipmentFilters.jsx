@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import CustomFilterSelect from "./CustomFilterSelect";
+import CustomFilterSelect from "../common/CustomFilterSelect.jsx";
 
 function EquipmentFilters({
                               search,

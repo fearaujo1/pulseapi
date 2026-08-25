@@ -30,7 +30,7 @@ import LayoutsImpressaoPage from "./pages/LayoutsImpressaoPage.jsx";
 import NovaImpressaoPage from "./pages/NovaImpressaoPage.jsx";
 import RelatoriosPage from "./pages/RelatoriosPage.jsx";
 import ConfiguracoesPage from "./pages/ConfiguracoesPage.jsx";
-import ConfirmDeleteModal from "./components/equipment/ConfirmDeleteModal.jsx";
+import ConfirmDeleteModal from "./components/common/ConfirmDeleteModal.jsx";
 
 
 function App() {

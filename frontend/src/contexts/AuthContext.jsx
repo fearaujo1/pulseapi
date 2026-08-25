@@ -1,24 +1,31 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+    createContext,
+    useContext,
+    useState,
+} from "react";
 import { authService } from "../services/authService.js"
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({children}) {
-    const [usuario, setUsuario] = useState(null);
-    const [token, setToken] = useState(null);
-    const [loadingAuth, setLoadingAuth] = useState(true);
 
-    useEffect(() => {
-        const storedToken = localStorage.getItem("token");
+
+    const [token, setToken] = useState(() =>
+        localStorage.getItem("token")
+    );
+
+    const [usuario, setUsuario] = useState(() => {
         const storedUsuario = localStorage.getItem("usuario");
 
-        if (storedToken && storedUsuario) {
-            setToken(storedToken);
-            setUsuario(JSON.parse(storedUsuario));
-        }
+        if (!storedUsuario) return null;
 
-        setLoadingAuth(false);
-    }, []);
+        try {
+            return JSON.parse(storedUsuario);
+        } catch {
+            localStorage.removeItem("usuario");
+            return null;
+        }
+    });
 
     async function login(payload) {
         const data = await authService.login(payload);
@@ -58,7 +65,6 @@ export function AuthProvider({children}) {
             value={{
                 usuario,
                 token,
-                loadingAuth,
                 isAuthenticated,
                 login,
                 logout,
@@ -69,6 +75,15 @@ export function AuthProvider({children}) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
-    return useContext(AuthContext);
+    const context = useContext(AuthContext);
+
+    if (!context) {
+        throw new Error(
+            "useAuth deve ser utilizado dentro de AuthProvider."
+        );
+    }
+
+    return context;
 }

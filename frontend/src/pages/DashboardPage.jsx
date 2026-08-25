@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import Topbar from "../components/layout/Topbar";
-import SummaryCard from "../components/equipment/SummaryCard";
+import SummaryCard from "../components/common/SummaryCard.jsx";
 import { useNavigate } from "react-router-dom";
 
 const linhas = [

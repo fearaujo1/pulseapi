@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Factory, Mail, Lock } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import toast from 'react-hot-toast';
+import { Mail, Lock } from "lucide-react";
+import AuthLayout from "../components/auth/AuthLayout";
+import AuthField from "../components/auth/AuthField";
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -78,89 +80,73 @@ function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-50 to-blue-50 flex flex-col items-center justify-center px-4">
-            <div className="mb-10 flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-3xl bg-blue-600 flex items-center justify-center shadow-sm mb-6">
-                    <Factory size={42} className="text-white" />
-                </div>
+        <AuthLayout
+            title="PulseAPI"
+            description="Sistema de Gestão de Produção Industrial"
+        >
+            <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+            >
+                <AuthField
+                    label="E-mail"
+                    icon={Mail}
+                    type="email"
+                    placeholder="seu.email@empresa.com"
+                    value={email}
+                    onChange={setEmail}
+                    autoComplete="email"
+                    disabled={loading}
+                />
 
-                <h1 className="text-3xl font-bold text-slate-950">PulseAPI</h1>
+                <AuthField
+                    label="Senha"
+                    icon={Lock}
+                    type="password"
+                    placeholder="••••••••"
+                    value={senha}
+                    onChange={setSenha}
+                    autoComplete="current-password"
+                    disabled={loading}
+                />
 
-                <p className="mt-3 text-slate-600">
-                    Sistema de Gestão de Produção Industrial
-                </p>
-            </div>
+                <div className="flex items-center justify-between">
+                    <label className="flex cursor-pointer items-center gap-2 text-slate-700">
+                        <input
+                            type="checkbox"
+                            checked={lembrar}
+                            onChange={(event) =>
+                                setLembrar(event.target.checked)
+                            }
+                            disabled={loading}
+                            className="h-4 w-4 accent-blue-600"
+                        />
 
-            <div className="w-full max-w-xl rounded-3xl bg-white border border-slate-200 shadow-2xl p-8">
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-5">
-                        <label className="mb-2 block text-lg font-semibold text-slate-900">
-                            E-mail
-                        </label>
-
-                        <div className="h-14 rounded-2xl bg-slate-100 flex items-center gap-3 px-4 focus-within:ring-2 focus-within:ring-blue-500">
-                            <Mail size={22} className="text-slate-400" />
-                            <input
-                                type="email"
-                                placeholder="seu.email@empresa.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-transparent outline-none text-l text-slate-700 placeholder:text-slate-400"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mb-5">
-                        <label className="mb-2 block text-lg font-semibold text-slate-900">
-                            Senha
-                        </label>
-
-                        <div className="h-14 rounded-2xl bg-slate-100 flex items-center gap-3 px-4 focus-within:ring-2 focus-within:ring-blue-500">
-                            <Lock size={22} className="text-slate-400" />
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={senha}
-                                onChange={(e) => setSenha(e.target.value)}
-                                className="w-full bg-transparent outline-none text-l text-slate-700 placeholder:text-slate-400"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mb-7 flex items-center justify-between">
-                        <label className="flex items-center gap-2 text-slate-700 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={lembrar}
-                                onChange={(e) => setLembrar(e.target.checked)}
-                                className="w-4 h-4 accent-blue-600"
-                            />
-                            Lembrar-me
-                        </label>
-
-                        <button
-                            type="button"
-                            className="text-blue-600 hover:underline"
-                            onClick={() => toast("Recuperação de senha será implementada em breve.")}
-                        >
-                            Esqueceu a senha?
-                        </button>
-                    </div>
+                        Lembrar-me
+                    </label>
 
                     <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-14 rounded-xl bg-blue-600 text-white text-lg font-semibold hover:bg-blue-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                        type="button"
+                        onClick={() =>
+                            toast(
+                                "Recuperação de senha será implementada em breve."
+                            )
+                        }
+                        className="text-blue-600 hover:underline"
                     >
-                        {loading ? "Entrando..." : "Entrar"}
+                        Esqueceu a senha?
                     </button>
-                </form>
-            </div>
+                </div>
 
-            <p className="mt-8 max-w-xl text-center text-slate-600">
-                © 2026 PulseAPI - Smart Production Manager. Todos os direitos reservados.
-            </p>
-        </div>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="h-14 w-full rounded-xl bg-blue-600 text-lg font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                    {loading ? "Entrando..." : "Entrar"}
+                </button>
+            </form>
+        </AuthLayout>
     );
 }
 

@@ -1,18 +1,22 @@
 import { useEffect, useMemo, useState} from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Cpu, CheckCircle2, Wrench, Factory } from "lucide-react";
-import Topbar from "../components/layout/Topbar";
-import SummaryCard from "../components/equipment/SummaryCard";
-import EquipmentFilters from "../components/equipment/EquipmentFilters";
-import EquipmentTable from "../components/equipment/EquipmentTable";
-import { equipamentosService } from "../services/equipamentosService";
-import EquipmentFormModal from "../components/equipment/EquipmentFormModal";
-import ConfirmDeleteModal from "../components/equipment/ConfirmDeleteModal";
-import toast from "react-hot-toast";
-import Pagination from "../components/equipment/Pagination.jsx";
-import EquipmentTableSkeleton from "../components/equipment/EquipmentTableSkeleton";
-import EquipmentCards from "../components/equipment/EquipmentCards.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import toast from "react-hot-toast";
+import Topbar from "../components/layout/Topbar";
+import { Plus, Cpu, CheckCircle2, Wrench, Factory } from "lucide-react";
+import { equipamentosService } from "../services/equipamentosService";
+
+import EquipmentFilters from "../components/equipment/EquipmentFilters";
+import EquipmentFormModal from "../components/equipment/EquipmentFormModal";
+import EquipmentTable from "../components/equipment/EquipmentTable";
+import EquipmentCards from "../components/equipment/EquipmentCards.jsx";
+
+import SummaryCard from "../components/common/SummaryCard.jsx";
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal.jsx";
+import TableSkeleton from "../components/common/TableSkeleton.jsx";
+import Pagination from "../components/common/Pagination.jsx";
+import PageHeader from "../components/common/PageHeader.jsx";
+import ContentCard from "../components/common/ContentCard.jsx";
 
 function EquipamentosPage() {
 
@@ -26,7 +30,6 @@ function EquipamentosPage() {
 
 
     const [equipamentos, setEquipamentos] = useState([]);
-    const [loading, setLoading] = useState(true);
 
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
@@ -56,7 +59,7 @@ function EquipamentosPage() {
     async function carregarEquipamentos(showLoading = false) {
         try {
             if (showLoading) {
-                setLoading(true);
+                setInitialLoading(true);
             }
 
             const data = await equipamentosService.listar();
@@ -68,7 +71,6 @@ function EquipamentosPage() {
             toast.error("Erro ao carregar equipamentos.");
         } finally {
             if (showLoading) {
-                setLoading(false);
                 setInitialLoading(false);
             }
         }
@@ -266,26 +268,21 @@ function EquipamentosPage() {
             <Topbar />
 
             <main className="p-4 md:p-6">
-                <section className="mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-slate-950">
-                            Equipamentos
-                        </h1>
-                        <p className="mt-1 text-[16px] text-slate-600">
-                            Cadastro e gestão de equipamentos industriais
-                        </p>
-                    </div>
-
+                <PageHeader
+                    title="Equipamentos"
+                    description="Cadastro e gestão de equipamentos industriais"
+                >
                     {podeCriar && (
                         <button
+                            type="button"
                             onClick={handleNovo}
-                            className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[15px] flex items-center gap-2 shadow-sm"
+                            className="flex h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
                         >
                             <Plus size={15} />
                             Novo Equipamento
                         </button>
                     )}
-                </section>
+                </PageHeader>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
                     <SummaryCard
@@ -321,36 +318,36 @@ function EquipamentosPage() {
                     />
                 </section>
 
-                <section className="rounded-[28px] border border-slate-200 bg-white shadow-sm p-6 md:p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-                        <h2 className="text-[24px] md:text-xl font-bold text-slate-950">
-                            Lista de Equipamentos
-                        </h2>
-
-                        <div className="h-12 rounded-2xl border border-slate-200 p-1 flex items-center bg-white">
+                <ContentCard
+                    title="Lista de Equipamentos"
+                    headerActions={
+                        <div className="flex h-12 items-center rounded-2xl border border-slate-200 bg-white p-1">
                             <button
+                                type="button"
                                 onClick={() => setViewMode("table")}
-                                className={`h-full px-4 rounded-xl text-sm ${
+                                className={`h-full rounded-xl px-4 text-sm transition ${
                                     viewMode === "table"
                                         ? "bg-blue-600 text-white"
-                                        : "text-slate-600"
+                                        : "text-slate-600 hover:bg-slate-50"
                                 }`}
                             >
                                 Tabela
                             </button>
+
                             <button
+                                type="button"
                                 onClick={() => setViewMode("cards")}
-                                className={`h-full px-4 rounded-xl text transition ${
+                                className={`h-full rounded-xl px-4 text-sm transition ${
                                     viewMode === "cards"
                                         ? "bg-blue-600 text-white"
-                                        : "text-slate-600"
+                                        : "text-slate-600 hover:bg-slate-50"
                                 }`}
                             >
                                 Cards
                             </button>
                         </div>
-                    </div>
-
+                    }
+                >
                     <div className="mb-6">
                         <EquipmentFilters
                             search={search}
@@ -364,7 +361,11 @@ function EquipamentosPage() {
                     </div>
 
                     {initialLoading ? (
-                        <EquipmentTableSkeleton/>
+                        <TableSkeleton
+                            rows={5}
+                            columns={9}
+                            minWidth="1200px"
+                        />
                     ) : (
                         <>
                             {viewMode === "table" ? (
@@ -389,7 +390,7 @@ function EquipamentosPage() {
                                     canDelete={podeExcluir}
                                 />
                             )}
-                            
+
                             <Pagination
                                 currentPage={currentPage}
                                 totalPages={totalPages}
@@ -397,23 +398,26 @@ function EquipamentosPage() {
                             />
                         </>
                     )}
-                </section>
+                </ContentCard>
             </main>
-            <EquipmentFormModal
-                isOpen={isModalOpen}
-                onClose={() => {
-                    setIsModalOpen(false);
-                    setSelectedEquipamento(null);
-                }}
-                onSubmit={
-                    selectedEquipamento
-                        ? handleUpdateEquipamento
-                        : handleCreateEquipamento
-                }
-                loading={submitLoading}
-                mode={selectedEquipamento ? "edit" : "create"}
-                initialData={selectedEquipamento}
-            />
+            {isModalOpen && (
+                <EquipmentFormModal
+                    key={selectedEquipamento?.id ?? "novo-equipamento"}
+                    isOpen={isModalOpen}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setSelectedEquipamento(null);
+                    }}
+                    onSubmit={
+                        selectedEquipamento
+                            ? handleUpdateEquipamento
+                            : handleCreateEquipamento
+                    }
+                    loading={submitLoading}
+                    mode={selectedEquipamento ? "edit" : "create"}
+                    initialData={selectedEquipamento}
+                />
+            )}
 
             <ConfirmDeleteModal
                 isOpen={isDeleteModalOpen}
@@ -423,7 +427,38 @@ function EquipamentosPage() {
                 }}
                 onConfirm={handleConfirmDelete}
                 loading={deleteLoading}
-                equipamento={equipamentoToDelete}
+                title="Excluir Equipamento"
+                description="Confirme a exclusão deste equipamento."
+                warningMessage="O equipamento será removido permanentemente do sistema."
+                itemLabel="Equipamento selecionado"
+                itemName={equipamentoToDelete?.nome}
+                details={[
+                    {
+                        label: "Código",
+                        value: equipamentoToDelete?.codigo,
+                    },
+                    {
+                        label: "Tipo",
+                        value: equipamentoToDelete?.tipo,
+                    },
+                    {
+                        label: "Setor",
+                        value: equipamentoToDelete?.setor,
+                    },
+                    {
+                        label: "IP",
+                        value: equipamentoToDelete?.ip,
+                    },
+                    {
+                        label: "Porta",
+                        value: equipamentoToDelete?.porta,
+                    },
+                    {
+                        label: "Protocolo",
+                        value: equipamentoToDelete?.protocolo,
+                    },
+                ]}
+                confirmText="Excluir Equipamento"
             />
         </div>
     );
