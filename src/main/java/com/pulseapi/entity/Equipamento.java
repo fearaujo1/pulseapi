@@ -46,16 +46,29 @@ public class Equipamento {
     private LocalDateTime dataCadastro;
     private LocalDateTime ultimaAtualizacao;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_conexao", length = 20)
+    private StatusConexaoEquipamento statusConexao;
+
+    @Column(name = "ultima_conexao_em")
+    private LocalDateTime ultimaConexaoEm;
+
+    @Column(name = "ultima_falha_conexao_em")
+    private LocalDateTime ultimaFalhaConexaoEm;
+
     @PrePersist // Metodo será executado antes de salvar a entidade pela primeira vez no banco
     public void prePersist() {
         this.dataCadastro = LocalDateTime.now();
         this.ultimaAtualizacao = LocalDateTime.now();
+
+        if (this.statusConexao == null) {
+            this.statusConexao =
+                    StatusConexaoEquipamento.SEM_CONEXAO;
+        }
     }
 
     @PreUpdate
     public void preUpdate() {
         this.ultimaAtualizacao = LocalDateTime.now();
     }
-
-
 }

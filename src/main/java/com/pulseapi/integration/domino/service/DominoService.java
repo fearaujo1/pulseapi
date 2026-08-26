@@ -155,8 +155,25 @@ public class DominoService {
                 true
         );
 
+
+
         try {
-            return DominoStatusParser.parse(resposta);
+            DominoStatusResponse status = DominoStatusParser.parse(resposta);
+
+            System.out.println(
+                    "STATUS DOMINO | codigo="
+                            + status.codigoStatus()
+                            + " | descricao="
+                            + status.descricao()
+                            + " | severidade="
+                            + status.severidade()
+                            + " | jato="
+                            + status.jato()
+                            + " | horario="
+                            + status.horarioAlteracao()
+            );
+
+            return status;
 
         } catch (IllegalArgumentException e) {
             throw new DominoCommunicationException(

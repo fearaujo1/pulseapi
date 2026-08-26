@@ -27,13 +27,30 @@ function EquipmentCards({
                     <div className="flex items-start justify-between gap-4">
                         <div>
                             <p className="text-sm text-slate-500">{equipamento.codigo || "-"}</p>
-                            <h3 className="mt-1 text-
-                            xl font-bold text-slate-900">
+                            <h3 className="mt-1 text-xl font-bold text-slate-900">
                                 {equipamento.nome || "-"}
                             </h3>
                         </div>
 
-                        <StatusBadge status={equipamento.status} />
+                        <div className="flex items-start gap-4">
+                            <div>
+                                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                    Status
+                                </p>
+
+                                <StatusBadge status={equipamento.status} />
+                            </div>
+
+                            <div>
+                                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                    Conexão
+                                </p>
+
+                                <StatusBadge
+                                    status={equipamento.statusConexao || "SEM_CONEXAO"}
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="mt-6 grid grid-cols-2 gap-4">

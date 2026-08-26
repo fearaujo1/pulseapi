@@ -3,7 +3,6 @@ package com.pulseapi.integration.domino.parser;
 import com.pulseapi.integration.domino.dto.DominoStatusResponse;
 
 import java.nio.charset.StandardCharsets;
-import com.pulseapi.integration.domino.dto.DominoStatusResponse;
 
 public class DominoStatusParser {
 
@@ -61,7 +60,9 @@ public class DominoStatusParser {
         return new DominoStatusResponse(
                 codigoStatus,
                 Integer.parseInt(jatoTexto),
-                hora + ":" + minuto
+                hora + ":" + minuto,
+                DominoStatusMap.descricao(codigoStatus),
+                DominoStatusMap.severidade(codigoStatus)
         );
     }
 

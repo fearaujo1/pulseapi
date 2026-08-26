@@ -6,7 +6,15 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ocorrencias")
+@Table(
+        name = "ocorrencias",
+        indexes = {
+                @Index(
+                        name = "idx_ocorrencia_domino_status",
+                        columnList = "FK_equipamento_id, origem, familia_status, jato, status"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,10 +48,36 @@ public class Ocorrencia {
     @Column(name = "atualizado_em", nullable = false)
     private LocalDateTime atualizadoEm;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origem", length = 20)
+    private OrigemOcorrencia origem;
+
+    @Column(name = "codigo_falha", length = 3)
+    private String codigoFalha;
+
+    @Column(name = "codigo_normalizacao", length = 3)
+    private String codigoNormalizacao;
+
+    @Column(name = "familia_status", length = 2)
+    private String familiaStatus;
+
+    @Column(name = "jato")
+    private Integer jato;
+
+    @Column(name = "detectado_em")
+    private LocalDateTime detectadoEm;
+
+    @Column(name = "normalizado_em")
+    private LocalDateTime normalizadoEm;
+
     @PrePersist
     public void prePersist() {
         if (this.status == null) {
             this.status = StatusOcorrencia.ABERTA;
+        }
+
+        if (this.origem == null) {
+            this.origem = OrigemOcorrencia.MANUAL;
         }
 
         LocalDateTime agora = LocalDateTime.now();
@@ -56,4 +90,6 @@ public class Ocorrencia {
     public void preUpdate() {
         this.atualizadoEm = LocalDateTime.now();
     }
+
+
 }

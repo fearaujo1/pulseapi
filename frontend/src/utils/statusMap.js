@@ -19,4 +19,8 @@ export const statusMap = {
         label: "Parado",
         className: "bg-orange-50 text-orange-600",
     },
+    CONECTADO: {
+        label: "Conectado",
+        className: "bg-blue-50 text-blue-600",
+    },
 };
