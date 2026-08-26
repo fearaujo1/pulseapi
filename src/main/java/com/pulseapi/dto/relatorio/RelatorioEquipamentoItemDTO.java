@@ -1,5 +1,6 @@
 package com.pulseapi.dto.relatorio;
 
+import com.pulseapi.entity.StatusConexaoEquipamento;
 import com.pulseapi.entity.StatusEquipamento;
 
 public record RelatorioEquipamentoItemDTO(
@@ -11,6 +12,7 @@ public record RelatorioEquipamentoItemDTO(
         String modelo,
         String setor,
         StatusEquipamento status,
+        StatusConexaoEquipamento statusConexao,
         String ip,
         Integer porta,
         String protocolo

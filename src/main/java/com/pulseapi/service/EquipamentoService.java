@@ -59,7 +59,7 @@ public class EquipamentoService {
 
     public EquipamentoResponseDTO atualizar(Long id, EquipamentoRequestDTO dto) {
         Equipamento equipamento = equipamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com ID: + id"));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com ID: " + id));
 
         if(!equipamento.getCodigo().equals(dto.getCodigo()) &&
                 equipamentoRepository.existsByCodigo(dto.getCodigo())) {
@@ -101,6 +101,9 @@ public class EquipamentoService {
                 equipamento.getNumeroSerie(),
                 equipamento.getSetor(),
                 equipamento.getStatus(),
+                equipamento.getStatusConexao(),
+                equipamento.getUltimaConexaoEm(),
+                equipamento.getUltimaFalhaConexaoEm(),
                 equipamento.getDataCadastro(),
                 equipamento.getUltimaAtualizacao(),
                 equipamento.getIp(),

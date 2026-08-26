@@ -25,11 +25,11 @@ public class DominoResponseReader {
                 break;
             }
 
-            if (valor == 0x06 && input.available() == 0) {
+            if (valor == DominoCommands.ACK) {
                 break;
             }
 
-            if (valor == 0x15) {
+            if (valor == DominoCommands.NAK) {
                 while (resposta.size() < 4) {
                     int proximo = input.read();
 

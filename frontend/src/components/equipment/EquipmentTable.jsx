@@ -23,7 +23,7 @@ function EquipmentTable({
     return (
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
-                <table className="w-full min-w-[1200px]">
+                <table className="w-full min-w-[1300px]">
                     <thead className="bg-slate-50 border-b border-slate-200">
                     <tr className="text-left">
                         <th
@@ -48,6 +48,7 @@ function EquipmentTable({
                         <th className="px-6 py-4 text-sm font-semibold text-slate-600">Porta</th>
                         <th className="px-6 py-4 text-sm font-semibold text-slate-600">Protocolo</th>
                         <th className="px-6 py-4 text-sm font-semibold text-slate-600">Status</th>
+                        <th className="px-6 py-4 text-sm font-semibold text-slate-600">Conexão</th>
                         <th className="px-6 py-4 text-sm font-semibold text-slate-600">Ações</th>
                     </tr>
                     </thead>
@@ -55,7 +56,10 @@ function EquipmentTable({
                     <tbody>
                     {equipamentos.length === 0 ? (
                         <tr>
-                            <td colSpan="9" className="px-6 py-10 text-center text-slate-500">
+                            <td
+                                colSpan="10"
+                                className="px-6 py-10 text-center text-slate-500"
+                            >
                                 Nenhum equipamento encontrado.
                             </td>
                         </tr>
@@ -95,6 +99,12 @@ function EquipmentTable({
 
                                 <td className="px-6 py-5">
                                     <StatusBadge status={equipamento.status} />
+                                </td>
+
+                                <td className="px-6 py-5">
+                                    <StatusBadge
+                                        status={equipamento.statusConexao || "SEM_CONEXAO"}
+                                    />
                                 </td>
 
                                 <td className="px-6 py-5">

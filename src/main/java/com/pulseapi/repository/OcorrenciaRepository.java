@@ -11,6 +11,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import com.pulseapi.entity.OrigemOcorrencia;
+import java.util.Collection;
+import java.util.Optional;
 
 @Repository
 public interface OcorrenciaRepository extends JpaRepository<Ocorrencia, Long> {
@@ -34,5 +37,19 @@ public interface OcorrenciaRepository extends JpaRepository<Ocorrencia, Long> {
             @Param("equipamentoId") Long equipamentoId,
             @Param("tipo") TipoOcorrencia tipo,
             @Param("status") StatusOcorrencia status
+    );
+
+
+    // Ele localizará uma ocorrência ativa da mesma família
+    // 205 pertence à família 05;
+    // 105 também pertence à família 05;
+    // 005 normaliza a família 05.
+    Optional<Ocorrencia>
+    findFirstByEquipamentoIdAndOrigemAndFamiliaStatusAndJatoAndStatusInOrderByCriadoEmDesc(
+            Long equipamentoId,
+            OrigemOcorrencia origem,
+            String familiaStatus,
+            Integer jato,
+            Collection<StatusOcorrencia> statuses
     );
 }

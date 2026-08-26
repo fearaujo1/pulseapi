@@ -7,6 +7,8 @@ public class DominoCommands {
     public static final byte ESC = 0x1B;
     public static final byte EOT = 0x04;
     public static final byte QUERY = 0x3F;
+    public static final byte ACK = 0x06;
+    public static final byte NAK = 0x15;
 
     private DominoCommands() {}
 
@@ -189,4 +191,34 @@ public class DominoCommands {
                 EOT
         };
     }
+
+    public static byte[] ativarMonitoramentoStatus() {
+        return new byte[] {
+                ESC,
+                0x30, // 0
+                0x59, // Y
+                0x36, // 6 = falhas e monitoramento de tinta
+                EOT
+        };
+    }
+
+    public static byte[] consultarModoMonitoramentoStatus() {
+        return new byte[] {
+                ESC,
+                0x30, // 0
+                QUERY,
+                EOT
+        };
+    }
+
+    public static byte[] consultarHistoricoStatus() {
+        return new byte[] {
+                ESC,
+                0x31, // 1
+                0x48, // H = histórico
+                QUERY,
+                EOT
+        };
+    }
+
 }

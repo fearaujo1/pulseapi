@@ -230,27 +230,40 @@ public class RelatorioService {
 
         long ativos = equipamentos.stream()
                 .filter(e ->
-                        e.getStatus() == StatusEquipamento.ATIVO)
+                        e.getStatus() == StatusEquipamento.ATIVO
+                                && e.getStatusConexao()
+                                != StatusConexaoEquipamento.SEM_CONEXAO
+                )
                 .count();
 
         long inativos = equipamentos.stream()
                 .filter(e ->
-                        e.getStatus() == StatusEquipamento.INATIVO)
+                        e.getStatus() == StatusEquipamento.INATIVO
+                )
                 .count();
 
         long emManutencao = equipamentos.stream()
                 .filter(e ->
-                        e.getStatus() == StatusEquipamento.EM_MANUTENCAO)
+                        e.getStatus() == StatusEquipamento.EM_MANUTENCAO
+                                && e.getStatusConexao()
+                                != StatusConexaoEquipamento.SEM_CONEXAO
+                )
                 .count();
 
         long semConexao = equipamentos.stream()
                 .filter(e ->
-                        e.getStatus() == StatusEquipamento.SEM_CONEXAO)
+                        e.getStatus() != StatusEquipamento.INATIVO
+                                && e.getStatusConexao()
+                                == StatusConexaoEquipamento.SEM_CONEXAO
+                )
                 .count();
 
         long parados = equipamentos.stream()
                 .filter(e ->
-                        e.getStatus() == StatusEquipamento.PARADO)
+                        e.getStatus() == StatusEquipamento.PARADO
+                                && e.getStatusConexao()
+                                != StatusConexaoEquipamento.SEM_CONEXAO
+                )
                 .count();
 
         return new RelatorioEquipamentoResponseDTO(
@@ -276,6 +289,7 @@ public class RelatorioService {
                 equipamento.getModelo(),
                 equipamento.getSetor(),
                 equipamento.getStatus(),
+                equipamento.getStatusConexao(),
                 equipamento.getIp(),
                 equipamento.getPorta(),
                 equipamento.getProtocolo()
