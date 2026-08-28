@@ -550,7 +550,6 @@ public class RelatorioPdfService {
                     "Código",
                     "Nome",
                     "Tipo",
-                    "Setor",
                     "Modelo",
                     "Status",
                     "IP"
@@ -578,12 +577,6 @@ public class RelatorioPdfService {
                 adicionarCelula(
                         table,
                         item.tipo(),
-                        alternar
-                );
-
-                adicionarCelula(
-                        table,
-                        item.setor(),
                         alternar
                 );
 

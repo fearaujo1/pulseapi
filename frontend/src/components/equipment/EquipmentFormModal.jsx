@@ -100,20 +100,6 @@ function EquipmentFormModal({
 
                         <div>
                             <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
-                                Setor *
-                            </label>
-                            <input
-                                name="setor"
-                                value={formData.setor}
-                                onChange={handleChange}
-                                placeholder="Ex: Linha 01"
-                                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-blue-500 text-[13px]"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
                                 Fabricante
                             </label>
                             <input
@@ -244,7 +230,6 @@ function criarFormInicial(initialData) {
         fabricante: initialData?.fabricante || "",
         modelo: initialData?.modelo || "",
         numeroSerie: initialData?.numeroSerie || "",
-        setor: initialData?.setor || "",
         ip: initialData?.ip || "",
         porta: initialData?.porta || "",
         protocolo: initialData?.protocolo || "",

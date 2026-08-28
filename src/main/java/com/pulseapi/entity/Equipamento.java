@@ -28,7 +28,16 @@ public class Equipamento {
     private String fabricante;
     private String modelo;
     private String numeroSerie;
-    private String setor;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "linha_id",
+            foreignKey = @ForeignKey(
+                    name = "fk_equipamentos_linha"
+            )
+    )
+    private Linha linha;
 
     @Column(name = "ip")
     private String ip;

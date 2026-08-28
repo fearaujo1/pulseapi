@@ -62,13 +62,6 @@ function EquipmentCards({
                         </div>
 
                         <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-sm text-slate-500">Setor</p>
-                            <p className="mt-1 text-[13.5px] text-slate-800">
-                                {equipamento.setor || "-"}
-                            </p>
-                        </div>
-
-                        <div className="rounded-2xl bg-slate-50 p-4">
                             <p className="text-sm text-slate-500">IP</p>
                             <p className="mt-1 text-[13.5px] text-slate-800">
                                 {equipamento.ip || "-"}

@@ -10,7 +10,6 @@ public record RelatorioEquipamentoItemDTO(
         String tipo,
         String fabricante,
         String modelo,
-        String setor,
         StatusEquipamento status,
         StatusConexaoEquipamento statusConexao,
         String ip,

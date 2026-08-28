@@ -43,7 +43,6 @@ function EquipmentTable({
                             </div>
                         </th>
                         <th className="px-6 py-4 text-sm font-semibold text-slate-600">Tipo</th>
-                        <th className="px-6 py-4 text-sm font-semibold text-slate-600">Setor</th>
                         <th className="px-6 py-4 text-sm font-semibold text-slate-600">IP</th>
                         <th className="px-6 py-4 text-sm font-semibold text-slate-600">Porta</th>
                         <th className="px-6 py-4 text-sm font-semibold text-slate-600">Protocolo</th>
@@ -79,10 +78,6 @@ function EquipmentTable({
 
                                 <td className="px-6 py-5 text-[13.5px] text-slate-600">
                                     {equipamento.tipo || "-"}
-                                </td>
-
-                                <td className="px-6 py-5 text-[13.5px] text-slate-600">
-                                    {equipamento.setor || "-"}
                                 </td>
 
                                 <td className="px-6 py-5 text-[13.5px] text-slate-600">

@@ -142,7 +142,6 @@ function EquipamentosPage() {
     const total = equipamentos.length;
     const ativos = equipamentos.filter((e) => e.status === "ATIVO").length;
     const manutencao = equipamentos.filter((e) => e.status === "EM_MANUTENCAO").length;
-    const setores = new Set(equipamentos.map((e) => e.setor).filter(Boolean)).size;
 
     const tipos = useMemo(() => {
         if (!Array.isArray(equipamentos)) return [];
@@ -308,14 +307,6 @@ function EquipamentosPage() {
                         icon={<Wrench size={28} className="text-amber-600" />}
                         className="border-slate-200 bg-white"
                     />
-
-                    <SummaryCard
-                        title="Setores Atendidos"
-                        value={setores}
-                        subtitle="Setores com equipamentos"
-                        icon={<Factory size={28} className="text-slate-600" />}
-                        className="border-slate-200 bg-white"
-                    />
                 </section>
 
                 <ContentCard
@@ -440,10 +431,6 @@ function EquipamentosPage() {
                     {
                         label: "Tipo",
                         value: equipamentoToDelete?.tipo,
-                    },
-                    {
-                        label: "Setor",
-                        value: equipamentoToDelete?.setor,
                     },
                     {
                         label: "IP",

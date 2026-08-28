@@ -1,0 +1,82 @@
+package com.pulseapi.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(
+        name = "plantas",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_planta_empresa_codigo",
+                        columnNames = {
+                                "empresa_id",
+                                "codigo"
+                        }
+                )
+        }
+)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Planta {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 100)
+    private String nome;
+
+    @Column(nullable = false, length = 50)
+    private String codigo;
+
+    @Column(length = 255)
+    private String endereco;
+
+    @Column(length = 100)
+    private String cidade;
+
+    @Column(length = 2)
+    private String estado;
+
+    @Column(nullable = false)
+    private Boolean ativa;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "empresa_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_plantas_empresa"
+            )
+    )
+    private Empresa empresa;
+
+    @Column(name = "data_cadastro", nullable = false)
+    private LocalDateTime dataCadastro;
+
+    @Column(name = "ultima_atualizacao", nullable = false)
+    private LocalDateTime ultimaAtualizacao;
+
+    @PrePersist
+    public void prePersist() {
+        LocalDateTime agora = LocalDateTime.now();
+
+        this.dataCadastro = agora;
+        this.ultimaAtualizacao = agora;
+
+        if (this.ativa == null) {
+            this.ativa = true;
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.ultimaAtualizacao = LocalDateTime.now();
+    }
+}

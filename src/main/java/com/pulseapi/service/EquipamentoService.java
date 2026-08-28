@@ -33,7 +33,6 @@ public class EquipamentoService {
         equipamento.setFabricante(dto.getFabricante());
         equipamento.setModelo(dto.getModelo());
         equipamento.setNumeroSerie(dto.getNumeroSerie());
-        equipamento.setSetor(dto.getSetor());
         equipamento.setStatus(dto.getStatus());
         equipamento.setIp(dto.getIp());
         equipamento.setPorta(dto.getPorta());
@@ -72,7 +71,6 @@ public class EquipamentoService {
         equipamento.setFabricante(dto.getFabricante());
         equipamento.setModelo(dto.getModelo());
         equipamento.setNumeroSerie(dto.getNumeroSerie());
-        equipamento.setSetor(dto.getSetor());
         equipamento.setStatus(dto.getStatus());
         equipamento.setIp(dto.getIp());
         equipamento.setPorta(dto.getPorta());
@@ -99,7 +97,6 @@ public class EquipamentoService {
                 equipamento.getFabricante(),
                 equipamento.getModelo(),
                 equipamento.getNumeroSerie(),
-                equipamento.getSetor(),
                 equipamento.getStatus(),
                 equipamento.getStatusConexao(),
                 equipamento.getUltimaConexaoEm(),

@@ -36,10 +36,6 @@ public class EquipamentoRequestDTO {
 
     @Getter
     @Setter
-    private String setor;
-
-    @Getter
-    @Setter
     @NotNull(message = "O status é obrigatório.")
     private StatusEquipamento status;
 

@@ -39,10 +39,6 @@ public class EquipamentoResponseDTO {
 
     @Getter
     @Setter
-    private String setor;
-
-    @Getter
-    @Setter
     private StatusEquipamento status;
 
     @Getter
@@ -81,7 +77,7 @@ public class EquipamentoResponseDTO {
 
     public EquipamentoResponseDTO(Long id, String nome, String codigo,
                                   String tipo, String fabricante, String modelo,
-                                  String numeroSerie, String setor,
+                                  String numeroSerie,
                                   StatusEquipamento status,
                                   StatusConexaoEquipamento statusConexao,
                                   LocalDateTime ultimaConexaoEm,
@@ -96,7 +92,6 @@ public class EquipamentoResponseDTO {
         this.fabricante = fabricante;
         this.modelo = modelo;
         this.numeroSerie = numeroSerie;
-        this.setor = setor;
         this.status = status;
         this.statusConexao = statusConexao;
         this.ultimaConexaoEm = ultimaConexaoEm;

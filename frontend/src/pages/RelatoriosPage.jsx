@@ -882,7 +882,6 @@ function TabelaEquipamentos({ itens }) {
                 "Código",
                 "Nome",
                 "Tipo",
-                "Setor",
                 "Modelo",
                 "Status",
                 "IP",
@@ -896,7 +895,6 @@ function TabelaEquipamentos({ itens }) {
                     <Td>{item.codigo}</Td>
                     <Td>{item.nome}</Td>
                     <Td>{item.tipo || "-"}</Td>
-                    <Td>{item.setor || "-"}</Td>
                     <Td>{item.modelo || "-"}</Td>
                     <Td>
                         <StatusBadge status={item.status} />

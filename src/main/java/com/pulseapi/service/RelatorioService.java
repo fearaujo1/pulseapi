@@ -287,7 +287,6 @@ public class RelatorioService {
                 equipamento.getTipo(),
                 equipamento.getFabricante(),
                 equipamento.getModelo(),
-                equipamento.getSetor(),
                 equipamento.getStatus(),
                 equipamento.getStatusConexao(),
                 equipamento.getIp(),
