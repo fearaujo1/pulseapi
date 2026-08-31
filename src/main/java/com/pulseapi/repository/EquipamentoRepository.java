@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> {
     Optional<Equipamento> findByCodigo(String codigo);
     boolean existsByCodigo(String codigo);
-
+    boolean existsByLinhaId(Long linhaId);
 }
 
 // JpaRespository = permite o save, findAll, findById, deleteById
