@@ -108,8 +108,18 @@ function EquipamentosPage() {
         return equipamentos.filter((item) => {
             const matchSearch =
                 !searchLower ||
-                item.nome?.toLowerCase().includes(searchLower) ||
-                item.codigo?.toLowerCase().includes(searchLower);
+                item.nome
+                    ?.toLowerCase()
+                    .includes(searchLower) ||
+                item.codigo
+                    ?.toLowerCase()
+                    .includes(searchLower) ||
+                item.plantaNome
+                    ?.toLowerCase()
+                    .includes(searchLower) ||
+                item.linhaNome
+                    ?.toLowerCase()
+                    .includes(searchLower);
 
             const matchStatus = !statusFilter || item.status === statusFilter;
             const matchType = !typeFilter || item.tipo === typeFilter;
@@ -354,8 +364,8 @@ function EquipamentosPage() {
                     {initialLoading ? (
                         <TableSkeleton
                             rows={5}
-                            columns={9}
-                            minWidth="1200px"
+                            columns={7}
+                            minWidth="70rem"
                         />
                     ) : (
                         <>
@@ -427,6 +437,14 @@ function EquipamentosPage() {
                     {
                         label: "Código",
                         value: equipamentoToDelete?.codigo,
+                    },
+                    {
+                        label: "Planta",
+                        value: equipamentoToDelete?.plantaNome,
+                    },
+                    {
+                        label: "Linha",
+                        value: equipamentoToDelete?.linhaNome,
                     },
                     {
                         label: "Tipo",

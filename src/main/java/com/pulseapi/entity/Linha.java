@@ -10,8 +10,11 @@ import java.time.LocalDateTime;
         name = "linhas",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_linhas_codigo",
-                        columnNames = "codigo"
+                        name = "uk_linha_planta_codigo",
+                        columnNames = {
+                                "planta_id",
+                                "codigo"
+                        }
                 )
         }
 )
@@ -29,11 +32,15 @@ public class Linha {
     @Column(nullable = false, length = 100)
     private String nome;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false, length = 50)
     private String codigo;
 
     @Column(length = 500)
     private String descricao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private StatusLinha status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -44,10 +51,6 @@ public class Linha {
             )
     )
     private Planta planta;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private StatusLinha status;
 
     @Column(name = "data_cadastro", nullable = false)
     private LocalDateTime dataCadastro;

@@ -11,20 +11,29 @@ import org.springframework.stereotype.Service;
 
 
 import java.util.List;
+import com.pulseapi.entity.Linha;
+import com.pulseapi.repository.LinhaRepository;
 
 @Service
 public class EquipamentoService {
 
     private final EquipamentoRepository equipamentoRepository;
+    private final LinhaRepository linhaRepository;
 
-    public EquipamentoService(EquipamentoRepository equipamentoRepository) {
+    public EquipamentoService(
+            EquipamentoRepository equipamentoRepository,
+            LinhaRepository linhaRepository
+    ) {
         this.equipamentoRepository = equipamentoRepository;
+        this.linhaRepository = linhaRepository;
     }
 
     public EquipamentoResponseDTO cadastrar(EquipamentoRequestDTO dto) {
         if (equipamentoRepository.existsByCodigo(dto.getCodigo())) {
             throw new BusinessException("Já existe um equipamento com esse código");
         }
+
+        Linha linha = buscarLinha(dto.getLinhaId());
 
         Equipamento equipamento = new Equipamento();
         equipamento.setNome(dto.getNome());
@@ -37,6 +46,7 @@ public class EquipamentoService {
         equipamento.setIp(dto.getIp());
         equipamento.setPorta(dto.getPorta());
         equipamento.setProtocolo(dto.getProtocolo());
+        equipamento.setLinha(linha);
 
         Equipamento salvo = equipamentoRepository.save(equipamento);
         return toResponseDTO(salvo);
@@ -65,6 +75,8 @@ public class EquipamentoService {
             throw new BusinessException("Já existe um equipamento com esse código");
         }
 
+        Linha linha = buscarLinha(dto.getLinhaId());
+
         equipamento.setNome(dto.getNome());
         equipamento.setCodigo(dto.getCodigo());
         equipamento.setTipo(dto.getTipo());
@@ -75,6 +87,7 @@ public class EquipamentoService {
         equipamento.setIp(dto.getIp());
         equipamento.setPorta(dto.getPorta());
         equipamento.setProtocolo(dto.getProtocolo());
+        equipamento.setLinha(linha);
 
         Equipamento atualizado = equipamentoRepository.save(equipamento);
         return toResponseDTO(atualizado);
@@ -87,8 +100,22 @@ public class EquipamentoService {
         equipamentoRepository.delete(equipamento);
     }
 
+    private Linha buscarLinha(Long linhaId) {
+        return linhaRepository.findById(linhaId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Linha não encontrada com ID: "
+                                        + linhaId
+                        )
+                );
+    }
+
     // Converte a entidade em DTO, não expondo os dados internos
-    private EquipamentoResponseDTO toResponseDTO(Equipamento equipamento) {
+    private EquipamentoResponseDTO toResponseDTO(
+            Equipamento equipamento
+    ) {
+        Linha linha = equipamento.getLinha();
+
         return new EquipamentoResponseDTO(
                 equipamento.getId(),
                 equipamento.getNome(),
@@ -105,7 +132,11 @@ public class EquipamentoService {
                 equipamento.getUltimaAtualizacao(),
                 equipamento.getIp(),
                 equipamento.getPorta(),
-                equipamento.getProtocolo()
+                equipamento.getProtocolo(),
+                linha != null ? linha.getId() : null,
+                linha != null ? linha.getNome() : null,
+                linha != null ? linha.getPlanta().getId() : null,
+                linha != null ? linha.getPlanta().getNome() : null
         );
     }
 

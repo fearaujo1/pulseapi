@@ -80,7 +80,7 @@ const menuSections = [
             },
 
             {
-                label: "Linhas",
+                label: "Plantas e Linhas",
                 icon: Factory,
                 path: "/linhas",
             },

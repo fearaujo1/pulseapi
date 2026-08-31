@@ -39,6 +39,22 @@ public class EquipamentoResponseDTO {
 
     @Getter
     @Setter
+    private Long linhaId;
+
+    @Getter
+    @Setter
+    private String linhaNome;
+
+    @Getter
+    @Setter
+    private Long plantaId;
+
+    @Getter
+    @Setter
+    private String plantaNome;
+
+    @Getter
+    @Setter
     private StatusEquipamento status;
 
     @Getter
@@ -75,16 +91,28 @@ public class EquipamentoResponseDTO {
 
     public EquipamentoResponseDTO() {}
 
-    public EquipamentoResponseDTO(Long id, String nome, String codigo,
-                                  String tipo, String fabricante, String modelo,
-                                  String numeroSerie,
-                                  StatusEquipamento status,
-                                  StatusConexaoEquipamento statusConexao,
-                                  LocalDateTime ultimaConexaoEm,
-                                  LocalDateTime ultimaFalhaConexaoEm,
-                                  LocalDateTime dataCadastro,
-                                  LocalDateTime ultimaAtualizacao, String ip,
-                                  Integer porta, String protocolo) {
+    public EquipamentoResponseDTO(
+            Long id,
+            String nome,
+            String codigo,
+            String tipo,
+            String fabricante,
+            String modelo,
+            String numeroSerie,
+            StatusEquipamento status,
+            StatusConexaoEquipamento statusConexao,
+            LocalDateTime ultimaConexaoEm,
+            LocalDateTime ultimaFalhaConexaoEm,
+            LocalDateTime dataCadastro,
+            LocalDateTime ultimaAtualizacao,
+            String ip,
+            Integer porta,
+            String protocolo,
+            Long linhaId,
+            String linhaNome,
+            Long plantaId,
+            String plantaNome
+    ) {
         this.id = id;
         this.nome = nome;
         this.codigo = codigo;
@@ -101,7 +129,10 @@ public class EquipamentoResponseDTO {
         this.ip = ip;
         this.porta = porta;
         this.protocolo = protocolo;
-
+        this.linhaId = linhaId;
+        this.linhaNome = linhaNome;
+        this.plantaId = plantaId;
+        this.plantaNome = plantaNome;
     }
 
 }

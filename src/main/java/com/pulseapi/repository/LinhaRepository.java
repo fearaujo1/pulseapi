@@ -1,27 +1,29 @@
 package com.pulseapi.repository;
 
 import com.pulseapi.entity.Linha;
-import com.pulseapi.entity.StatusLinha;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface LinhaRepository
         extends JpaRepository<Linha, Long> {
 
-    Optional<Linha> findByCodigo(String codigo);
+    boolean existsByPlantaId(Long plantaId);
 
-    boolean existsByCodigo(String codigo);
+    boolean existsByPlantaIdAndCodigoIgnoreCase(
+            Long plantaId,
+            String codigo
+    );
 
-    boolean existsByCodigoAndIdNot(
+    boolean existsByPlantaIdAndCodigoIgnoreCaseAndIdNot(
+            Long plantaId,
             String codigo,
             Long id
     );
 
-    List<Linha> findAllByStatusOrderByNomeAsc(
-            StatusLinha status
+    List<Linha> findAllByPlantaIdOrderByNomeAsc(
+            Long plantaId
     );
 }

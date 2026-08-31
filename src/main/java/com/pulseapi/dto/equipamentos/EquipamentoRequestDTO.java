@@ -32,6 +32,11 @@ public class EquipamentoRequestDTO {
 
     @Getter
     @Setter
+    @NotNull(message = "A linha é obrigatória.")
+    private Long linhaId;
+
+    @Getter
+    @Setter
     private String numeroSerie;
 
     @Getter

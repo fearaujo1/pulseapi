@@ -44,8 +44,9 @@ public class Planta {
     @Column(length = 2)
     private String estado;
 
-    @Column(nullable = false)
-    private Boolean ativa;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private StatusPlanta status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -70,8 +71,8 @@ public class Planta {
         this.dataCadastro = agora;
         this.ultimaAtualizacao = agora;
 
-        if (this.ativa == null) {
-            this.ativa = true;
+        if (this.status == null) {
+            this.status = StatusPlanta.ATIVA;
         }
     }
 
