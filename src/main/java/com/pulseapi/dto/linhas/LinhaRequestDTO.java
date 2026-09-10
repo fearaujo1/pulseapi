@@ -1,6 +1,6 @@
 package com.pulseapi.dto.linhas;
 
-import com.pulseapi.entity.StatusLinha;
+import com.pulseapi.entity.linha.StatusLinha;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

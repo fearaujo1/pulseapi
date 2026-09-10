@@ -1,7 +1,14 @@
 package com.pulseapi.service;
 
 import com.pulseapi.dto.relatorio.*;
-import com.pulseapi.entity.*;
+import com.pulseapi.entity.equipamento.Equipamento;
+import com.pulseapi.entity.equipamento.StatusConexaoEquipamento;
+import com.pulseapi.entity.equipamento.StatusEquipamento;
+import com.pulseapi.entity.impressao.FilaImpressao;
+import com.pulseapi.entity.impressao.StatusFilaImpressao;
+import com.pulseapi.entity.ocorrencia.Ocorrencia;
+import com.pulseapi.entity.ocorrencia.StatusOcorrencia;
+import com.pulseapi.entity.ocorrencia.TipoOcorrencia;
 import com.pulseapi.repository.EquipamentoRepository;
 import com.pulseapi.repository.FilaImpressaoRepository;
 import com.pulseapi.repository.OcorrenciaRepository;

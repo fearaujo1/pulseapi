@@ -1,6 +1,6 @@
 package com.pulseapi.dto.layout;
 
-import com.pulseapi.entity.TipoCampoLayout;
+import com.pulseapi.entity.impressao.TipoCampoLayout;
 
 public record CampoLayoutResponseDTO(
         Long id,

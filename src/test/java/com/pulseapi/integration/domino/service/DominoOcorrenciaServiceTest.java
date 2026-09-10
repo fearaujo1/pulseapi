@@ -1,6 +1,10 @@
 package com.pulseapi.integration.domino.service;
 
-import com.pulseapi.entity.*;
+import com.pulseapi.entity.equipamento.Equipamento;
+import com.pulseapi.entity.ocorrencia.Ocorrencia;
+import com.pulseapi.entity.ocorrencia.OrigemOcorrencia;
+import com.pulseapi.entity.ocorrencia.StatusOcorrencia;
+import com.pulseapi.entity.ocorrencia.TipoOcorrencia;
 import com.pulseapi.integration.domino.dto.DominoStatusResponse;
 import com.pulseapi.repository.EquipamentoRepository;
 import com.pulseapi.repository.OcorrenciaRepository;
@@ -12,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;

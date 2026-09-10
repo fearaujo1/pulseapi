@@ -1,7 +1,7 @@
 package com.pulseapi.dto.relatorio;
 
-import com.pulseapi.entity.StatusOcorrencia;
-import com.pulseapi.entity.TipoOcorrencia;
+import com.pulseapi.entity.ocorrencia.StatusOcorrencia;
+import com.pulseapi.entity.ocorrencia.TipoOcorrencia;
 
 import java.time.LocalDateTime;
 

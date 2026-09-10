@@ -1,6 +1,6 @@
 package com.pulseapi.integration.domino.service;
 
-import com.pulseapi.entity.Equipamento;
+import com.pulseapi.entity.equipamento.Equipamento;
 import com.pulseapi.integration.domino.DominoCommands;
 import com.pulseapi.integration.domino.DominoTcpClient;
 import com.pulseapi.integration.domino.dto.*;

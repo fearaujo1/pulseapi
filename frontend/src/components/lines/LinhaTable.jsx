@@ -1,6 +1,7 @@
 import {
     Pencil,
     Trash2,
+    Users,
 } from "lucide-react";
 
 function LinhaTable({
@@ -8,6 +9,7 @@ function LinhaTable({
                         plantaSelecionada,
                         onEdit,
                         onDelete,
+                        onManageResponsaveis,
                         canManage = false,
                         loading = false,
                     }) {
@@ -73,35 +75,40 @@ function LinhaTable({
 
                             <td className="px-4 py-4">
                                 {canManage && (
-                                    <div className="flex gap-2">
+                                    <div className="flex items-center gap-2">
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                onEdit(
+                                                onManageResponsaveis(
                                                     linha
                                                 )
                                             }
-                                            className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100"
-                                            title="Editar linha"
+                                            className="rounded-xl border border-blue-200 p-2 text-blue-600 transition hover:bg-blue-50"
+                                            title="Gerenciar responsáveis"
                                         >
-                                            <Pencil
-                                                size={15}
-                                            />
+                                            <Users size={15} />
                                         </button>
 
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                onDelete(
-                                                    linha
-                                                )
+                                                onEdit(linha)
                                             }
-                                            className="rounded-xl border border-red-200 p-2 text-red-600 hover:bg-red-50"
+                                            className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
+                                            title="Editar linha"
+                                        >
+                                            <Pencil size={15} />
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                onDelete(linha)
+                                            }
+                                            className="rounded-xl border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
                                             title="Excluir linha"
                                         >
-                                            <Trash2
-                                                size={15}
-                                            />
+                                            <Trash2 size={15} />
                                         </button>
                                     </div>
                                 )}

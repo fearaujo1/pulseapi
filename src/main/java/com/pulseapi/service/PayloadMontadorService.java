@@ -1,10 +1,8 @@
 package com.pulseapi.service;
 
 import com.pulseapi.dto.layout.MontarPayloadResponseDTO;
-import com.pulseapi.entity.CampoLayout;
-import com.pulseapi.entity.EstrategiaMontagemPayload;
-import com.pulseapi.entity.LayoutImpressao;
-import com.pulseapi.entity.TipoCampoLayout;
+import com.pulseapi.entity.impressao.CampoLayout;
+import com.pulseapi.entity.impressao.LayoutImpressao;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.exception.ResourceNotFoundException;
 import com.pulseapi.repository.LayoutImpressaoRepository;

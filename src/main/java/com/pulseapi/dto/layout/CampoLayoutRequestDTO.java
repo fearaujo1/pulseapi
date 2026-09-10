@@ -1,6 +1,6 @@
 package com.pulseapi.dto.layout;
 
-import com.pulseapi.entity.TipoCampoLayout;
+import com.pulseapi.entity.impressao.TipoCampoLayout;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

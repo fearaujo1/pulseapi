@@ -3,7 +3,7 @@ package com.pulseapi.service;
 import com.pulseapi.dto.equipamentos.EquipamentoRequestDTO;
 import com.pulseapi.dto.equipamentos.EquipamentoResponseDTO;
 import com.pulseapi.dto.equipamentos.EquipamentoStatusDTO;
-import com.pulseapi.entity.Equipamento;
+import com.pulseapi.entity.equipamento.Equipamento;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.exception.ResourceNotFoundException;
 import com.pulseapi.repository.EquipamentoRepository;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.util.List;
-import com.pulseapi.entity.Linha;
+import com.pulseapi.entity.linha.Linha;
 import com.pulseapi.repository.LinhaRepository;
 
 @Service

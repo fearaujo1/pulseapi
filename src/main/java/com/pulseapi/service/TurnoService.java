@@ -2,7 +2,7 @@ package com.pulseapi.service;
 
 import com.pulseapi.dto.configuracao.TurnoRequestDTO;
 import com.pulseapi.dto.configuracao.TurnoResponseDTO;
-import com.pulseapi.entity.Turno;
+import com.pulseapi.entity.usuario.Turno;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.exception.ResourceNotFoundException;
 import com.pulseapi.repository.TurnoRepository;

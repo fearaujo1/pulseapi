@@ -1,6 +1,6 @@
 package com.pulseapi.repository;
 
-import com.pulseapi.entity.Linha;
+import com.pulseapi.entity.linha.Linha;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,11 +1,11 @@
 package com.pulseapi.dto.equipamentos;
 
-import com.pulseapi.entity.StatusEquipamento;
+import com.pulseapi.entity.equipamento.StatusEquipamento;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import com.pulseapi.entity.StatusConexaoEquipamento;
+import com.pulseapi.entity.equipamento.StatusConexaoEquipamento;
 
 public class EquipamentoResponseDTO {
 

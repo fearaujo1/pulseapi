@@ -1,6 +1,6 @@
 package com.pulseapi.dto.plantas;
 
-import com.pulseapi.entity.StatusPlanta;
+import com.pulseapi.entity.linha.StatusPlanta;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

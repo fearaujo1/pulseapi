@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
-import com.pulseapi.entity.Usuario;
+import com.pulseapi.entity.usuario.Usuario;
 import org.springframework.security.core.Authentication;
 
 import java.util.List;

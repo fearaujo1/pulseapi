@@ -1,6 +1,6 @@
 package com.pulseapi.integration.domino.dto;
 
-import com.pulseapi.entity.ResultadoComunicacaoDomino;
+import com.pulseapi.entity.domino.ResultadoComunicacaoDomino;
 
 import java.time.LocalDateTime;
 

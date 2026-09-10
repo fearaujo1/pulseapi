@@ -6,10 +6,10 @@ import com.pulseapi.dto.usuario.UsuarioStatusDTO;
 import com.pulseapi.dto.usuario.UsuarioTurnoResponseDTO;
 import com.pulseapi.dto.usuario.UsuarioUpdateDTO;
 
-import com.pulseapi.entity.Perfil;
-import com.pulseapi.entity.StatusUsuario;
-import com.pulseapi.entity.Turno;
-import com.pulseapi.entity.Usuario;
+import com.pulseapi.entity.usuario.Perfil;
+import com.pulseapi.entity.usuario.StatusUsuario;
+import com.pulseapi.entity.usuario.Turno;
+import com.pulseapi.entity.usuario.Usuario;
 
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.exception.ResourceNotFoundException;

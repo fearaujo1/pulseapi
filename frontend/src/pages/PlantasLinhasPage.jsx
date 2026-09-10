@@ -20,6 +20,7 @@ import PlantaTable from "../components/plants/PlantaTable.jsx";
 import PlantaFormModal from "../components/plants/PlantaFormModal.jsx";
 import LinhaTable from "../components/lines/LinhaTable.jsx";
 import LinhaFormModal from "../components/lines/LinhaFormModal.jsx";
+import LinhaResponsaveisModal from "../components/lines/LinhaResponsaveisModal.jsx";
 
 function PlantasLinhasPage() {
     const { usuario } = useAuth();
@@ -35,6 +36,16 @@ function PlantasLinhasPage() {
     const [
         plantaSelecionada,
         setPlantaSelecionada,
+    ] = useState(null);
+
+    const [
+        responsaveisModalOpen,
+        setResponsaveisModalOpen,
+    ] = useState(false);
+
+    const [
+        linhaResponsaveis,
+        setLinhaResponsaveis,
     ] = useState(null);
 
     const [loadingPlantas, setLoadingPlantas] =
@@ -150,6 +161,11 @@ function PlantasLinhasPage() {
     function abrirNovaPlanta() {
         setPlantaEmEdicao(null);
         setPlantaModalOpen(true);
+    }
+
+    function abrirResponsaveis(linha) {
+        setLinhaResponsaveis(linha);
+        setResponsaveisModalOpen(true);
     }
 
     function abrirEdicaoPlanta(planta) {
@@ -434,6 +450,7 @@ function PlantasLinhasPage() {
                             onDelete={
                                 solicitarExclusaoLinha
                             }
+                            onManageResponsaveis={abrirResponsaveis}
                             canManage={canManage}
                             loading={loadingLinhas}
                         />
@@ -481,6 +498,19 @@ function PlantasLinhasPage() {
                             setLinhaEmEdicao(
                                 null
                             );
+                        }}
+                    />
+                )}
+
+            {responsaveisModalOpen &&
+                linhaResponsaveis && (
+                    <LinhaResponsaveisModal
+                        key={linhaResponsaveis.id}
+                        isOpen={responsaveisModalOpen}
+                        linha={linhaResponsaveis}
+                        onClose={() => {
+                            setResponsaveisModalOpen(false);
+                            setLinhaResponsaveis(null);
                         }}
                     />
                 )}

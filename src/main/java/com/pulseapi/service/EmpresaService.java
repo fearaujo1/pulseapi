@@ -1,6 +1,6 @@
 package com.pulseapi.service;
 
-import com.pulseapi.entity.Empresa;
+import com.pulseapi.entity.empresa.Empresa;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.exception.ResourceNotFoundException;
 import com.pulseapi.repository.EmpresaRepository;

@@ -1,6 +1,6 @@
 package com.pulseapi.dto.layout;
 
-import com.pulseapi.entity.EstrategiaMontagemPayload;
+import com.pulseapi.entity.domino.EstrategiaMontagemPayload;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.pulseapi.dto.equipamentos;
 
-import com.pulseapi.entity.StatusEquipamento;
+import com.pulseapi.entity.equipamento.StatusEquipamento;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;

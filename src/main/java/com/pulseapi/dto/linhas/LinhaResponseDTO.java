@@ -1,6 +1,6 @@
 package com.pulseapi.dto.linhas;
 
-import com.pulseapi.entity.StatusLinha;
+import com.pulseapi.entity.linha.StatusLinha;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

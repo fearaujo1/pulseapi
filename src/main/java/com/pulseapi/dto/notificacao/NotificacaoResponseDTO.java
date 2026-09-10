@@ -1,7 +1,7 @@
 package com.pulseapi.dto.notificacao;
 
-import com.pulseapi.entity.NivelNotificacao;
-import com.pulseapi.entity.TipoNotificacao;
+import com.pulseapi.entity.notificacao.NivelNotificacao;
+import com.pulseapi.entity.notificacao.TipoNotificacao;
 
 import java.time.LocalDateTime;
 

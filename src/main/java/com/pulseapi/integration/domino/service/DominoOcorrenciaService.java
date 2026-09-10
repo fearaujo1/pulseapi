@@ -1,10 +1,10 @@
 package com.pulseapi.integration.domino.service;
 
-import com.pulseapi.entity.Equipamento;
-import com.pulseapi.entity.Ocorrencia;
-import com.pulseapi.entity.OrigemOcorrencia;
-import com.pulseapi.entity.StatusOcorrencia;
-import com.pulseapi.entity.TipoOcorrencia;
+import com.pulseapi.entity.equipamento.Equipamento;
+import com.pulseapi.entity.ocorrencia.Ocorrencia;
+import com.pulseapi.entity.ocorrencia.OrigemOcorrencia;
+import com.pulseapi.entity.ocorrencia.StatusOcorrencia;
+import com.pulseapi.entity.ocorrencia.TipoOcorrencia;
 import com.pulseapi.exception.ResourceNotFoundException;
 import com.pulseapi.integration.domino.dto.DominoStatusResponse;
 import com.pulseapi.integration.domino.parser.DominoStatusMap;
@@ -14,9 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 

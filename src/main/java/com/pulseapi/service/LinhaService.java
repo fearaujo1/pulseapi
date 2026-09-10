@@ -2,8 +2,8 @@ package com.pulseapi.service;
 
 import com.pulseapi.dto.linhas.LinhaRequestDTO;
 import com.pulseapi.dto.linhas.LinhaResponseDTO;
-import com.pulseapi.entity.Linha;
-import com.pulseapi.entity.Planta;
+import com.pulseapi.entity.linha.Linha;
+import com.pulseapi.entity.linha.Planta;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.exception.ResourceNotFoundException;
 import com.pulseapi.repository.EquipamentoRepository;

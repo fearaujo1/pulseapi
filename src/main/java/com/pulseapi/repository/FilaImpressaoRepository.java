@@ -1,7 +1,7 @@
 package com.pulseapi.repository;
 
-import com.pulseapi.entity.FilaImpressao;
-import com.pulseapi.entity.StatusFilaImpressao;
+import com.pulseapi.entity.impressao.FilaImpressao;
+import com.pulseapi.entity.impressao.StatusFilaImpressao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,6 +1,6 @@
 package com.pulseapi.repository;
 
-import com.pulseapi.entity.Planta;
+import com.pulseapi.entity.linha.Planta;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
