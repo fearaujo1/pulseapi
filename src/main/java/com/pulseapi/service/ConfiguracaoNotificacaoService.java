@@ -2,8 +2,8 @@ package com.pulseapi.service;
 
 import com.pulseapi.dto.configuracao.ConfiguracaoNotificacaoResponseDTO;
 import com.pulseapi.dto.configuracao.ConfiguracaoNotificacaoUpdateDTO;
-import com.pulseapi.entity.ConfiguracaoNotificacao;
-import com.pulseapi.entity.TipoNotificacao;
+import com.pulseapi.entity.configuracao.ConfiguracaoNotificacao;
+import com.pulseapi.entity.notificacao.TipoNotificacao;
 import com.pulseapi.repository.ConfiguracaoNotificacaoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

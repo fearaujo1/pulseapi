@@ -2,7 +2,7 @@ package com.pulseapi.service;
 
 import com.pulseapi.dto.configuracao.ConfiguracaoGeralRequestDTO;
 import com.pulseapi.dto.configuracao.ConfiguracaoGeralResponseDTO;
-import com.pulseapi.entity.ConfiguracaoSistema;
+import com.pulseapi.entity.configuracao.ConfiguracaoSistema;
 import com.pulseapi.repository.ConfiguracaoSistemaRepository;
 import org.springframework.stereotype.Service;
 

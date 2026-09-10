@@ -1,17 +1,17 @@
 package com.pulseapi.repository;
 
-import com.pulseapi.entity.Ocorrencia;
+import com.pulseapi.entity.ocorrencia.Ocorrencia;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import com.pulseapi.entity.StatusOcorrencia;
-import com.pulseapi.entity.TipoOcorrencia;
+import com.pulseapi.entity.ocorrencia.StatusOcorrencia;
+import com.pulseapi.entity.ocorrencia.TipoOcorrencia;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
-import com.pulseapi.entity.OrigemOcorrencia;
+import com.pulseapi.entity.ocorrencia.OrigemOcorrencia;
 import java.util.Collection;
 import java.util.Optional;
 

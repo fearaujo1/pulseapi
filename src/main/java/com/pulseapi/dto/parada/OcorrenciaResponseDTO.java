@@ -1,7 +1,7 @@
 package com.pulseapi.dto.parada;
 
-import com.pulseapi.entity.StatusOcorrencia;
-import com.pulseapi.entity.TipoOcorrencia;
+import com.pulseapi.entity.ocorrencia.StatusOcorrencia;
+import com.pulseapi.entity.ocorrencia.TipoOcorrencia;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

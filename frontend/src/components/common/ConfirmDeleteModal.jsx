@@ -107,7 +107,7 @@ function ConfirmDeleteModal({
                             type="button"
                             onClick={onConfirm}
                             disabled={loading}
-                            className="h-10 rounded-xl b-red-600 px-6 text-[13.5px] font-semibold text-white transition hover:bg-red-700
+                            className="h-10 rounded-xl b-red-600 px-6 text-[13.5px] font-semibold bg-red-600 text-white transition hover:bg-red-800
                             disabled:cursor-not-allowed disabled:opacity-70"
                         >
                             {loading ? loadingText : confirmText}

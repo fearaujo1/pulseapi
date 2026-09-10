@@ -1,7 +1,7 @@
 package com.pulseapi.dto.relatorio;
 
-import com.pulseapi.entity.StatusConexaoEquipamento;
-import com.pulseapi.entity.StatusEquipamento;
+import com.pulseapi.entity.equipamento.StatusConexaoEquipamento;
+import com.pulseapi.entity.equipamento.StatusEquipamento;
 
 public record RelatorioEquipamentoItemDTO(
         Long id,

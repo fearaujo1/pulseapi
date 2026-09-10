@@ -53,7 +53,29 @@ function EquipmentCards({
                         </div>
                     </div>
 
+
+
                     <div className="mt-6 grid grid-cols-2 gap-4">
+                        <div className="rounded-2xl bg-slate-50 p-4">
+                            <p className="text-sm text-slate-500">
+                                Planta
+                            </p>
+
+                            <p className="mt-1 text-sm font-medium text-slate-800">
+                                {equipamento.plantaNome || "-"}
+                            </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 p-4">
+                            <p className="text-sm text-slate-500">
+                                Linha
+                            </p>
+
+                            <p className="mt-1 text-sm font-medium text-slate-800">
+                                {equipamento.linhaNome || "-"}
+                            </p>
+                        </div>
+
                         <div className="rounded-2xl bg-slate-50 p-4">
                             <p className="text-sm text-slate-500">Tipo</p>
                             <p className="mt-1 text-[13.5px] text-slate-800">

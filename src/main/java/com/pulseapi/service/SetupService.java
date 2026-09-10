@@ -2,10 +2,10 @@ package com.pulseapi.service;
 
 import com.pulseapi.dto.setup.SetupInicialRequestDTO;
 import com.pulseapi.dto.setup.SetupStatusResponseDTO;
-import com.pulseapi.entity.Empresa;
-import com.pulseapi.entity.Perfil;
-import com.pulseapi.entity.StatusUsuario;
-import com.pulseapi.entity.Usuario;
+import com.pulseapi.entity.empresa.Empresa;
+import com.pulseapi.entity.usuario.Perfil;
+import com.pulseapi.entity.usuario.StatusUsuario;
+import com.pulseapi.entity.usuario.Usuario;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.repository.EmpresaRepository;
 import com.pulseapi.repository.PerfilRepository;

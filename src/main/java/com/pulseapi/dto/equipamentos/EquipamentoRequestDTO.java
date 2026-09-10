@@ -1,6 +1,6 @@
 package com.pulseapi.dto.equipamentos;
 
-import com.pulseapi.entity.StatusEquipamento;
+import com.pulseapi.entity.equipamento.StatusEquipamento;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -29,6 +29,11 @@ public class EquipamentoRequestDTO {
     @Getter
     @Setter
     private String modelo;
+
+    @Getter
+    @Setter
+    @NotNull(message = "A linha é obrigatória.")
+    private Long linhaId;
 
     @Getter
     @Setter

@@ -1,7 +1,7 @@
 package com.pulseapi.integration.domino.service;
 
-import com.pulseapi.entity.Equipamento;
-import com.pulseapi.entity.StatusConexaoEquipamento;
+import com.pulseapi.entity.equipamento.Equipamento;
+import com.pulseapi.entity.equipamento.StatusConexaoEquipamento;
 import com.pulseapi.repository.EquipamentoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

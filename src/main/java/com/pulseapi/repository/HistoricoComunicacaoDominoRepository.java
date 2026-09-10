@@ -1,6 +1,6 @@
 package com.pulseapi.repository;
 
-import com.pulseapi.entity.HistoricoComunicacaoDomino;
+import com.pulseapi.entity.domino.HistoricoComunicacaoDomino;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.pulseapi.repository;
 
-import com.pulseapi.entity.ConfiguracaoNotificacao;
-import com.pulseapi.entity.TipoNotificacao;
+import com.pulseapi.entity.configuracao.ConfiguracaoNotificacao;
+import com.pulseapi.entity.notificacao.TipoNotificacao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

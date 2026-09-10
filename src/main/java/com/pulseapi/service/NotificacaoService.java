@@ -2,7 +2,12 @@ package com.pulseapi.service;
 
 import com.pulseapi.dto.notificacao.NotificacaoContextoDTO;
 import com.pulseapi.dto.notificacao.NotificacaoResponseDTO;
-import com.pulseapi.entity.*;
+import com.pulseapi.entity.configuracao.ConfiguracaoNotificacao;
+import com.pulseapi.entity.notificacao.NivelNotificacao;
+import com.pulseapi.entity.notificacao.Notificacao;
+import com.pulseapi.entity.notificacao.TipoNotificacao;
+import com.pulseapi.entity.usuario.StatusUsuario;
+import com.pulseapi.entity.usuario.Usuario;
 import com.pulseapi.exception.ResourceNotFoundException;
 import com.pulseapi.repository.NotificacaoRepository;
 import com.pulseapi.repository.UsuarioRepository;

@@ -1,13 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Info, X, ChevronDown } from "lucide-react";
+import { plantaService } from "../../services/plantaService";
+import { linhaService } from "../../services/linhaService";
 
 function EquipmentFormModal({
                                 isOpen,
-                                onClose,onSubmit,
+                                onClose,
+                                onSubmit,
                                 loading = false,
                                 initialData = null,
                                 mode = "create",
                             }) {
+    const [plantas, setPlantas] = useState([]);
+    const [linhas, setLinhas] = useState([]);
+    const [plantasLoading, setPlantasLoading] = useState(false);
+    const [linhasLoading, setLinhasLoading] = useState(false);
+
     const [formData, setFormData] = useState(() =>
         criarFormInicial(initialData)
     );
@@ -17,6 +25,17 @@ function EquipmentFormModal({
 
     function handleChange(e) {
         const { name, value } = e.target;
+
+        if (name === "plantaId") {
+            setFormData((prev) => ({
+                ...prev,
+                plantaId: value,
+                linhaId: "",
+            }));
+
+            return;
+        }
+
         setFormData((prev) => ({
             ...prev,
             [name]: value,
@@ -25,8 +44,107 @@ function EquipmentFormModal({
 
     function handleSubmit(e) {
         e.preventDefault();
-        onSubmit(formData);
+
+        const payload = {
+            ...formData,
+            linhaId: Number(formData.linhaId),
+            porta: formData.porta
+                ? Number(formData.porta)
+                : null,
+        };
+
+        delete payload.plantaId;
+
+        onSubmit(payload);
     }
+
+    useEffect(() => {
+        if (!isOpen) {
+            setPlantas([]);
+            return;
+        }
+
+        let ativo = true;
+
+        async function carregarPlantas() {
+            try {
+                setPlantasLoading(true);
+
+                const data =
+                    await plantaService.listar();
+
+                if (ativo) {
+                    setPlantas(
+                        Array.isArray(data) ? data : []
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    "Erro ao carregar plantas:",
+                    error
+                );
+
+                if (ativo) {
+                    setPlantas([]);
+                }
+            } finally {
+                if (ativo) {
+                    setPlantasLoading(false);
+                }
+            }
+        }
+
+        carregarPlantas();
+
+        return () => {
+            ativo = false;
+        };
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen || !formData.plantaId) {
+            setLinhas([]);
+            return;
+        }
+
+        let ativo = true;
+
+        async function carregarLinhas() {
+            try {
+                setLinhasLoading(true);
+
+                const data =
+                    await linhaService.listarPorPlanta(
+                        formData.plantaId
+                    );
+
+                if (ativo) {
+                    setLinhas(
+                        Array.isArray(data) ? data : []
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    "Erro ao carregar linhas:",
+                    error
+                );
+
+                if (ativo) {
+                    setLinhas([]);
+                }
+            } finally {
+                if (ativo) {
+                    setLinhasLoading(false);
+                }
+            }
+        }
+
+        carregarLinhas();
+
+        return () => {
+            ativo = false;
+        };
+    }, [isOpen, formData.plantaId]);
 
     const isEditMode = mode === "edit";
 
@@ -81,6 +199,81 @@ function EquipmentFormModal({
                                 placeholder="Ex: Impressora Domino Ax150i"
                                 className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-blue-500 text-[13px]"
                                 required
+                            />
+                        </div>
+
+                        <div className="relative">
+                            <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
+                                Planta *
+                            </label>
+
+                            <select
+                                name="plantaId"
+                                value={formData.plantaId}
+                                onChange={handleChange}
+                                disabled={plantasLoading}
+                                className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-10 text-[13px] outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                required
+                            >
+                                <option value="">
+                                    {plantasLoading
+                                        ? "Carregando plantas..."
+                                        : "Selecione uma planta"}
+                                </option>
+
+                                {plantas.map((planta) => (
+                                    <option
+                                        key={planta.id}
+                                        value={planta.id}
+                                    >
+                                        {planta.nome} ({planta.codigo})
+                                    </option>
+                                ))}
+                            </select>
+
+                            <ChevronDown
+                                size={17}
+                                className="pointer-events-none absolute bottom-3 right-3 text-slate-400"
+                            />
+                        </div>
+
+                        <div className="relative">
+                            <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
+                                Linha *
+                            </label>
+
+                            <select
+                                name="linhaId"
+                                value={formData.linhaId}
+                                onChange={handleChange}
+                                disabled={
+                                    !formData.plantaId ||
+                                    linhasLoading
+                                }
+                                className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-10 text-[13px] outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                required
+                            >
+                                <option value="">
+                                    {!formData.plantaId
+                                        ? "Selecione primeiro uma planta"
+                                        : linhasLoading
+                                            ? "Carregando linhas..."
+                                            : "Selecione uma linha"}
+                                </option>
+
+                                {linhas.map((linha) => (
+                                    <option
+                                        key={linha.id}
+                                        value={linha.id}
+                                    >
+                                        {linha.nome} ({linha.codigo})
+                                    </option>
+                                ))}
+                            </select>
+
+                            <ChevronDown
+                                size={17}
+                                className="pointer-events-none absolute bottom-3 right-3 text-slate-400"
                             />
                         </div>
 
@@ -233,5 +426,8 @@ function criarFormInicial(initialData) {
         ip: initialData?.ip || "",
         porta: initialData?.porta || "",
         protocolo: initialData?.protocolo || "",
+        status: initialData?.status || "ATIVO",
+        plantaId: initialData?.plantaId || "",
+        linhaId: initialData?.linhaId || "",
     };
 }

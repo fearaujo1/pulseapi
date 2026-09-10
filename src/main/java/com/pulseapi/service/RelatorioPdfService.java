@@ -1,10 +1,10 @@
 package com.pulseapi.service;
 
 import com.pulseapi.dto.relatorio.*;
-import com.pulseapi.entity.Empresa;
-import com.pulseapi.entity.StatusFilaImpressao;
-import com.pulseapi.entity.StatusOcorrencia;
-import com.pulseapi.entity.TipoOcorrencia;
+import com.pulseapi.entity.empresa.Empresa;
+import com.pulseapi.entity.impressao.StatusFilaImpressao;
+import com.pulseapi.entity.ocorrencia.StatusOcorrencia;
+import com.pulseapi.entity.ocorrencia.TipoOcorrencia;
 import com.pulseapi.repository.EmpresaRepository;
 import org.openpdf.text.*;
 import org.openpdf.text.pdf.*;

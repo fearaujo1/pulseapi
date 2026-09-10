@@ -1,8 +1,8 @@
 package com.pulseapi.integration.domino.service;
 
-import com.pulseapi.entity.Equipamento;
-import com.pulseapi.entity.HistoricoComunicacaoDomino;
-import com.pulseapi.entity.ResultadoComunicacaoDomino;
+import com.pulseapi.entity.equipamento.Equipamento;
+import com.pulseapi.entity.domino.HistoricoComunicacaoDomino;
+import com.pulseapi.entity.domino.ResultadoComunicacaoDomino;
 import com.pulseapi.integration.domino.DominoLogger;
 import com.pulseapi.repository.HistoricoComunicacaoDominoRepository;
 import org.springframework.stereotype.Service;

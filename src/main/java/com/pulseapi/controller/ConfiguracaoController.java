@@ -1,8 +1,8 @@
 package com.pulseapi.controller;
 
 import com.pulseapi.dto.configuracao.*;
-import com.pulseapi.entity.Empresa;
-import com.pulseapi.entity.TipoNotificacao;
+import com.pulseapi.entity.empresa.Empresa;
+import com.pulseapi.entity.notificacao.TipoNotificacao;
 import com.pulseapi.service.ConfiguracaoNotificacaoService;
 import com.pulseapi.service.ConfiguracaoSistemaService;
 import com.pulseapi.service.EmpresaService;

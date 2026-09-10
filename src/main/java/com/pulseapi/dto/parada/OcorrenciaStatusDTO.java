@@ -1,6 +1,6 @@
 package com.pulseapi.dto.parada;
 
-import com.pulseapi.entity.StatusOcorrencia;
+import com.pulseapi.entity.ocorrencia.StatusOcorrencia;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;

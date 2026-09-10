@@ -1,6 +1,6 @@
 package com.pulseapi.service;
 
-import com.pulseapi.entity.StatusFilaImpressao;
+import com.pulseapi.entity.impressao.StatusFilaImpressao;
 import com.pulseapi.repository.FilaImpressaoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

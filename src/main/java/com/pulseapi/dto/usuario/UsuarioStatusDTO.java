@@ -1,6 +1,6 @@
 package com.pulseapi.dto.usuario;
 
-import com.pulseapi.entity.StatusUsuario;
+import com.pulseapi.entity.usuario.StatusUsuario;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;

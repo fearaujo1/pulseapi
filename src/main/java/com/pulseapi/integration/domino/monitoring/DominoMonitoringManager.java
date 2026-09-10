@@ -1,7 +1,7 @@
 package com.pulseapi.integration.domino.monitoring;
 
-import com.pulseapi.entity.Equipamento;
-import com.pulseapi.entity.StatusEquipamento;
+import com.pulseapi.entity.equipamento.Equipamento;
+import com.pulseapi.entity.equipamento.StatusEquipamento;
 import com.pulseapi.repository.EquipamentoRepository;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;

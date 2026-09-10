@@ -1,6 +1,6 @@
 package com.pulseapi.repository;
 
-import com.pulseapi.entity.Equipamento;
+import com.pulseapi.entity.equipamento.Equipamento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> {
     Optional<Equipamento> findByCodigo(String codigo);
     boolean existsByCodigo(String codigo);
-
+    boolean existsByLinhaId(Long linhaId);
 }
 
 // JpaRespository = permite o save, findAll, findById, deleteById

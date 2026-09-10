@@ -1,6 +1,6 @@
 package com.pulseapi.dto.fila;
 
-import com.pulseapi.entity.StatusFilaImpressao;
+import com.pulseapi.entity.impressao.StatusFilaImpressao;
 
 public record ProcessamentoFilaResponseDTO(
         Long filaId,

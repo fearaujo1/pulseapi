@@ -1,6 +1,6 @@
 package com.pulseapi.dto.layout;
 
-import com.pulseapi.entity.EstrategiaMontagemPayload;
+import com.pulseapi.entity.domino.EstrategiaMontagemPayload;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;

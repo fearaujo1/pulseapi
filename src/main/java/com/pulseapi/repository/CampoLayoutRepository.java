@@ -1,6 +1,6 @@
 package com.pulseapi.repository;
 
-import com.pulseapi.entity.CampoLayout;
+import com.pulseapi.entity.impressao.CampoLayout;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

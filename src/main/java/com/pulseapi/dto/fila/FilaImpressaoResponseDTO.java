@@ -1,6 +1,6 @@
 package com.pulseapi.dto.fila;
 
-import com.pulseapi.entity.StatusFilaImpressao;
+import com.pulseapi.entity.impressao.StatusFilaImpressao;
 
 import java.time.LocalDateTime;
 import java.util.Map;

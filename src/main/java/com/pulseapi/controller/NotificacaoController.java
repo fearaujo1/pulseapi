@@ -1,7 +1,7 @@
 package com.pulseapi.controller;
 
 import com.pulseapi.dto.notificacao.NotificacaoResponseDTO;
-import com.pulseapi.entity.Usuario;
+import com.pulseapi.entity.usuario.Usuario;
 import com.pulseapi.exception.ResourceNotFoundException;
 import com.pulseapi.repository.UsuarioRepository;
 import com.pulseapi.service.NotificacaoService;
