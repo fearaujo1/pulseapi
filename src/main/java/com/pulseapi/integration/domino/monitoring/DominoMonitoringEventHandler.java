@@ -2,6 +2,7 @@ package com.pulseapi.integration.domino.monitoring;
 
 import com.pulseapi.integration.domino.DominoCommands;
 import com.pulseapi.integration.domino.dto.DominoStatusResponse;
+import com.pulseapi.integration.domino.parser.DominoStatusMap;
 import com.pulseapi.integration.domino.parser.DominoStatusParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,9 @@ import org.springframework.stereotype.Component;
 import java.util.HexFormat;
 import com.pulseapi.integration.domino.service.DominoOcorrenciaService;
 import com.pulseapi.integration.domino.service.DominoConnectionStatusService;
+import com.pulseapi.dto.notificacao.NotificacaoContextoDTO;
+import com.pulseapi.entity.notificacao.TipoNotificacao;
+import com.pulseapi.service.NotificacaoService;
 
 @Component
 public class DominoMonitoringEventHandler {
@@ -20,17 +24,20 @@ public class DominoMonitoringEventHandler {
     private final DominoOcorrenciaService ocorrenciaService;
     private final DominoMonitoringProperties properties;
     private final DominoConnectionStatusService connectionStatusService;
+    private final NotificacaoService notificacaoService;
 
     public DominoMonitoringEventHandler(
             DominoStatusStateTracker stateTracker,
             DominoOcorrenciaService ocorrenciaService,
             DominoMonitoringProperties properties,
-            DominoConnectionStatusService connectionStatusService
+            DominoConnectionStatusService connectionStatusService,
+            NotificacaoService notificacaoService
     ) {
         this.stateTracker = stateTracker;
         this.ocorrenciaService = ocorrenciaService;
         this.properties = properties;
         this.connectionStatusService = connectionStatusService;
+        this.notificacaoService = notificacaoService;
     }
 
     public void conectado(DominoMonitoringEndpoint endpoint) {
@@ -106,6 +113,19 @@ public class DominoMonitoringEventHandler {
         try {
             DominoStatusResponse status =
                     DominoStatusParser.parse(frame);
+
+            if (!DominoStatusMap.conhecido(
+                    status.codigoStatus()
+            )) {
+                log.debug(
+                        "Status Domino desconhecido ignorado: equipamento={} codigo={} jato={}",
+                        endpoint.equipamentoId(),
+                        status.codigoStatus(),
+                        status.jato()
+                );
+
+                return;
+            }
 
             DominoStatusStateChange change =
                     stateTracker.processar(
@@ -206,14 +226,39 @@ public class DominoMonitoringEventHandler {
                                 endpoint.equipamentoId(),
                                 status
                         )
-                        .ifPresent(ocorrenciaId ->
-                                log.warn(
-                                        "Ocorrência Domino registrada/atualizada: ocorrencia={} equipamento={} codigo={}",
-                                        ocorrenciaId,
-                                        endpoint.equipamentoId(),
-                                        status.codigoStatus()
-                                )
-                        );
+                        .ifPresent(ocorrenciaId -> {
+                            log.warn(
+                                    "Ocorrência Domino registrada/atualizada: ocorrencia={} equipamento={} codigo={}",
+                                    ocorrenciaId,
+                                    endpoint.equipamentoId(),
+                                    status.codigoStatus()
+                            );
+
+                            TipoNotificacao tipoNotificacao =
+                                    categoria == '2'
+                                            ? TipoNotificacao
+                                              .OCORRENCIA_CRITICA
+                                            : TipoNotificacao
+                                              .NOVA_OCORRENCIA;
+
+                            NotificacaoContextoDTO contexto =
+                                    new NotificacaoContextoDTO(
+                                            endpoint.equipamentoId(),
+                                            ocorrenciaId,
+                                            null,
+                                            null
+                                    );
+
+                            notificacaoService
+                                    .notificarResponsaveisEquipamento(
+                                            tipoNotificacao,
+                                            "Falha detectada no equipamento",
+                                            criarMensagemNotificacao(
+                                                    status
+                                            ),
+                                            contexto
+                                    );
+                        });
             }
 
         } catch (Exception exception) {
@@ -228,5 +273,17 @@ public class DominoMonitoringEventHandler {
                     exception
             );
         }
+    }
+
+    private String criarMensagemNotificacao(
+            DominoStatusResponse status
+    ) {
+        return "A integração Domino identificou a falha "
+                + status.codigoStatus()
+                + " - "
+                + status.descricao()
+                + ". Jato: "
+                + status.jato()
+                + ".";
     }
 }

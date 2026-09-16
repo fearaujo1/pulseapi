@@ -4,7 +4,7 @@ import {
     Trash2,
     X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { linhaUsuarioService } from "../../services/linhaUsuarioService.js";
@@ -26,7 +26,11 @@ function LinhaResponsaveisModal({
         if (isOpen && linha?.id) {
             carregarDados();
         }
-    }, [isOpen, linha?.id]);
+    }, [
+        isOpen,
+        linha?.id,
+        carregarDados,
+    ]);
 
     const usuariosDisponiveis = useMemo(() => {
         const idsVinculados = new Set(
@@ -48,38 +52,46 @@ function LinhaResponsaveisModal({
             );
     }, [usuarios, vinculos]);
 
-    async function carregarDados() {
-        try {
-            setLoading(true);
+    const carregarDados = useCallback(
+        async () => {
+            if (!linha?.id) {
+                return;
+            }
 
-            const [usuariosData, vinculosData] =
-                await Promise.all([
-                    usuarioService.listar(),
-                    linhaUsuarioService.listarPorLinha(
-                        linha.id
-                    ),
-                ]);
+            try {
+                setLoading(true);
 
-            setUsuarios(
-                Array.isArray(usuariosData)
-                    ? usuariosData
-                    : []
-            );
+                const [usuariosData, vinculosData] =
+                    await Promise.all([
+                        usuarioService.listar(),
+                        linhaUsuarioService
+                            .listarPorLinha(
+                                linha.id
+                            ),
+                    ]);
 
-            setVinculos(
-                Array.isArray(vinculosData)
-                    ? vinculosData
-                    : []
-            );
-        } catch (error) {
-            mostrarErro(
-                error,
-                "Erro ao carregar responsáveis."
-            );
-        } finally {
-            setLoading(false);
-        }
-    }
+                setUsuarios(
+                    Array.isArray(usuariosData)
+                        ? usuariosData
+                        : []
+                );
+
+                setVinculos(
+                    Array.isArray(vinculosData)
+                        ? vinculosData
+                        : []
+                );
+            } catch (error) {
+                mostrarErro(
+                    error,
+                    "Erro ao carregar responsáveis."
+                );
+            } finally {
+                setLoading(false);
+            }
+        },
+        [linha?.id]
+    );
 
     async function adicionarResponsavel() {
         if (!usuarioId) {

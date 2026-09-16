@@ -1,9 +1,11 @@
 package com.pulseapi.repository;
 
+import com.pulseapi.entity.usuario.StatusUsuario;
 import com.pulseapi.entity.usuario.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 
@@ -16,4 +18,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     @EntityGraph(attributePaths = "turnos")
     Optional<Usuario> findComTurnosByEmail(String email);
+
+    @EntityGraph(attributePaths = "perfil")
+    List<Usuario> findAllByStatusAndPerfilNome(
+            StatusUsuario status,
+            String perfilNome
+    );
 }

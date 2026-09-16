@@ -18,8 +18,8 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 
-// Responsável pela abertura, deduplicação,
-// atualização e resolução automática.
+// Responsável pela abertura, deduplicação
+// e atualização das ocorrências Domino.
 @Service
 public class DominoOcorrenciaService {
 
@@ -148,15 +148,6 @@ public class DominoOcorrenciaService {
 
         return categoria == '1'
                 || categoria == '2';
-    }
-
-    private boolean ehNormalizacao(
-            DominoStatusResponse status
-    ) {
-        return status != null
-                && status.codigoStatus() != null
-                && status.codigoStatus().length() == 3
-                && status.codigoStatus().charAt(0) == '0';
     }
 
     private String criarTitulo(

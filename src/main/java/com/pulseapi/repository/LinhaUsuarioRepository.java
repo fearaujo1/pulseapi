@@ -1,6 +1,7 @@
 package com.pulseapi.repository;
 
 import com.pulseapi.entity.linha.LinhaUsuario;
+import com.pulseapi.entity.usuario.StatusUsuario;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -58,4 +59,13 @@ public interface LinhaUsuarioRepository
             Long id,
             Long linhaId
     );
+
+    @EntityGraph(
+            attributePaths= {
+                    "usuario",
+                    "usuario.perfil"
+            }
+    )
+    List<LinhaUsuario>
+    findAllByLinhaIdAndUsuarioStatus(Long linhaId, StatusUsuario status);
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
     Factory,
@@ -85,78 +85,99 @@ function PlantasLinhasPage() {
             return;
         }
 
-        carregarLinhas(plantaSelecionada.id);
-    }, [plantaSelecionada?.id]);
+        carregarLinhas(
+            plantaSelecionada.id
+        );
+    }, [
+        plantaSelecionada?.id,
+    ]);
 
-    async function carregarPlantas(
-        plantaIdPreferida = null
-    ) {
-        try {
-            setLoadingPlantas(true);
+    const carregarPlantas = useCallback(
+        async (
+            plantaIdPreferida = null
+        ) => {
+            try {
+                setLoadingPlantas(true);
 
-            const data = await plantaService.listar();
-            const lista = Array.isArray(data)
-                ? data
-                : [];
+                const data =
+                    await plantaService.listar();
 
-            setPlantas(lista);
+                const lista =
+                    Array.isArray(data)
+                        ? data
+                        : [];
 
-            const idDesejado =
-                plantaIdPreferida ??
-                plantaSelecionada?.id;
+                setPlantas(lista);
 
-            const proximaSelecao =
-                lista.find(
-                    (planta) =>
-                        planta.id === idDesejado
-                ) ??
-                lista[0] ??
-                null;
+                setPlantaSelecionada(
+                    (selecaoAtual) => {
+                        const idDesejado =
+                            plantaIdPreferida ??
+                            selecaoAtual?.id;
 
-            setPlantaSelecionada(
-                proximaSelecao
-            );
-        } catch (error) {
-            console.error(
-                "Erro ao carregar plantas:",
-                error
-            );
+                        return (
+                            lista.find(
+                                (planta) =>
+                                    planta.id ===
+                                    idDesejado
+                            ) ??
+                            lista[0] ??
+                            null
+                        );
+                    }
+                );
+            } catch (error) {
+                console.error(
+                    "Erro ao carregar plantas:",
+                    error
+                );
 
-            setPlantas([]);
-            setPlantaSelecionada(null);
-            toast.error(
-                "Erro ao carregar plantas."
-            );
-        } finally {
-            setLoadingPlantas(false);
-        }
-    }
+                setPlantas([]);
+                setPlantaSelecionada(null);
 
-    async function carregarLinhas(plantaId) {
-        try {
-            setLoadingLinhas(true);
+                toast.error(
+                    "Erro ao carregar plantas."
+                );
+            } finally {
+                setLoadingPlantas(false);
+            }
+        },
+        []
+    );
 
-            const data =
-                await linhaService
-                    .listarPorPlanta(plantaId);
+    const carregarLinhas = useCallback(
+        async (plantaId) => {
+            try {
+                setLoadingLinhas(true);
 
-            setLinhas(
-                Array.isArray(data) ? data : []
-            );
-        } catch (error) {
-            console.error(
-                "Erro ao carregar linhas:",
-                error
-            );
+                const data =
+                    await linhaService
+                        .listarPorPlanta(
+                            plantaId
+                        );
 
-            setLinhas([]);
-            toast.error(
-                "Erro ao carregar linhas."
-            );
-        } finally {
-            setLoadingLinhas(false);
-        }
-    }
+                setLinhas(
+                    Array.isArray(data)
+                        ? data
+                        : []
+                );
+            } catch (error) {
+                console.error(
+                    "Erro ao carregar linhas:",
+                    error
+                );
+
+                setLinhas([]);
+
+                toast.error(
+                    "Erro ao carregar linhas."
+                );
+            } finally {
+                setLoadingLinhas(false);
+            }
+        },
+        []
+    );
 
     function abrirNovaPlanta() {
         setPlantaEmEdicao(null);

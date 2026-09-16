@@ -22,15 +22,18 @@ public class NotificacaoService {
     private final NotificacaoRepository notificacaoRepository;
     private final UsuarioRepository usuarioRepository;
     private final ConfiguracaoNotificacaoService configuracaoNotificacaoService;
+    private final OcorrenciaDestinatarioService ocorrenciaDestinatarioService;
 
     public NotificacaoService(
             NotificacaoRepository notificacaoRepository,
             UsuarioRepository usuarioRepository,
-            ConfiguracaoNotificacaoService configuracaoNotificacaoService
+            ConfiguracaoNotificacaoService configuracaoNotificacaoService,
+            OcorrenciaDestinatarioService ocorrenciaDestinatarioService
     ) {
         this.notificacaoRepository = notificacaoRepository;
         this.usuarioRepository = usuarioRepository;
         this.configuracaoNotificacaoService = configuracaoNotificacaoService;
+        this.ocorrenciaDestinatarioService = ocorrenciaDestinatarioService;
     }
 
     @Transactional
@@ -40,44 +43,65 @@ public class NotificacaoService {
             String mensagem,
             NotificacaoContextoDTO contexto
     ) {
-
         ConfiguracaoNotificacao configuracao =
-                configuracaoNotificacaoService.buscarPorTipo(tipo);
+                configuracaoNotificacaoService
+                        .buscarPorTipo(tipo);
 
-        if (!Boolean.TRUE.equals(configuracao.getNotificacaoSistemaAtiva())) {
+        if (!Boolean.TRUE.equals(
+                configuracao
+                        .getNotificacaoSistemaAtiva()
+        )) {
             return;
         }
 
-        NivelNotificacao nivel = definirNivel(tipo);
+        salvarNotificacoes(
+                tipo,
+                titulo,
+                mensagem,
+                contexto,
+                buscarDestinatarios(tipo)
+        );
+    }
 
-        List<Usuario> destinatarios = buscarDestinatarios(tipo);
-
-        for (Usuario usuario : destinatarios) {
-
-            Notificacao notificacao =
-                    Notificacao.builder()
-                            .tipo(tipo)
-                            .nivel(nivel)
-                            .titulo(titulo)
-                            .mensagem(mensagem)
-                            .lida(false)
-                            .equipamentoId(contexto != null ? contexto.equipamentoId() : null)
-                            .ocorrenciaId(contexto != null ? contexto.ocorrenciaId() : null)
-                            .producaoId(contexto != null ? contexto.producaoId() : null)
-                            .filaImpressaoId(contexto != null ? contexto.filaImpressaoId() : null)
-                            .usuario(usuario)
-                            .build();
-
-            notificacaoRepository.save(notificacao);
+    @Transactional
+    public void notificarResponsaveisEquipamento(
+            TipoNotificacao tipo,
+            String titulo,
+            String mensagem,
+            NotificacaoContextoDTO contexto
+    ) {
+        if (contexto == null
+                || contexto.equipamentoId() == null
+                || contexto.ocorrenciaId() == null) {
+            throw new IllegalArgumentException(
+                    "Equipamento e ocorrência são obrigatórios."
+            );
         }
 
-        /*
-         * Próxima etapa:
-         *
-         * if (configuracao.getNotificacaoEmailAtiva()) {
-         *     emailService.enviar(...);
-         * }
-         */
+        ConfiguracaoNotificacao configuracao =
+                configuracaoNotificacaoService
+                        .buscarPorTipo(tipo);
+
+        if (!Boolean.TRUE.equals(
+                configuracao
+                        .getNotificacaoSistemaAtiva()
+        )) {
+            return;
+        }
+
+        List<Usuario> destinatarios =
+                ocorrenciaDestinatarioService
+                        .buscarPorEquipamento(
+                                contexto.equipamentoId()
+                        );
+
+        salvarNotificacoes(
+                tipo,
+                titulo,
+                mensagem,
+                contexto,
+                destinatarios
+        );
     }
 
     // =========================================================
@@ -198,6 +222,76 @@ public class NotificacaoService {
                 notificacao.getFilaImpressaoId(),
                 notificacao.getCriadoEm()
         );
+    }
+
+    private void salvarNotificacoes(
+            TipoNotificacao tipo,
+            String titulo,
+            String mensagem,
+            NotificacaoContextoDTO contexto,
+            List<Usuario> destinatarios
+    ) {
+        NivelNotificacao nivel =
+                definirNivel(tipo);
+
+        for (Usuario usuario : destinatarios) {
+            if (notificacaoJaExiste(
+                    usuario.getId(),
+                    contexto
+            )) {
+                continue;
+            }
+
+            Notificacao notificacao =
+                    Notificacao.builder()
+                            .tipo(tipo)
+                            .nivel(nivel)
+                            .titulo(titulo)
+                            .mensagem(mensagem)
+                            .lida(false)
+                            .equipamentoId(
+                                    contexto != null
+                                            ? contexto.equipamentoId()
+                                            : null
+                            )
+                            .ocorrenciaId(
+                                    contexto != null
+                                            ? contexto.ocorrenciaId()
+                                            : null
+                            )
+                            .producaoId(
+                                    contexto != null
+                                            ? contexto.producaoId()
+                                            : null
+                            )
+                            .filaImpressaoId(
+                                    contexto != null
+                                            ? contexto.filaImpressaoId()
+                                            : null
+                            )
+                            .usuario(usuario)
+                            .build();
+
+            notificacaoRepository.save(
+                    notificacao
+            );
+        }
+    }
+
+    private boolean notificacaoJaExiste(
+            Long usuarioId,
+            NotificacaoContextoDTO contexto
+    ) {
+        if (contexto == null
+                || contexto.ocorrenciaId() == null) {
+            return false;
+        }
+
+        return notificacaoRepository
+                .existsByUsuarioIdAndOcorrenciaId(
+                        usuarioId,
+                        contexto.ocorrenciaId()
+                );
     }
 }
 

@@ -1,6 +1,7 @@
 package com.pulseapi.repository;
 
 import com.pulseapi.entity.notificacao.Notificacao;
+import com.pulseapi.entity.notificacao.TipoNotificacao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -22,5 +23,10 @@ public interface NotificacaoRepository
 
     long countByUsuarioIdAndLidaFalse(
             Long usuarioId
+    );
+
+    boolean existsByUsuarioIdAndOcorrenciaId(
+            Long usuarioId,
+            Long ocorrenciaId
     );
 }

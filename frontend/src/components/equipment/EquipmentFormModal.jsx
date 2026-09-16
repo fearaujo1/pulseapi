@@ -21,7 +21,7 @@ function EquipmentFormModal({
     );
 
 
-    if (!isOpen) return null;
+
 
     function handleChange(e) {
         const { name, value } = e.target;
@@ -146,7 +146,10 @@ function EquipmentFormModal({
         };
     }, [isOpen, formData.plantaId]);
 
+
     const isEditMode = mode === "edit";
+
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
