@@ -21,8 +21,6 @@ function EquipmentFormModal({
     );
 
 
-    if (!isOpen) return null;
-
     function handleChange(e) {
         const { name, value } = e.target;
 
@@ -146,6 +144,8 @@ function EquipmentFormModal({
         };
     }, [isOpen, formData.plantaId]);
 
+    if (!isOpen) return null;
+    
     const isEditMode = mode === "edit";
 
     return (
