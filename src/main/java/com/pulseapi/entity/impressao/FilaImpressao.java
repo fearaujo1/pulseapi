@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import com.pulseapi.entity.producao.ProducaoItem;
 
 @Entity
 @Table(name = "fila_impressao")
@@ -26,6 +27,28 @@ public class FilaImpressao {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "layout_id", nullable = false)
     private LayoutImpressao layout;
+
+    /*
+     * Nulo para impressões adicionadas manualmente.
+     *
+     * Quando preenchido, indica qual item da produção
+     * originou este registro da fila.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "producao_item_id",
+            foreignKey = @ForeignKey(
+                    name = "fk_fila_impressao_producao_item"
+            )
+    )
+    private ProducaoItem producaoItem;
+
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "etapa_producao",
+            length = 20
+    )
+    private EtapaFilaProducao etapaProducao;
 
     @Lob
     @Column(name = "valores_json", nullable = false, columnDefinition = "NVARCHAR(MAX)")

@@ -221,4 +221,71 @@ public class DominoCommands {
         };
     }
 
+    /**
+     * Executa um Software Print Go no detector 1.
+     *
+     * Conforme o protocolo EPT033760 Issue 10:
+     * ESC N 1 EOT
+     * HEX: 1B 4E 31 04
+     */
+    public static byte[] softwarePrintGo1() {
+        return new byte[] {
+                ESC,
+                0x4E, // N
+                0x31, // Detector de produto 1
+                EOT
+        };
+    }
+
+    /*
+     * ============================================================
+     * CONTROLE DO CABEÇOTE
+     * ============================================================
+     */
+
+    public static byte[] habilitarCabecote1() {
+        return new byte[] {
+                ESC,
+                0x51, // Q
+                0x31, // Cabeçote 1
+                0x59, // Y = habilitar impressão
+                EOT
+        };
+    }
+
+    public static byte[] desabilitarCabecote1() {
+        return new byte[] {
+                ESC,
+                0x51, // Q
+                0x31, // Cabeçote 1
+                0x4E, // N = desabilitar impressão
+                EOT
+        };
+    }
+
+    /*
+     * ============================================================
+     * CONTROLE DO JATO
+     * ============================================================
+     */
+
+    public static byte[] ligarJato() {
+        return new byte[] {
+                ESC,
+                0x4F, // O
+                0x53, // S
+                0x31, // 1 = Ready to Print
+                EOT
+        };
+    }
+
+    public static byte[] colocarJatoEmStandby() {
+        return new byte[] {
+                ESC,
+                0x4F, // O
+                0x53, // S
+                0x30, // 0 = Standby
+                EOT
+        };
+    }
 }

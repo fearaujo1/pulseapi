@@ -505,4 +505,140 @@ public class DominoService {
                         + "."
         );
     }
+
+    /*
+     * ============================================================
+     * SOFTWARE PRINT GO
+     * ============================================================
+     */
+
+    /**
+     * Dispara um pulso de impressão via protocolo Codenet.
+     *
+     * A impressora se comportará como se tivesse recebido
+     * um pulso físico do sensor de produto.
+     */
+    public void dispararSoftwarePrintGo(
+            Equipamento equipamento
+    ) {
+        byte[] resposta = executarComHistorico(
+                equipamento,
+                "SOFTWARE_PRINT_GO_1",
+                DominoCommands.softwarePrintGo1(),
+                true
+        );
+
+        validarAck(
+                resposta,
+                "Software Print Go"
+        );
+    }
+
+    /*
+     * ============================================================
+     * CONTROLE DO CABEÇOTE
+     * ============================================================
+     */
+
+    public void habilitarCabecote(
+            Equipamento equipamento
+    ) {
+        byte[] resposta = executarComHistorico(
+                equipamento,
+                "HABILITAR_CABECOTE_1",
+                DominoCommands.habilitarCabecote1(),
+                true
+        );
+
+        validarAck(
+                resposta,
+                "habilitação do cabeçote 1"
+        );
+    }
+
+    public void desabilitarCabecote(
+            Equipamento equipamento
+    ) {
+        byte[] resposta = executarComHistorico(
+                equipamento,
+                "DESABILITAR_CABECOTE_1",
+                DominoCommands.desabilitarCabecote1(),
+                true
+        );
+
+        validarAck(
+                resposta,
+                "desabilitação do cabeçote 1"
+        );
+    }
+
+    /*
+     * ============================================================
+     * CONTROLE DO JATO
+     * ============================================================
+     */
+
+    public void ligarJato(
+            Equipamento equipamento
+    ) {
+        byte[] resposta = executarComHistorico(
+                equipamento,
+                "LIGAR_JATO",
+                DominoCommands.ligarJato(),
+                true
+        );
+
+        validarAck(
+                resposta,
+                "acionamento do jato"
+        );
+    }
+
+    public void colocarJatoEmStandby(
+            Equipamento equipamento
+    ) {
+        byte[] resposta = executarComHistorico(
+                equipamento,
+                "COLOCAR_JATO_EM_STANDBY",
+                DominoCommands.colocarJatoEmStandby(),
+                true
+        );
+
+        validarAck(
+                resposta,
+                "colocação do jato em standby"
+        );
+    }
+
+    public void limparFifo(
+            Equipamento equipamento
+    ) {
+        byte[] resposta = executarComHistorico(
+                equipamento,
+                "LIMPAR_FIFO_TCP",
+                DominoCommands.limparFifoTcp(),
+                true
+        );
+
+        validarAck(
+                resposta,
+                "limpeza do FIFO TCP"
+        );
+    }
+
+    public void ativarAtualizacaoMonitorLayout(
+            Equipamento equipamento
+    ) {
+        byte[] resposta = executarComHistorico(
+                equipamento,
+                "ATIVAR_ATUALIZACAO_MONITOR_LAYOUT",
+                DominoCommands.ativarAtualizacaoMonitorLayout(),
+                true
+        );
+
+        validarAck(
+                resposta,
+                "ativação da atualização do monitor do layout"
+        );
+    }
 }

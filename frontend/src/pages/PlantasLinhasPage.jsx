@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
     Factory,
@@ -75,9 +75,74 @@ function PlantasLinhasPage() {
     const [itemParaExcluir, setItemParaExcluir] =
         useState(null);
 
+    const carregarPlantas = useCallback(
+        async (plantaIdPreferida = null) => {
+            try {
+                setLoadingPlantas(true);
+
+                const lista =
+                    await plantaService.listar();
+
+                setPlantas(lista);
+
+                setPlantaSelecionada((selecaoAtual) => {
+                    const idDesejado =
+                        plantaIdPreferida
+                        ?? selecaoAtual?.id;
+
+                    return lista.find(
+                        (planta) =>
+                            planta.id === idDesejado
+                    ) ?? lista[0] ?? null;
+                });
+            } catch (error) {
+                toast.error(
+                    error.response?.data?.detail
+                    || "Não foi possível carregar as plantas."
+                );
+
+                setPlantas([]);
+                setPlantaSelecionada(null);
+            } finally {
+                setLoadingPlantas(false);
+            }
+        },
+        []
+    );
+
+    const carregarLinhas = useCallback(
+        async (plantaId) => {
+            if (!plantaId) {
+                setLinhas([]);
+                return;
+            }
+
+            try {
+                setLoadingLinhas(true);
+
+                const lista =
+                    await linhaService.listarPorPlanta(
+                        plantaId
+                    );
+
+                setLinhas(lista);
+            } catch (error) {
+                toast.error(
+                    error.response?.data?.detail
+                    || "Não foi possível carregar as linhas."
+                );
+
+                setLinhas([]);
+            } finally {
+                setLoadingLinhas(false);
+            }
+        },
+        []
+    );
+
     useEffect(() => {
         carregarPlantas();
-    }, []);
+    }, [carregarPlantas]);
 
     useEffect(() => {
         if (!plantaSelecionada?.id) {
@@ -86,77 +151,10 @@ function PlantasLinhasPage() {
         }
 
         carregarLinhas(plantaSelecionada.id);
-    }, [plantaSelecionada?.id]);
-
-    async function carregarPlantas(
-        plantaIdPreferida = null
-    ) {
-        try {
-            setLoadingPlantas(true);
-
-            const data = await plantaService.listar();
-            const lista = Array.isArray(data)
-                ? data
-                : [];
-
-            setPlantas(lista);
-
-            const idDesejado =
-                plantaIdPreferida ??
-                plantaSelecionada?.id;
-
-            const proximaSelecao =
-                lista.find(
-                    (planta) =>
-                        planta.id === idDesejado
-                ) ??
-                lista[0] ??
-                null;
-
-            setPlantaSelecionada(
-                proximaSelecao
-            );
-        } catch (error) {
-            console.error(
-                "Erro ao carregar plantas:",
-                error
-            );
-
-            setPlantas([]);
-            setPlantaSelecionada(null);
-            toast.error(
-                "Erro ao carregar plantas."
-            );
-        } finally {
-            setLoadingPlantas(false);
-        }
-    }
-
-    async function carregarLinhas(plantaId) {
-        try {
-            setLoadingLinhas(true);
-
-            const data =
-                await linhaService
-                    .listarPorPlanta(plantaId);
-
-            setLinhas(
-                Array.isArray(data) ? data : []
-            );
-        } catch (error) {
-            console.error(
-                "Erro ao carregar linhas:",
-                error
-            );
-
-            setLinhas([]);
-            toast.error(
-                "Erro ao carregar linhas."
-            );
-        } finally {
-            setLoadingLinhas(false);
-        }
-    }
+    }, [
+        plantaSelecionada?.id,
+        carregarLinhas,
+    ]);
 
     function abrirNovaPlanta() {
         setPlantaEmEdicao(null);

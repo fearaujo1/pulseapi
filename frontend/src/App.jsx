@@ -31,7 +31,7 @@ import NovaImpressaoPage from "./pages/NovaImpressaoPage.jsx";
 import RelatoriosPage from "./pages/RelatoriosPage.jsx";
 import ConfiguracoesPage from "./pages/ConfiguracoesPage.jsx";
 import PlantasLinhasPage from "./pages/PlantasLinhasPage.jsx";
-
+import ProducoesPage from "./pages/ProducoesPage.jsx";
 
 function App() {
     return (
@@ -120,7 +120,7 @@ function App() {
 
                         <Route
                             path="/producoes"
-                            element={<EmDesenvolvimentoPage />}
+                            element={<ProducoesPage />}
                         />
 
                         <Route
