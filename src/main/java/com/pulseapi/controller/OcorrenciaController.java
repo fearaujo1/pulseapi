@@ -1,8 +1,8 @@
 package com.pulseapi.controller;
 
-import com.pulseapi.dto.parada.OcorrenciaRequestDTO;
-import com.pulseapi.dto.parada.OcorrenciaResponseDTO;
-import com.pulseapi.dto.parada.OcorrenciaStatusDTO;
+import com.pulseapi.dto.ocorrencia.OcorrenciaRequestDTO;
+import com.pulseapi.dto.ocorrencia.OcorrenciaResponseDTO;
+import com.pulseapi.dto.ocorrencia.OcorrenciaStatusDTO;
 import com.pulseapi.service.OcorrenciaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

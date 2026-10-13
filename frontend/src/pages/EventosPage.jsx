@@ -6,6 +6,10 @@ import {
     Plus,
     Wrench,
 } from "lucide-react";
+import {
+    ACOES,
+    podeExecutar,
+} from "../config/accessControl.js";
 import { useAuth } from "../contexts/AuthContext";
 import toast from "react-hot-toast";
 import Topbar from "../components/layout/Topbar";
@@ -50,9 +54,44 @@ function EventosPage() {
 
     const { usuario } = useAuth();
 
-    const podeGerenciarEventos = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(
-        usuario?.perfil
-    );
+    const perfil =
+        usuario?.perfil;
+
+    const podeCriar =
+        podeExecutar(
+            perfil,
+            ACOES.EVENTO_CRIAR
+        );
+
+    const podeEditar =
+        podeExecutar(
+            perfil,
+            ACOES.EVENTO_EDITAR
+        );
+
+    const podeAlterarStatus =
+        podeExecutar(
+            perfil,
+            ACOES.EVENTO_ALTERAR_STATUS
+        );
+
+    const podeExcluir =
+        podeExecutar(
+            perfil,
+            ACOES.EVENTO_EXCLUIR
+        );
+
+    const podeGerenciarEventos =
+        podeCriar ||
+        podeEditar ||
+        podeAlterarStatus ||
+        podeExcluir;
+
+    function informarAcessoNegado() {
+        toast.error(
+            "Você não possui permissão para realizar esta operação."
+        );
+    }
 
     async function carregarEquipamentos() {
         try {
@@ -88,16 +127,31 @@ function EventosPage() {
     }, []);
 
     function handleNovoEvento() {
+        if (!podeCriar) {
+            informarAcessoNegado();
+            return;
+        }
+
         setSelectedEvento(null);
         setIsModalOpen(true);
     }
 
     function handleEditEvento(evento) {
+        if (!podeEditar) {
+            informarAcessoNegado();
+            return;
+        }
+
         setSelectedEvento(evento);
         setIsModalOpen(true);
     }
 
     async function handleCreateEvento(formData) {
+        if (!podeCriar) {
+            informarAcessoNegado();
+            return;
+        }
+
         try {
             setSubmitLoading(true);
 
@@ -130,6 +184,23 @@ function EventosPage() {
     }
 
     async function handleUpdateEvento(formData) {
+        if (!podeEditar) {
+            informarAcessoNegado();
+            return;
+        }
+
+        if (!selectedEvento) {
+            toast.error("Nenhuma ocorrência foi selecionada.");
+            return;
+        }
+
+        const statusFoiAlterado = formData.status && formData.status !== selectedEvento.status;
+
+        if (statusFoiAlterado && !podeAlterarStatus) {
+            informarAcessoNegado();
+            return;
+        }
+
         try {
             setSubmitLoading(true);
 
@@ -167,11 +238,21 @@ function EventosPage() {
     }
 
     function handleDeleteEvento(evento) {
+        if (!podeExcluir) {
+            informarAcessoNegado();
+            return;
+        }
+
         setEventoToDelete(evento);
         setIsDeleteModalOpen(true);
     }
 
     async function handleConfirmDeleteEvento() {
+        if (!podeExcluir) {
+            informarAcessoNegado();
+            return;
+        }
+
         if (!eventoToDelete?.id) return;
 
         try {
@@ -261,7 +342,7 @@ function EventosPage() {
                     title="Eventos e Ocorrências"
                     description="Registro e acompanhamento de ocorrências, falhas e paradas de produção"
                 >
-                    {podeGerenciarEventos && (
+                    {podeCriar && (
                         <button
                             type="button"
                             onClick={handleNovoEvento}
@@ -325,7 +406,7 @@ function EventosPage() {
                         onView={setSelectedEventoDetails}
                         onEdit={handleEditEvento}
                         onDelete={handleDeleteEvento}
-                        canManage={podeGerenciarEventos}
+                        canManage={podeEditar || podeExcluir}
                     />
 
                     {!loading && (
@@ -337,7 +418,7 @@ function EventosPage() {
                     )}
                 </ContentCard>
             </main>
-            {isModalOpen && (
+            {isModalOpen && (selectedEvento ? podeEditar : podeExcluir) && (
                 <EventoFormModal
                     key={selectedEvento?.id ?? "novo-evento"}
                     isOpen={isModalOpen}
@@ -356,32 +437,34 @@ function EventosPage() {
                     equipamentos={equipamentos}
                 />
             )}
-            
-            <ConfirmDeleteModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => {
-                    setIsDeleteModalOpen(false);
-                    setEventoToDelete(null);
-                }}
-                onConfirm={handleConfirmDeleteEvento}
-                loading={deleteLoading}
-                title="Excluir Ocorrência"
-                description="Confirme a exclusão desta ocorrência."
-                warningMessage="A ocorrência será removida do histórico de eventos."
-                itemLabel="Ocorrência selecionada"
-                itemName={eventoToDelete?.titulo}
-                details={[
-                    {
-                        label: "Equipamento",
-                        value: eventoToDelete?.equipamentoNome,
-                    },
-                    {
-                        label: "Tipo",
-                        value: eventoToDelete?.tipo,
-                    },
-                ]}
-                confirmText="Excluir Ocorrência"
-            />
+
+            {podeExcluir && (
+                <ConfirmDeleteModal
+                    isOpen={isDeleteModalOpen}
+                    onClose={() => {
+                        setIsDeleteModalOpen(false);
+                        setEventoToDelete(null);
+                    }}
+                    onConfirm={handleConfirmDeleteEvento}
+                    loading={deleteLoading}
+                    title="Excluir Ocorrência"
+                    description="Confirme a exclusão desta ocorrência."
+                    warningMessage="A ocorrência será removida do histórico de eventos."
+                    itemLabel="Ocorrência selecionada"
+                    itemName={eventoToDelete?.titulo}
+                    details={[
+                        {
+                            label: "Equipamento",
+                            value: eventoToDelete?.equipamentoNome,
+                        },
+                        {
+                            label: "Tipo",
+                            value: eventoToDelete?.tipo,
+                        },
+                    ]}
+                    confirmText="Excluir Ocorrência"
+                />
+            )}
 
             <EventoDetailsModal
                 evento={selectedEventoDetails}

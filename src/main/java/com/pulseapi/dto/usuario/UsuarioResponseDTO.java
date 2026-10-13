@@ -20,7 +20,6 @@ public class UsuarioResponseDTO {
     private Long perfilId;
 
     private StatusUsuario status;
-    private Boolean primeiroAcesso;
 
     private Long empresaId;
     private String empresaNome;

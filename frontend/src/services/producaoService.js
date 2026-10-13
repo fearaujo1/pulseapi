@@ -39,12 +39,24 @@ export const producaoService = {
         await api.delete(`/producoes/${id}`);
     },
 
-    async importarItens(id, payload) {
-        const response =
-            await api.post(
-                `/producoes/${id}/itens/lote`,
-                payload
-            );
+    async importarItens(id, arquivo) {
+        const formData = new FormData();
+
+        formData.append(
+            "arquivo",
+            arquivo
+        );
+
+        const response = await api.post(
+            `/producoes/${id}/itens/csv`,
+            formData,
+            {
+                headers: {
+                    "Content-Type":
+                        "multipart/form-data",
+                },
+            }
+        );
 
         return response.data;
     },

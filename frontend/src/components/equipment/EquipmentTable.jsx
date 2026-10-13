@@ -1,10 +1,11 @@
-import StatusBadge from "../common/StatusBadge.jsx";
 import {
-    Pencil,
-    Trash2,
     ArrowUpDown,
     Cable,
+    Pencil,
+    Trash2,
 } from "lucide-react";
+
+import StatusBadge from "../common/StatusBadge.jsx";
 
 function EquipmentTable({
                             equipamentos = [],
@@ -14,9 +15,18 @@ function EquipmentTable({
                             onSort,
                             sortField,
                             sortDirection,
-                            canEdit = true,
-                            canDelete = true,
+                            canEdit = false,
+                            canDelete = false,
+                            canIntegrate = false,
                         }) {
+    const possuiAcoes =
+        canIntegrate ||
+        canEdit ||
+        canDelete;
+
+    const quantidadeColunas =
+        possuiAcoes ? 7 : 6;
+
     function renderSortIcon(field) {
         if (sortField !== field) {
             return (
@@ -27,7 +37,9 @@ function EquipmentTable({
             );
         }
 
-        return sortDirection === "asc" ? "↑" : "↓";
+        return sortDirection === "asc"
+            ? "↑"
+            : "↓";
     }
 
     const headerClass =
@@ -40,7 +52,9 @@ function EquipmentTable({
                     <thead className="border-b border-slate-200 bg-slate-50">
                     <tr className="text-left">
                         <th
-                            onClick={() => onSort("nome")}
+                            onClick={() =>
+                                onSort?.("nome")
+                            }
                             className={`${headerClass} cursor-pointer select-none`}
                         >
                             <div className="flex items-center gap-2">
@@ -69,9 +83,11 @@ function EquipmentTable({
                             Conexão
                         </th>
 
-                        <th className={headerClass}>
-                            Ações
-                        </th>
+                        {possuiAcoes && (
+                            <th className={headerClass}>
+                                Ações
+                            </th>
+                        )}
                     </tr>
                     </thead>
 
@@ -79,7 +95,9 @@ function EquipmentTable({
                     {equipamentos.length === 0 ? (
                         <tr>
                             <td
-                                colSpan={7}
+                                colSpan={
+                                    quantidadeColunas
+                                }
                                 className="px-4 py-10 text-center text-slate-500"
                             >
                                 Nenhum equipamento encontrado.
@@ -123,7 +141,8 @@ function EquipmentTable({
 
                                     <td className="px-4 py-4">
                                         <p className="text-sm font-medium text-slate-700">
-                                            {equipamento.ip || "Sem IP"}
+                                            {equipamento.ip ||
+                                                "Sem IP"}
                                         </p>
 
                                         <p className="mt-1 text-xs text-slate-500">
@@ -150,58 +169,71 @@ function EquipmentTable({
                                         />
                                     </td>
 
-                                    <td className="px-4 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    onIntegracao(
-                                                        equipamento
-                                                    )
-                                                }
-                                                className="rounded-xl border border-blue-200 p-2 text-blue-600 transition hover:bg-blue-50"
-                                                title="Integração"
-                                            >
-                                                <Cable
-                                                    size={16}
-                                                />
-                                            </button>
+                                    {possuiAcoes && (
+                                        <td className="px-4 py-4">
+                                            <div className="flex items-center gap-2">
+                                                {canIntegrate && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            onIntegracao?.(
+                                                                equipamento
+                                                            )
+                                                        }
+                                                        className="rounded-xl border border-blue-200 p-2 text-blue-600 transition hover:bg-blue-50"
+                                                        title="Integração"
+                                                        aria-label={`Abrir integração do equipamento ${equipamento.nome}`}
+                                                    >
+                                                        <Cable
+                                                            size={
+                                                                16
+                                                            }
+                                                        />
+                                                    </button>
+                                                )}
 
-                                            {canEdit && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        onEdit(
-                                                            equipamento
-                                                        )
-                                                    }
-                                                    className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
-                                                    title="Editar"
-                                                >
-                                                    <Pencil
-                                                        size={16}
-                                                    />
-                                                </button>
-                                            )}
+                                                {canEdit && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            onEdit?.(
+                                                                equipamento
+                                                            )
+                                                        }
+                                                        className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
+                                                        title="Editar"
+                                                        aria-label={`Editar equipamento ${equipamento.nome}`}
+                                                    >
+                                                        <Pencil
+                                                            size={
+                                                                16
+                                                            }
+                                                        />
+                                                    </button>
+                                                )}
 
-                                            {canDelete && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        onDelete(
-                                                            equipamento
-                                                        )
-                                                    }
-                                                    className="rounded-xl border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2
-                                                        size={16}
-                                                    />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
+                                                {canDelete && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            onDelete?.(
+                                                                equipamento
+                                                            )
+                                                        }
+                                                        className="rounded-xl border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
+                                                        title="Excluir"
+                                                        aria-label={`Excluir equipamento ${equipamento.nome}`}
+                                                    >
+                                                        <Trash2
+                                                            size={
+                                                                16
+                                                            }
+                                                        />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    )}
                                 </tr>
                             )
                         )

@@ -153,6 +153,13 @@ public class Producao {
     @Column(name = "cancelada_em")
     private LocalDateTime canceladaEm;
 
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "motivo_pausa",
+            length = 40
+    )
+    private MotivoPausa motivoPausa;
+
     @Column(
             name = "criado_em",
             nullable = false,

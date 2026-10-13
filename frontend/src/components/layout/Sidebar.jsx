@@ -1,121 +1,131 @@
 import {
-    X,
-    LayoutDashboard,
-    Factory,
-    CircleAlert,
     ChartColumn,
-    Users,
-    Settings,
-    Wifi,
-    HardDriveIcon,
-    Printer,
-    Layers3,
+    CircleAlert,
     ClipboardList,
+    Factory,
+    HardDriveIcon,
+    Layers3,
+    LayoutDashboard,
+    Printer,
+    Settings,
+    Users,
+    Wifi,
+    X,
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+
+import {
+    ACESSOS,
+    possuiAcesso,
+} from "../../config/accessControl.js";
+
+import { useAuth } from "../../contexts/AuthContext.jsx";
+
+/*
+ * Futuramente este valor poderá vir das
+ * configurações da empresa.
+ */
+const LOGO_EMPRESA_PADRAO =
+    "/branding/logo-autopack.png";
 
 const menuSections = [
     {
         title: null,
-
         items: [
             {
                 label: "Dashboard",
                 icon: LayoutDashboard,
                 path: "/dashboard",
+                allowedProfiles:
+                ACESSOS.DASHBOARD,
             },
         ],
     },
 
     {
         title: "Produção",
-
         items: [
             {
                 label: "Produções",
                 icon: ClipboardList,
                 path: "/producoes",
+                allowedProfiles:
+                ACESSOS.PRODUCOES,
             },
-
-            /*
-             * Por enquanto a tela da fila é global.
-             *
-             * Quando Gerenciar Linhas estiver implementado,
-             * o OPERADOR poderá acessar uma fila filtrada
-             * pela linha/equipamentos atribuídos a ele.
-             */
             {
                 label: "Fila de Impressão",
                 icon: Printer,
                 path: "/fila-impressao",
-                hideForOperator: true,
+                allowedProfiles:
+                ACESSOS.FILA_IMPRESSAO,
             },
-
             {
                 label: "Layouts de Impressão",
                 icon: Layers3,
                 path: "/layouts-impressao",
-                hideForOperator: true,
+                allowedProfiles:
+                ACESSOS.LAYOUTS_IMPRESSAO,
             },
         ],
     },
 
     {
         title: "Gestão",
-
         items: [
             {
                 label: "Equipamentos",
                 icon: HardDriveIcon,
                 path: "/equipamentos",
+                allowedProfiles:
+                ACESSOS.EQUIPAMENTOS,
             },
-
             {
                 label: "Ocorrências",
                 icon: CircleAlert,
                 path: "/eventos",
-                hideForOperator: true,
+                allowedProfiles:
+                ACESSOS.EVENTOS,
             },
-
             {
                 label: "Plantas e Linhas",
                 icon: Factory,
                 path: "/linhas",
+                allowedProfiles:
+                ACESSOS.LINHAS,
             },
         ],
     },
 
     {
         title: "Análises",
-
         items: [
             {
                 label: "Relatórios",
                 icon: ChartColumn,
                 path: "/relatorios",
-                hideForOperator: true,
+                allowedProfiles:
+                ACESSOS.RELATORIOS,
             },
         ],
     },
 
     {
         title: "Administração",
-
         items: [
             {
                 label: "Usuários",
                 icon: Users,
                 path: "/usuarios",
-                adminOnly: true,
+                allowedProfiles:
+                ACESSOS.USUARIOS,
             },
-
             {
                 label: "Configurações",
                 icon: Settings,
                 path: "/configuracoes",
-                adminOnly: true,
+                allowedProfiles:
+                ACESSOS.CONFIGURACOES,
             },
         ],
     },
@@ -127,28 +137,11 @@ function Sidebar({
                  }) {
     const { usuario } = useAuth();
 
-    function canSeeItem(
-        item,
-        perfil
-    ) {
-        if (item.adminOnly) {
-            return perfil === "ADMIN";
-        }
-
-        if (item.hideForOperator) {
-            return perfil !== "OPERADOR";
-        }
-
-        return true;
-    }
+    const perfil =
+        usuario?.perfil;
 
     return (
         <>
-
-            {/* ================================== */}
-            {/* OVERLAY SOMENTE MOBILE            */}
-            {/* ================================== */}
-
             <div
                 onClick={onClose}
                 className={`
@@ -156,7 +149,6 @@ function Sidebar({
                     bg-black/30
                     transition-opacity duration-300
                     lg:hidden
-
                     ${
                     isOpen
                         ? "opacity-100"
@@ -165,26 +157,17 @@ function Sidebar({
                 `}
             />
 
-
-            {/* ================================== */}
-            {/* SIDEBAR                            */}
-            {/* ================================== */}
-
             <aside
                 className={`
                     fixed left-0 top-0 z-50
                     flex h-screen w-[270px] flex-col
                     bg-slate-950 text-white
-
+                    shadow-2xl
                     transition-transform
                     duration-300
                     ease-in-out
-
-                    shadow-2xl
-
                     lg:translate-x-0
                     lg:shadow-none
-
                     ${
                     isOpen
                         ? "translate-x-0"
@@ -192,38 +175,19 @@ function Sidebar({
                 }
                 `}
             >
-
-                {/* ============================== */}
-                {/* LOGO / CABEÇALHO              */}
-                {/* ============================== */}
-
-                <div className="flex items-center justify-between px-6 py-6">
-
-                    <div className="flex items-center gap-3">
-
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600">
-                            <Factory size={25} />
-                        </div>
-
-                        <div>
-                            <h2 className="text-lg font-bold">
-                                PulseAPI
-                            </h2>
-
-                            <p className="text-xs leading-tight text-slate-300">
-                                Smart Production
-                                <br />
-                                Manager
-                            </p>
-                        </div>
+                <div className="relative px-6 pb-5 pt-6">
+                    <div className="flex min-h-[100px] flex-col justify-center">
+                        <img
+                            src={LOGO_EMPRESA_PADRAO}
+                            alt="Logo da empresa"
+                            className="h-auto max-h-[90px] w-full max-w-[205px] object-contain object-center"
+                        />
                     </div>
 
-
-                    {/* Fechar somente no mobile */}
-
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="rounded-xl p-2 text-slate-300 hover:bg-slate-800 lg:hidden"
+                        className="absolute right-3 top-3 rounded-xl p-2 text-slate-300 transition hover:bg-slate-800 lg:hidden"
                         title="Fechar menu"
                     >
                         <X size={20} />
@@ -232,35 +196,35 @@ function Sidebar({
 
                 <div className="mx-6 border-b border-slate-800" />
 
-
-                {/* ============================== */}
-                {/* NAVEGAÇÃO                     */}
-                {/* ============================== */}
-
                 <nav className="flex-1 overflow-y-auto py-4">
-
                     {menuSections.map(
-                        (section, sectionIndex) => {
-
+                        (
+                            section,
+                            sectionIndex
+                        ) => {
                             const visibleItems =
                                 section.items.filter(
                                     (item) =>
-                                        canSeeItem(
-                                            item,
-                                            usuario?.perfil
+                                        possuiAcesso(
+                                            perfil,
+                                            item.allowedProfiles
                                         )
                                 );
 
-                            if (visibleItems.length === 0) {
+                            if (
+                                visibleItems.length === 0
+                            ) {
                                 return null;
                             }
 
                             return (
                                 <div
-                                    key={sectionIndex}
+                                    key={
+                                        section.title ||
+                                        sectionIndex
+                                    }
                                     className="mb-5"
                                 >
-
                                     {section.title && (
                                         <p className="mb-2 px-7 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
                                             {section.title}
@@ -268,76 +232,62 @@ function Sidebar({
                                     )}
 
                                     <div className="space-y-1">
-
                                         {visibleItems.map(
                                             (item) => {
-
                                                 const Icon =
                                                     item.icon;
 
                                                 return (
                                                     <NavLink
-                                                        key={item.path}
-                                                        to={item.path}
-
-                                                        /*
-                                                         * No desktop isso não
-                                                         * fecha visualmente a
-                                                         * Sidebar porque ela
-                                                         * possui lg:translate-x-0.
-                                                         *
-                                                         * No mobile fecha
-                                                         * normalmente.
-                                                         */
-                                                        onClick={onClose}
-
+                                                        key={
+                                                            item.path
+                                                        }
+                                                        to={
+                                                            item.path
+                                                        }
+                                                        onClick={
+                                                            onClose
+                                                        }
                                                         className={({
                                                                         isActive,
-                                                                    }) =>
-                                                            `
-                                                                mx-3
-                                                                flex h-12
-                                                                items-center
-                                                                gap-3
-                                                                rounded-xl
-                                                                px-4
-
-                                                                text-[14px]
-                                                                font-semibold
-
-                                                                transition
-
-                                                                ${
-                                                                isActive
-                                                                    ? "bg-blue-600 text-white"
-                                                                    : "text-slate-300 hover:bg-slate-900 hover:text-white"
-                                                            }
-                                                            `
+                                                                    }) => `
+                                                            mx-3
+                                                            flex h-12
+                                                            items-center
+                                                            gap-3
+                                                            rounded-xl
+                                                            px-4
+                                                            text-[14px]
+                                                            font-semibold
+                                                            transition
+                                                            ${
+                                                            isActive
+                                                                ? "bg-blue-600 text-white"
+                                                                : "text-slate-300 hover:bg-slate-900 hover:text-white"
                                                         }
+                                                        `}
                                                     >
-                                                        <Icon size={19} />
+                                                        <Icon
+                                                            size={
+                                                                19
+                                                            }
+                                                        />
 
-                                                        {item.label}
+                                                        {
+                                                            item.label
+                                                        }
                                                     </NavLink>
                                                 );
                                             }
                                         )}
-
                                     </div>
                                 </div>
                             );
                         }
                     )}
-
                 </nav>
 
-
-                {/* ============================== */}
-                {/* RODAPÉ                         */}
-                {/* ============================== */}
-
                 <div className="border-t border-slate-800 px-6 py-5">
-
                     <div className="flex items-center gap-2 text-sm font-medium text-emerald-400">
                         <Wifi size={16} />
                         Conectado
@@ -346,9 +296,7 @@ function Sidebar({
                     <p className="mt-3 text-xs text-slate-500">
                         v1.0.4
                     </p>
-
                 </div>
-
             </aside>
         </>
     );

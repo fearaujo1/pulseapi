@@ -516,156 +516,184 @@ public class FilaImpressaoProcessadorService {
         Equipamento equipamento =
                 primeiroPendente.getEquipamento();
 
-        validarConexaoEquipamento(
-                equipamento
-        );
+        boolean fifoFoiAlterado = false;
 
-        /*
-         * Impede impressão acidental durante a preparação.
-         * O jato permanece ligado, mas o cabeçote não imprime.
-         */
-        dominoService.desabilitarCabecote(
-                equipamento
-        );
-
-        String layoutEsperado =
-                primeiroPendente
-                        .getLayout()
-                        .getNomeNaImpressora();
-
-        DominoLayoutOnlineResponse layoutAtual =
-                dominoService.consultarLayoutOnline(
-                        equipamento
-                );
-
-        if (!layoutEsperado.equals(
-                layoutAtual.nome()
-        )) {
-            dominoService.selecionarLayout(
-                    equipamento,
-                    layoutEsperado
+        try {
+            validarConexaoEquipamento(
+                    equipamento
             );
 
-            DominoLayoutOnlineResponse layoutConfirmado =
+            /*
+             * A produção ainda não está confirmada.
+             * O cabeçote permanece desabilitado enquanto
+             * preparamos o primeiro item.
+             */
+            dominoService.desabilitarCabecote(
+                    equipamento
+            );
+
+            String layoutEsperado =
+                    primeiroPendente
+                            .getLayout()
+                            .getNomeNaImpressora();
+
+            DominoLayoutOnlineResponse layoutAtual =
                     dominoService.consultarLayoutOnline(
                             equipamento
                     );
 
             if (!layoutEsperado.equals(
-                    layoutConfirmado.nome()
+                    layoutAtual.nome()
             )) {
-                throw new BusinessException(
-                        "A impressora não confirmou o layout "
-                                + layoutEsperado
-                                + " como online."
-                );
-            }
-        }
-
-        /*
-         * Habilita a atualização da prévia na tela.
-         */
-        dominoService.ativarAtualizacaoMonitorLayout(
-                equipamento
-        );
-
-        DominoFifoCountResponse fifoInicial =
-                dominoService.consultarQuantidadeFifo(
-                        equipamento
+                dominoService.selecionarLayout(
+                        equipamento,
+                        layoutEsperado
                 );
 
-        /*
-         * Não apagamos conteúdo desconhecido automaticamente.
-         * Na retomada, o método pausar() já terá limpado o FIFO.
-         */
-        if (fifoInicial.quantidadeItens() > 0) {
-            throw new BusinessException(
-                    "O FIFO físico já possui "
-                            + fifoInicial.quantidadeItens()
-                            + " item(ns). Limpe ou reconcilie "
-                            + "a impressora antes de iniciar."
-            );
-        }
-
-        int quantidadeEnviada =
-                abastecerAteCapacidade(
-                        equipamentoId
-                );
-
-        if (quantidadeEnviada == 0) {
-            throw new BusinessException(
-                    "Nenhum item foi enviado ao FIFO durante "
-                            + "a preparação da produção."
-            );
-        }
-
-        FilaImpressao primeiroEnviado =
-                filaRepository
-                        .findFirstByEquipamentoIdAndStatusOrderByOrdemFilaAsc(
-                                equipamentoId,
-                                StatusFilaImpressao.ENVIADO_FIFO
-                        )
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        "Nenhum registro enviado foi encontrado."
-                                )
+                DominoLayoutOnlineResponse layoutConfirmado =
+                        dominoService.consultarLayoutOnline(
+                                equipamento
                         );
 
-        /*
-         * Com o cabeçote desabilitado, o Print Go preparatório
-         * carrega o primeiro conjunto de dados sem imprimir
-         * fisicamente no produto.
-         */
-        dominoService.dispararSoftwarePrintGo(
-                equipamento
-        );
+                if (!layoutEsperado.equals(
+                        layoutConfirmado.nome()
+                )) {
+                    throw new BusinessException(
+                            "A impressora não confirmou o layout "
+                                    + layoutEsperado
+                                    + " como online."
+                    );
+                }
+            }
 
-        DominoProductCountResponse contadorDepois =
-                dominoService.consultarContadorProduto(
-                        equipamento
-                );
-
-        primeiroEnviado.setStatus(
-                StatusFilaImpressao.PRONTO_IMPRESSAO
-        );
-
-        primeiroEnviado.setContadorCarregamento(
-                contadorDepois.quantidade()
-        );
-
-        primeiroEnviado.setMensagemErro(null);
-
-        /*
-         * Garante que o estado lógico foi gravado antes de
-         * habilitar fisicamente a impressão.
-         */
-        filaRepository.saveAndFlush(
-                primeiroEnviado
-        );
-
-        DominoFifoCountResponse fifoPreparado =
-                dominoService.consultarQuantidadeFifo(
-                        equipamento
-                );
-
-        /*
-         * Se somente um registro tiver sido enviado, o Print Go
-         * preparatório poderá deixar o FIFO com zero porque esse
-         * registro já foi carregado como PRONTO_IMPRESSAO.
-         *
-         * Portanto, a existência de primeiroEnviado como pronto
-         * é a confirmação principal; não exigimos FIFO > 0.
-         */
-        if (primeiroEnviado.getStatus()
-                != StatusFilaImpressao.PRONTO_IMPRESSAO) {
-            throw new BusinessException(
-                    "A impressora não possui item preparado para impressão."
+            dominoService.ativarAtualizacaoMonitorLayout(
+                    equipamento
             );
-        }
 
-        dominoService.habilitarCabecote(
-                equipamento
-        );
+            DominoFifoCountResponse fifoInicial =
+                    dominoService.consultarQuantidadeFifo(
+                            equipamento
+                    );
+
+            /*
+             * Conteúdo desconhecido nunca deve ser apagado
+             * automaticamente.
+             */
+            if (fifoInicial.quantidadeItens() > 0) {
+                throw new BusinessException(
+                        "O FIFO físico já possui "
+                                + fifoInicial.quantidadeItens()
+                                + " item(ns). Limpe ou reconcilie "
+                                + "a impressora antes de iniciar."
+                );
+            }
+
+            /*
+             * A partir deste ponto o método pode alterar o FIFO.
+             * Se ocorrer erro, tentaremos compensar limpando-o.
+             */
+            fifoFoiAlterado = true;
+
+            int quantidadeEnviada =
+                    abastecerAteCapacidade(
+                            equipamentoId
+                    );
+
+            if (quantidadeEnviada == 0) {
+                throw new BusinessException(
+                        "Nenhum item foi enviado ao FIFO durante "
+                                + "a preparação da produção."
+                );
+            }
+
+            FilaImpressao primeiroEnviado =
+                    filaRepository
+                            .findFirstByEquipamentoIdAndStatusOrderByOrdemFilaAsc(
+                                    equipamentoId,
+                                    StatusFilaImpressao.ENVIADO_FIFO
+                            )
+                            .orElseThrow(() ->
+                                    new BusinessException(
+                                            "Nenhum registro enviado foi encontrado."
+                                    )
+                            );
+
+            /*
+             * Carrega a primeira mensagem na tela, mas ainda
+             * sem permitir impressão física.
+             */
+            dominoService.dispararSoftwarePrintGo(
+                    equipamento
+            );
+
+            DominoProductCountResponse contadorDepois =
+                    dominoService.consultarContadorProduto(
+                            equipamento
+                    );
+
+            primeiroEnviado.setStatus(
+                    StatusFilaImpressao.PRONTO_IMPRESSAO
+            );
+
+            primeiroEnviado.setContadorCarregamento(
+                    contadorDepois.quantidade()
+            );
+
+            primeiroEnviado.setMensagemErro(null);
+
+            filaRepository.saveAndFlush(
+                    primeiroEnviado
+            );
+
+            if (primeiroEnviado.getStatus()
+                    != StatusFilaImpressao.PRONTO_IMPRESSAO) {
+                throw new BusinessException(
+                        "A impressora não possui item preparado para impressão."
+                );
+            }
+
+            /*
+             * Só habilitamos o cabeçote depois que a impressora
+             * e o banco estão preparados.
+             */
+            dominoService.habilitarCabecote(
+                    equipamento
+            );
+
+        } catch (RuntimeException exception) {
+            /*
+             * Mantemos o equipamento em estado seguro.
+             * Uma falha neste comando não substitui a exceção original.
+             */
+            try {
+                dominoService.desabilitarCabecote(
+                        equipamento
+                );
+            } catch (RuntimeException falhaDesabilitar) {
+                exception.addSuppressed(
+                        falhaDesabilitar
+                );
+            }
+
+            /*
+             * Só limpamos o FIFO quando sabemos que este método
+             * começou a alterá-lo. Assim não apagamos dados que
+             * já estavam anteriormente na impressora.
+             */
+            if (fifoFoiAlterado) {
+                try {
+                    dominoService.limparFifo(
+                            equipamento
+                    );
+                } catch (RuntimeException falhaLimpeza) {
+                    exception.addSuppressed(
+                            falhaLimpeza
+                    );
+                }
+            }
+
+            throw exception;
+        }
     }
 
     @Transactional

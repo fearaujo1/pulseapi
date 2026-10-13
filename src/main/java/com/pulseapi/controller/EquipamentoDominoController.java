@@ -45,6 +45,22 @@ public class EquipamentoDominoController {
         );
     }
 
+    @GetMapping("/niveis-liquidos")
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
+    )
+    public ResponseEntity<DominoLiquidLevelsResponse>
+    consultarNiveisLiquidos(
+            @PathVariable Long equipamentoId
+    ) {
+        return ResponseEntity.ok(
+                equipamentoDominoService
+                        .consultarNiveisLiquidos(
+                                equipamentoId
+                        )
+        );
+    }
+
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')")
     @GetMapping("/configuracao")
     public ResponseEntity<DominoConfigurationResponse> consultarConfiguracao(

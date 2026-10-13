@@ -11,7 +11,6 @@ public class LoginResponseDTO {
     private String nome;
     private String email;
     private String perfil;
-    private Boolean primeiroAcesso;
     private String token;
     private String mensagem;
 }

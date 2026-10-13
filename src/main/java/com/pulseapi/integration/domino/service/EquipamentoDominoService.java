@@ -17,39 +17,69 @@ public class EquipamentoDominoService {
             EquipamentoRepository equipamentoRepository,
             DominoService dominoService
     ) {
-        this.equipamentoRepository = equipamentoRepository;
-        this.dominoService = dominoService;
+        this.equipamentoRepository =
+                equipamentoRepository;
+
+        this.dominoService =
+                dominoService;
     }
 
-    public DominoIdentityResponse consultarIdentidade(Long equipamentoId) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
+    public DominoIdentityResponse consultarIdentidade(
+            Long equipamentoId
+    ) {
+        Equipamento equipamento =
+                buscarEValidar(equipamentoId);
 
-        return dominoService.consultarIdentidade(equipamento);
+        return dominoService
+                .consultarIdentidade(equipamento);
     }
 
-    public DominoStatusResponse consultarStatus(Long equipamentoId) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
+    public DominoStatusResponse consultarStatus(
+            Long equipamentoId
+    ) {
+        Equipamento equipamento =
+                buscarEValidar(equipamentoId);
 
-        return dominoService.consultarStatus(equipamento);
+        return dominoService
+                .consultarStatus(equipamento);
     }
 
-    public DominoConfigurationResponse consultarConfiguracao(Long equipamentoId) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
+    public DominoLiquidLevelsResponse consultarNiveisLiquidos(
+            Long equipamentoId
+    ) {
+        Equipamento equipamento =
+                buscarEValidar(equipamentoId);
 
-        return dominoService.consultarConfiguracao(equipamento);
+        return dominoService
+                .consultarNiveisLiquidos(equipamento);
     }
 
-    public DominoFifoCountResponse consultarQuantidadeFifo(Long equipamentoId) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
+    public DominoConfigurationResponse consultarConfiguracao(
+            Long equipamentoId
+    ) {
+        Equipamento equipamento =
+                buscarEValidar(equipamentoId);
 
-        return dominoService.consultarQuantidadeFifo(equipamento);
+        return dominoService
+                .consultarConfiguracao(equipamento);
+    }
+
+    public DominoFifoCountResponse consultarQuantidadeFifo(
+            Long equipamentoId
+    ) {
+        Equipamento equipamento =
+                buscarEValidar(equipamentoId);
+
+        return dominoService
+                .consultarQuantidadeFifo(equipamento);
     }
 
     public DominoFifoSendResponse enviarDadosFifo(
             Long equipamentoId,
             String dados
     ) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
+        Equipamento equipamento =
+                buscarEValidar(equipamentoId);
 
         return dominoService.enviarDadosFifo(
                 equipamento,
@@ -60,16 +90,19 @@ public class EquipamentoDominoService {
     public DominoLayoutOnlineResponse consultarLayoutOnline(
             Long equipamentoId
     ) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
+        Equipamento equipamento =
+                buscarEValidar(equipamentoId);
 
-        return dominoService.consultarLayoutOnline(equipamento);
+        return dominoService
+                .consultarLayoutOnline(equipamento);
     }
 
     public void selecionarLayout(
             Long equipamentoId,
             String nomeLayout
     ) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
+        Equipamento equipamento =
+                buscarEValidar(equipamentoId);
 
         dominoService.selecionarLayout(
                 equipamento,
@@ -80,19 +113,31 @@ public class EquipamentoDominoService {
     public DominoProductCountResponse consultarContadorProduto(
             Long equipamentoId
     ) {
-        Equipamento equipamento = buscarEValidar(equipamentoId);
+        Equipamento equipamento =
+                buscarEValidar(equipamentoId);
 
-        return dominoService.consultarContadorProduto(equipamento);
+        return dominoService
+                .consultarContadorProduto(equipamento);
     }
 
-    private Equipamento buscarEValidar(Long equipamentoId) {
-        Equipamento equipamento = equipamentoRepository.findById(equipamentoId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Equipamento não encontrado com ID: " + equipamentoId
-                ));
+    private Equipamento buscarEValidar(
+            Long equipamentoId
+    ) {
+        Equipamento equipamento =
+                equipamentoRepository
+                        .findById(equipamentoId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Equipamento não encontrado com ID: "
+                                                + equipamentoId
+                                )
+                        );
 
-        if (equipamento.getIp() == null || equipamento.getIp().isBlank()) {
-            throw new ResourceNotFoundException(
+        if (
+                equipamento.getIp() == null ||
+                        equipamento.getIp().isBlank()
+        ) {
+            throw new BusinessException(
                     "O equipamento não possui um endereço IP configurado."
             );
         }
@@ -103,7 +148,10 @@ public class EquipamentoDominoService {
             );
         }
 
-        if (equipamento.getPorta() < 1 || equipamento.getPorta() > 65535) {
+        if (
+                equipamento.getPorta() < 1 ||
+                        equipamento.getPorta() > 65535
+        ) {
             throw new BusinessException(
                     "A porta configurada para o equipamento é inválida."
             );

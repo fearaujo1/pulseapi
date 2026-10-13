@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.pulseapi.entity.usuario.Usuario;
 import org.springframework.security.core.Authentication;
-
+import com.pulseapi.dto.usuario.UsuarioSenhaRequestDTO;
 import java.util.List;
 
 @RestController
@@ -60,6 +60,14 @@ public class UsuarioController {
     public ResponseEntity<UsuarioResponseDTO> atualizarStatus(@PathVariable Long id,
                                                               @RequestBody @Valid UsuarioStatusDTO dto) {
         return ResponseEntity.ok(usuarioService.atualizarStatus(id, dto));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/senha")
+    public ResponseEntity<Void> redefinirSenha(@PathVariable Long id,
+                                               @RequestBody @Valid UsuarioSenhaRequestDTO dto) {
+        usuarioService.redefinirSenha(id,dto);
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasRole('ADMIN')")

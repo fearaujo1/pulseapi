@@ -1,4 +1,4 @@
-package com.pulseapi.dto.parada;
+package com.pulseapi.dto.ocorrencia;
 
 import com.pulseapi.entity.ocorrencia.StatusOcorrencia;
 import com.pulseapi.entity.ocorrencia.TipoOcorrencia;

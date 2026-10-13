@@ -30,6 +30,15 @@ import {
 
 import ImportarItensModal from "./ImportarItensModal.jsx";
 
+import {
+    useAuth,
+} from "../../contexts/AuthContext.jsx";
+
+import {
+    ACOES,
+    podeExecutar,
+} from "../../config/accessControl.js";
+
 const statusItemMap = {
     AGUARDANDO: {
         label: "Aguardando",
@@ -86,6 +95,65 @@ function ProducaoDetalhesModal({
                                    onClose,
                                    onUpdated,
                                }) {
+
+    const { usuario } = useAuth();
+
+    const perfil =
+        usuario?.perfil;
+
+    const podeImportar =
+        podeExecutar(
+            perfil,
+            ACOES.PRODUCAO_IMPORTAR_ITENS
+        );
+
+    const podeFinalizarCarga =
+        podeExecutar(
+            perfil,
+            ACOES.PRODUCAO_FINALIZAR_CARGA
+        );
+
+    const [
+        confirmacaoAcao,
+        setConfirmacaoAcao,
+    ] = useState(null);
+
+    const podeCancelar =
+        podeExecutar(
+            perfil,
+            ACOES.PRODUCAO_CANCELAR
+        );
+
+    const podeIniciar =
+        podeExecutar(
+            perfil,
+            ACOES.PRODUCAO_INICIAR
+        );
+
+    const podePausar =
+        podeExecutar(
+            perfil,
+            ACOES.PRODUCAO_PAUSAR
+        );
+
+    const podeRetomar =
+        podeExecutar(
+            perfil,
+            ACOES.PRODUCAO_RETOMAR
+        );
+
+    const podeFinalizarAvaliacao =
+        podeExecutar(
+            perfil,
+            ACOES.PRODUCAO_FINALIZAR_AVALIACAO
+        );
+
+    const podeGerenciarRetrabalho =
+        podeExecutar(
+            perfil,
+            ACOES.PRODUCAO_MARCAR_RETRABALHO
+        );
+
     const [producao, setProducao] =
         useState(null);
 
@@ -180,6 +248,7 @@ function ProducaoDetalhesModal({
         setCancelamentoOpen(false);
         setMotivoCancelamento("");
         setImportarModalOpen(false);
+        setConfirmacaoAcao(null);
 
         carregarDados(true, true);
     }, [
@@ -314,7 +383,11 @@ function ProducaoDetalhesModal({
         }
     }
 
-    async function importarItens(payload) {
+    async function importarItens(arquivo) {
+        if (!validarPermissao(podeImportar)) {
+            return;
+        }
+
         try {
             setActionLoading("IMPORTAR");
 
@@ -322,7 +395,7 @@ function ProducaoDetalhesModal({
                 await producaoService
                     .importarItens(
                         producao.id,
-                        payload
+                        arquivo
                     );
 
             setImportarModalOpen(false);
@@ -353,7 +426,15 @@ function ProducaoDetalhesModal({
         }
     }
 
-    async function marcarRetrabalho(item) {
+    async function marcarRetrabalho(
+        item
+    ) {
+        if (!validarPermissao(
+            podeGerenciarRetrabalho
+        )) {
+            return;
+        }
+
         await executarAcao(
             `MARCAR-${item.id}`,
             () =>
@@ -369,6 +450,12 @@ function ProducaoDetalhesModal({
     async function desmarcarRetrabalho(
         item
     ) {
+        if (!validarPermissao(
+            podeGerenciarRetrabalho
+        )) {
+            return;
+        }
+
         await executarAcao(
             `DESMARCAR-${item.id}`,
             () =>
@@ -382,6 +469,10 @@ function ProducaoDetalhesModal({
     }
 
     async function cancelarProducao() {
+        if (!validarPermissao(podeCancelar)) {
+            return;
+        }
+
         const motivo =
             motivoCancelamento.trim();
 
@@ -413,62 +504,147 @@ function ProducaoDetalhesModal({
     }
 
     function iniciarProducao() {
-        const confirmado =
-            window.confirm(
-                "Confirma o início da produção? A impressora será preparada e o cabeçote será habilitado."
-            );
-
-        if (!confirmado) {
+        if (!validarPermissao(podeIniciar)) {
             return;
         }
 
-        executarAcao(
-            "INICIAR",
-            () =>
-                producaoService.iniciar(
-                    producao.id
-                ),
-            "Produção iniciada com sucesso."
-        );
+        setCancelamentoOpen(false);
+
+        setConfirmacaoAcao({
+            tipo: "INICIAR",
+            titulo: "Iniciar produção",
+            mensagem:
+                "A impressora será preparada e o cabeçote será habilitado. Confirme somente se a linha estiver pronta para iniciar.",
+            confirmarLabel: "Iniciar produção",
+            destaque: "blue",
+        });
     }
 
     function pausarProducao() {
-        const confirmado =
-            window.confirm(
-                "Confirma a pausa? Pare fisicamente a esteira antes de continuar. O cabeçote será desabilitado e o FIFO será limpo."
-            );
-
-        if (!confirmado) {
+        if (!validarPermissao(podePausar)) {
             return;
         }
 
-        executarAcao(
-            "PAUSAR",
-            () =>
-                producaoService.pausar(
-                    producao.id
-                ),
-            "Produção pausada com sucesso."
-        );
+        setCancelamentoOpen(false);
+
+        setConfirmacaoAcao({
+            tipo: "PAUSAR",
+            titulo: "Pausar produção",
+            mensagem:
+                "Pare fisicamente a esteira antes de continuar. O cabeçote será desabilitado e o Buffer da impressora será limpo.",
+            confirmarLabel: "Confirmar pausa",
+            destaque: "amber",
+        });
     }
 
     function retomarProducao() {
-        const confirmado =
-            window.confirm(
-                "Confirma a retomada? A impressora será novamente preparada e o cabeçote será habilitado."
-            );
+        if (!validarPermissao(podeRetomar)) {
+            return;
+        }
 
-        if (!confirmado) {
+        setCancelamentoOpen(false);
+
+        setConfirmacaoAcao({
+            tipo: "RETOMAR",
+            titulo: "Retomar produção",
+            mensagem:
+                "A impressora será preparada novamente e o cabeçote será habilitado. Verifique se a linha está pronta.",
+            confirmarLabel: "Retomar produção",
+            destaque: "blue",
+        });
+    }
+
+    async function confirmarAcaoProducao() {
+        if (!confirmacaoAcao || !producao) {
+            return;
+        }
+
+        const configuracoes = {
+            INICIAR: {
+                permissao: podeIniciar,
+                acao: () =>
+                    producaoService.iniciar(
+                        producao.id
+                    ),
+                mensagem:
+                    "Produção iniciada com sucesso.",
+            },
+
+            PAUSAR: {
+                permissao: podePausar,
+                acao: () =>
+                    producaoService.pausar(
+                        producao.id
+                    ),
+                mensagem:
+                    "Produção pausada com sucesso.",
+            },
+
+            RETOMAR: {
+                permissao: podeRetomar,
+                acao: () =>
+                    producaoService.retomar(
+                        producao.id
+                    ),
+                mensagem:
+                    "Produção retomada com sucesso.",
+            },
+        };
+
+        const configuracao =
+            configuracoes[confirmacaoAcao.tipo];
+
+        if (
+            !configuracao ||
+            !validarPermissao(configuracao.permissao)
+        ) {
+            return;
+        }
+
+        const sucesso = await executarAcao(
+            confirmacaoAcao.tipo,
+            configuracao.acao,
+            configuracao.mensagem
+        );
+
+        if (sucesso) {
+            setConfirmacaoAcao(null);
+        }
+    }
+
+    function finalizarCarga() {
+        if (!validarPermissao(
+            podeFinalizarCarga
+        )) {
             return;
         }
 
         executarAcao(
-            "RETOMAR",
+            "FINALIZAR_CARGA",
             () =>
-                producaoService.retomar(
-                    producao.id
-                ),
-            "Produção retomada com sucesso."
+                producaoService
+                    .finalizarCarga(
+                        producao.id
+                    ),
+            "Carga finalizada com sucesso."
+        );
+    }
+
+    function finalizarAvaliacao() {
+        if (!validarPermissao(
+            podeFinalizarAvaliacao
+        )) {
+            return;
+        }
+
+        executarAcao(
+            "FINALIZAR_AVALIACAO",
+            () =>
+                producaoService
+                    .finalizarAvaliacao(
+                        producao.id
+                    ),
+            "Avaliação finalizada com sucesso."
         );
     }
 
@@ -577,59 +753,52 @@ function ProducaoDetalhesModal({
                                 />
 
                                 <AcoesProducao
-                                    producao={
-                                        producao
-                                    }
-                                    bloqueado={
-                                        bloqueado
-                                    }
-                                    actionLoading={
-                                        actionLoading
-                                    }
-                                    onImportar={() =>
-                                        setImportarModalOpen(
-                                            true
-                                        )
-                                    }
-                                    onFinalizarCarga={() =>
-                                        executarAcao(
-                                            "FINALIZAR_CARGA",
-                                            () =>
-                                                producaoService
-                                                    .finalizarCarga(
-                                                        producao.id
-                                                    ),
-                                            "Carga finalizada com sucesso."
-                                        )
-                                    }
-                                    onIniciar={
-                                        iniciarProducao
-                                    }
-                                    onPausar={
-                                        pausarProducao
-                                    }
-                                    onRetomar={
-                                        retomarProducao
-                                    }
-                                    onFinalizarAvaliacao={() =>
-                                        executarAcao(
-                                            "FINALIZAR_AVALIACAO",
-                                            () =>
-                                                producaoService
-                                                    .finalizarAvaliacao(
-                                                        producao.id
-                                                    ),
-                                            "Avaliação finalizada com sucesso."
-                                        )
-                                    }
-                                    onCancelar={() =>
-                                        setCancelamentoOpen(
-                                            true
-                                        )
-                                    }
+                                    producao={producao}
+                                    bloqueado={bloqueado}
+                                    actionLoading={actionLoading}
+                                    podeImportar={podeImportar}
+                                    podeFinalizarCarga={podeFinalizarCarga}
+                                    podeIniciar={podeIniciar}
+                                    podePausar={podePausar}
+                                    podeRetomar={podeRetomar}
+                                    podeFinalizarAvaliacao={podeFinalizarAvaliacao}
+                                    podeCancelar={podeCancelar}
+                                    onImportar={() => setImportarModalOpen(true)}
+                                    onFinalizarCarga={finalizarCarga}
+                                    onIniciar={iniciarProducao}
+                                    onPausar={pausarProducao}
+                                    onRetomar={retomarProducao}
+                                    onFinalizarAvaliacao={finalizarAvaliacao}
+                                    onCancelar={() => {
+                                        setConfirmacaoAcao(null);
+                                        setCancelamentoOpen(true);
+                                    }}
                                 />
 
-                                {cancelamentoOpen && (
+                                {confirmacaoAcao && (
+                                    <ConfirmacaoAcaoBox
+                                        titulo={confirmacaoAcao.titulo}
+                                        mensagem={confirmacaoAcao.mensagem}
+                                        confirmarLabel={
+                                            confirmacaoAcao.confirmarLabel
+                                        }
+                                        destaque={
+                                            confirmacaoAcao.destaque
+                                        }
+                                        loading={
+                                            actionLoading ===
+                                            confirmacaoAcao.tipo
+                                        }
+                                        onConfirmar={
+                                            confirmarAcaoProducao
+                                        }
+                                        onFechar={() =>
+                                            setConfirmacaoAcao(null)
+                                        }
+                                    />
+                                )}
+
+                                {podeCancelar && cancelamentoOpen && (
                                     <CancelamentoBox
                                         motivo={
                                             motivoCancelamento
@@ -658,18 +827,11 @@ function ProducaoDetalhesModal({
 
                                 <ItensTable
                                     itens={itens}
-                                    producaoStatus={
-                                        producao.status
-                                    }
-                                    actionLoading={
-                                        actionLoading
-                                    }
-                                    onMarcarRetrabalho={
-                                        marcarRetrabalho
-                                    }
-                                    onDesmarcarRetrabalho={
-                                        desmarcarRetrabalho
-                                    }
+                                    producaoStatus={producao.status}
+                                    actionLoading={actionLoading}
+                                    podeGerenciarRetrabalho={podeGerenciarRetrabalho}
+                                    onMarcarRetrabalho={marcarRetrabalho}
+                                    onDesmarcarRetrabalho={desmarcarRetrabalho}
                                 />
                             </div>
                         ) : (
@@ -681,29 +843,31 @@ function ProducaoDetalhesModal({
                 </div>
             </div>
 
-            <ImportarItensModal
-                isOpen={
-                    importarModalOpen
-                }
-                producao={producao}
-                onClose={() => {
-                    if (
-                        actionLoading !==
-                        "IMPORTAR"
-                    ) {
-                        setImportarModalOpen(
-                            false
-                        );
+            { podeImportar && (
+                <ImportarItensModal
+                    isOpen={
+                        importarModalOpen
                     }
-                }}
-                onImport={
-                    importarItens
-                }
-                loading={
-                    actionLoading ===
-                    "IMPORTAR"
-                }
-            />
+                    producao={producao}
+                    onClose={() => {
+                        if (
+                            actionLoading !==
+                            "IMPORTAR"
+                        ) {
+                            setImportarModalOpen(
+                                false
+                            );
+                        }
+                    }}
+                    onImport={
+                        importarItens
+                    }
+                    loading={
+                        actionLoading ===
+                        "IMPORTAR"
+                    }
+                />
+            )}
         </>
     );
 }
@@ -898,6 +1062,13 @@ function AcoesProducao({
                            producao,
                            bloqueado,
                            actionLoading,
+                           podeImportar,
+                           podeFinalizarCarga,
+                           podeIniciar,
+                           podePausar,
+                           podeRetomar,
+                           podeFinalizarAvaliacao,
+                           podeCancelar,
                            onImportar,
                            onFinalizarCarga,
                            onIniciar,
@@ -909,19 +1080,6 @@ function AcoesProducao({
     const status =
         producao.status;
 
-    const podeCancelar =
-        [
-            "AGUARDANDO_DADOS",
-            "PRONTA",
-            "PAUSADA",
-        ].includes(status);
-
-    const podePausar =
-        [
-            "EM_ANDAMENTO",
-            "EM_RETRABALHO",
-        ].includes(status);
-
     return (
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-base font-bold text-slate-900">
@@ -929,24 +1087,20 @@ function AcoesProducao({
             </h3>
 
             <div className="mt-4 flex flex-wrap gap-3">
-                {status ===
-                    "AGUARDANDO_DADOS" && (
-                        <>
+                {status === "AGUARDANDO_DADOS" && (
+                    <>
+                        {podeImportar && (
                             <ActionButton
                                 icon={FileUp}
                                 label="Importar itens"
-                                onClick={
-                                    onImportar
-                                }
-                                disabled={
-                                    bloqueado
-                                }
+                                onClick={onImportar}
+                                disabled={bloqueado}
                             />
+                        )}
 
+                        {podeFinalizarCarga && (
                             <ActionButton
-                                icon={
-                                    CheckCircle2
-                                }
+                                icon={CheckCircle2}
                                 label="Finalizar carga"
                                 onClick={
                                     onFinalizarCarga
@@ -955,67 +1109,71 @@ function AcoesProducao({
                                     actionLoading ===
                                     "FINALIZAR_CARGA"
                                 }
-                                disabled={
-                                    bloqueado
-                                }
+                                disabled={bloqueado}
                                 color="green"
                             />
-                        </>
+                        )}
+                    </>
+                )}
+
+                {status === "PRONTA" &&
+                    podeIniciar && (
+                        <ActionButton
+                            icon={CirclePlay}
+                            label="Iniciar produção"
+                            onClick={onIniciar}
+                            loading={
+                                actionLoading ===
+                                "INICIAR"
+                            }
+                            disabled={bloqueado}
+                            color="green"
+                        />
                     )}
 
-                {status === "PRONTA" && (
-                    <ActionButton
-                        icon={CirclePlay}
-                        label="Iniciar produção"
-                        onClick={onIniciar}
-                        loading={
-                            actionLoading ===
-                            "INICIAR"
-                        }
-                        disabled={bloqueado}
-                        color="green"
-                    />
-                )}
+                {podePausar &&
+                    [
+                        "EM_ANDAMENTO",
+                        "EM_RETRABALHO",
+                    ].includes(status) && (
+                        <ActionButton
+                            icon={CirclePause}
+                            label={
+                                status ===
+                                "EM_RETRABALHO"
+                                    ? "Pausar retrabalho"
+                                    : "Pausar produção"
+                            }
+                            onClick={onPausar}
+                            loading={
+                                actionLoading ===
+                                "PAUSAR"
+                            }
+                            disabled={bloqueado}
+                            color="amber"
+                        />
+                    )}
 
-                {podePausar && (
-                    <ActionButton
-                        icon={CirclePause}
-                        label={
-                            status ===
-                            "EM_RETRABALHO"
-                                ? "Pausar retrabalho"
-                                : "Pausar produção"
-                        }
-                        onClick={onPausar}
-                        loading={
-                            actionLoading ===
-                            "PAUSAR"
-                        }
-                        disabled={bloqueado}
-                        color="amber"
-                    />
-                )}
-
-                {status === "PAUSADA" && (
-                    <ActionButton
-                        icon={CirclePlay}
-                        label="Retomar produção"
-                        onClick={onRetomar}
-                        loading={
-                            actionLoading ===
-                            "RETOMAR"
-                        }
-                        disabled={bloqueado}
-                        color="green"
-                    />
-                )}
+                {status === "PAUSADA" &&
+                    podeRetomar && (
+                        <ActionButton
+                            icon={CirclePlay}
+                            label="Retomar produção"
+                            onClick={onRetomar}
+                            loading={
+                                actionLoading ===
+                                "RETOMAR"
+                            }
+                            disabled={bloqueado}
+                            color="green"
+                        />
+                    )}
 
                 {status ===
-                    "AGUARDANDO_AVALIACAO" && (
+                    "AGUARDANDO_AVALIACAO" &&
+                    podeFinalizarAvaliacao && (
                         <ActionButton
-                            icon={
-                                CheckCircle2
-                            }
+                            icon={CheckCircle2}
                             label="Finalizar avaliação"
                             onClick={
                                 onFinalizarAvaliacao
@@ -1029,19 +1187,24 @@ function AcoesProducao({
                         />
                     )}
 
-                {podeCancelar && (
-                    <ActionButton
-                        icon={Trash2}
-                        label="Cancelar produção"
-                        onClick={onCancelar}
-                        loading={
-                            actionLoading ===
-                            "CANCELAR"
-                        }
-                        disabled={bloqueado}
-                        color="red"
-                    />
-                )}
+                {podeCancelar &&
+                    [
+                        "AGUARDANDO_DADOS",
+                        "PRONTA",
+                        "PAUSADA",
+                    ].includes(status) && (
+                        <ActionButton
+                            icon={Trash2}
+                            label="Cancelar produção"
+                            onClick={onCancelar}
+                            loading={
+                                actionLoading ===
+                                "CANCELAR"
+                            }
+                            disabled={bloqueado}
+                            color="red"
+                        />
+                    )}
 
                 {status ===
                     "CONCLUIDA" && (
@@ -1065,6 +1228,7 @@ function ItensTable({
                         itens,
                         producaoStatus,
                         actionLoading,
+                        podeGerenciarRetrabalho,
                         onMarcarRetrabalho,
                         onDesmarcarRetrabalho,
                     }) {
@@ -1193,7 +1357,8 @@ function ItensTable({
                                     </td>
 
                                     <td className="px-4 py-4">
-                                        {producaoStatus ===
+                                        {podeGerenciarRetrabalho &&
+                                            producaoStatus ===
                                             "AGUARDANDO_AVALIACAO" &&
                                             item.status ===
                                             "AGUARDANDO_VALIDACAO" && (
@@ -1226,7 +1391,8 @@ function ItensTable({
                                                 </button>
                                             )}
 
-                                        {producaoStatus ===
+                                        {podeGerenciarRetrabalho &&
+                                            producaoStatus ===
                                             "AGUARDANDO_AVALIACAO" &&
                                             item.status ===
                                             "AGUARDANDO_RETRABALHO" && (
@@ -1468,6 +1634,141 @@ function formatarData(data) {
             dateStyle: "short",
             timeStyle: "short",
         }
+    );
+}
+
+function validarPermissao(
+    permitido
+) {
+    if (permitido) {
+        return true;
+    }
+
+    toast.error(
+        "Você não possui permissão para realizar esta operação."
+    );
+
+    return false;
+}
+
+
+function ConfirmacaoAcaoBox({
+                                titulo,
+                                mensagem,
+                                confirmarLabel,
+                                destaque = "blue",
+                                loading,
+                                onConfirmar,
+                                onFechar,
+                            }) {
+    const estilo =
+        destaque === "amber"
+            ? {
+                container:
+                    "border-amber-200 bg-amber-50",
+                icone:
+                    "bg-amber-100 text-amber-700",
+                titulo:
+                    "text-amber-950",
+                texto:
+                    "text-amber-800",
+                botao:
+                    "bg-amber-600 hover:bg-amber-700 focus:ring-amber-200",
+            }
+            : {
+                container:
+                    "border-blue-200 bg-blue-50",
+                icone:
+                    "bg-blue-100 text-blue-700",
+                titulo:
+                    "text-blue-950",
+                texto:
+                    "text-blue-800",
+                botao:
+                    "bg-blue-600 hover:bg-blue-700 focus:ring-blue-200",
+            };
+
+    return (
+        <section
+            className={`
+                rounded-3xl border p-5
+                ${estilo.container}
+            `}
+        >
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-start gap-4">
+                    <div
+                        className={`
+                            flex h-11 w-11 shrink-0
+                            items-center justify-center
+                            rounded-2xl
+                            ${estilo.icone}
+                        `}
+                    >
+                        <CirclePause size={21} />
+                    </div>
+
+                    <div>
+                        <h3
+                            className={`
+                                text-base font-bold
+                                ${estilo.titulo}
+                            `}
+                        >
+                            {titulo}
+                        </h3>
+
+                        <p
+                            className={`
+                                mt-1 max-w-3xl text-sm
+                                leading-6
+                                ${estilo.texto}
+                            `}
+                        >
+                            {mensagem}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex shrink-0 items-center justify-end gap-3">
+                    <button
+                        type="button"
+                        onClick={onFechar}
+                        disabled={loading}
+                        className="h-11 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        Voltar
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={onConfirmar}
+                        disabled={loading}
+                        className={`
+                            inline-flex h-11 items-center
+                            justify-center gap-2 rounded-xl
+                            px-5 text-sm font-semibold
+                            text-white transition
+                            focus:outline-none focus:ring-4
+                            disabled:cursor-not-allowed
+                            disabled:opacity-60
+                            ${estilo.botao}
+                        `}
+                    >
+                        {loading && (
+                            <Loader2
+                                size={17}
+                                className="animate-spin"
+                            />
+                        )}
+
+                        {loading
+                            ? "Processando..."
+                            : confirmarLabel}
+                    </button>
+                </div>
+            </div>
+        </section>
     );
 }
 

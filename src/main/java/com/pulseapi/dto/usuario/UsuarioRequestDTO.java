@@ -13,21 +13,20 @@ import java.util.Set;
 @Setter
 public class UsuarioRequestDTO {
 
-    @NotBlank(message = "O nome é obrigatório")
+    @NotBlank(message = "O nome é obrigatório.")
     private String nome;
 
-    @Email(message = "Email inválido")
-    @NotBlank(message = "O email é obrigatório")
+    @Email(message = "E-mail inválido.")
+    @NotBlank(message = "O e-mail é obrigatório.")
     private String email;
 
-    @NotBlank(message = "A senha temporária é obrigatória.")
-    private String senhaTemporaria;
+    @NotBlank(message = "A senha é obrigatória.")
+    private String senha;
 
     private String telefone;
 
-    @NotNull(message = "O perfil é obrigatório")
+    @NotNull(message = "O perfil é obrigatório.")
     private Long perfilId;
 
-    //Um usuário pode possuir nenhum ou vários turnos.
     private Set<Long> turnoIds = new HashSet<>();
 }

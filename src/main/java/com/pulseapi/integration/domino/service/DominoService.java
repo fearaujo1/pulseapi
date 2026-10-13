@@ -641,4 +641,45 @@ public class DominoService {
                 "ativação da atualização do monitor do layout"
         );
     }
+
+    /*
+     * ============================================================
+     * NÍVEIS DE TINTA E MAKE-UP
+     * ============================================================
+     */
+
+    public DominoLiquidLevelsResponse consultarNiveisLiquidos(
+            Equipamento equipamento
+    ) {
+        byte[] resposta = executarComHistorico(
+                equipamento,
+                "CONSULTAR_NIVEIS_LIQUIDOS",
+                DominoCommands.consultarNiveisLiquidos(),
+                false
+        );
+
+        try {
+            DominoLiquidLevelsResponse niveis =
+                    DominoLiquidLevelsParser.parse(
+                            resposta
+                    );
+
+            System.out.println(
+                    "NÍVEIS DOMINO"
+                            + " | tinta="
+                            + niveis.tinta().descricao()
+                            + " | make-up="
+                            + niveis.makeup().descricao()
+            );
+
+            return niveis;
+
+        } catch (IllegalArgumentException exception) {
+            throw new DominoCommunicationException(
+                    "A impressora retornou níveis de líquidos inválidos: "
+                            + exception.getMessage(),
+                    exception
+            );
+        }
+    }
 }

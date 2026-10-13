@@ -1,6 +1,7 @@
 package com.pulseapi.controller;
 
 import com.pulseapi.dto.relatorio.RelatorioEquipamentoResponseDTO;
+import com.pulseapi.dto.relatorio.RelatorioGeralResponseDTO;
 import com.pulseapi.dto.relatorio.RelatorioImpressaoResponseDTO;
 import com.pulseapi.dto.relatorio.RelatorioOcorrenciaResponseDTO;
 import com.pulseapi.entity.impressao.StatusFilaImpressao;
@@ -14,7 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.core.Authentication;
 import java.time.LocalDate;
 
 @RestController
@@ -128,6 +129,45 @@ public class RelatorioController {
 
         return ResponseEntity.ok(
                 relatorioService.gerarRelatorioEquipamentos()
+        );
+    }
+
+    // =========================
+    // RELATÓRIO GERAL
+    // =========================
+
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
+    )
+    @GetMapping("/geral")
+    public ResponseEntity<RelatorioGeralResponseDTO>
+    gerarRelatorioGeral(
+
+            @RequestParam
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate dataInicial,
+
+            @RequestParam
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate dataFinal,
+
+            Authentication authentication
+    ) {
+        String geradoPor =
+                authentication != null
+                        ? authentication.getName()
+                        : "Não identificado";
+
+        return ResponseEntity.ok(
+                relatorioService.gerarRelatorioGeral(
+                        dataInicial,
+                        dataFinal,
+                        geradoPor
+                )
         );
     }
 
@@ -253,6 +293,60 @@ public class RelatorioController {
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=relatorio-equipamentos.pdf"
+                )
+                .contentType(
+                        MediaType.APPLICATION_PDF
+                )
+                .body(pdf);
+    }
+
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
+    )
+    @GetMapping(
+            value = "/geral/pdf",
+            produces = MediaType.APPLICATION_PDF_VALUE
+    )
+    public ResponseEntity<byte[]> exportarRelatorioGeralPdf(
+
+            @RequestParam
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate dataInicial,
+
+            @RequestParam
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate dataFinal,
+
+            Authentication authentication
+    ) {
+        String geradoPor =
+                authentication != null
+                        ? authentication.getName()
+                        : "Não identificado";
+
+        byte[] pdf =
+                relatorioPdfService.gerarPdfGeral(
+                        dataInicial,
+                        dataFinal,
+                        geradoPor
+                );
+
+        String nomeArquivo =
+                "relatorio-geral-"
+                        + dataInicial
+                        + "-a-"
+                        + dataFinal
+                        + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename="
+                                + nomeArquivo
                 )
                 .contentType(
                         MediaType.APPLICATION_PDF

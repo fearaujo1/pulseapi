@@ -25,7 +25,7 @@ public class PlantaController {
     }
 
     @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR')"
+            "hasAnyRole('ADMIN', 'GESTOR','SUPERVISOR')"
     )
     @PostMapping
     public ResponseEntity<PlantaResponseDTO> cadastrar(

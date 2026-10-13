@@ -1,19 +1,12 @@
 package com.pulseapi.service;
 
 import com.pulseapi.event.ProducaoIniciadaEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 public class FilaImpressaoInicioListener {
-
-    private static final Logger log =
-            LoggerFactory.getLogger(
-                    FilaImpressaoInicioListener.class
-            );
 
     private final FilaImpressaoProcessadorService processadorService;
 
@@ -24,29 +17,23 @@ public class FilaImpressaoInicioListener {
     }
 
     /**
-     * A comunicação com a impressora acontece somente depois
-     * que a transação de início da produção foi confirmada.
+     * A preparação da impressora acontece antes da confirmação
+     * da transação que inicia a produção.
+     *
+     * Se qualquer comando da impressora falhar, a exceção será
+     * propagada e toda a transação será revertida.
+     *
+     * Dessa forma, a produção não ficará como EM_ANDAMENTO
+     * quando a impressora estiver indisponível.
      */
     @TransactionalEventListener(
-            phase = TransactionPhase.AFTER_COMMIT
+            phase = TransactionPhase.BEFORE_COMMIT
     )
     public void aoIniciarProducao(
             ProducaoIniciadaEvent evento
     ) {
-        try {
-            processadorService.prepararInicioProducao(
-                    evento.equipamentoId()
-            );
-
-        } catch (RuntimeException exception) {
-            log.error(
-                    "A produção {} foi iniciada, mas o abastecimento inicial "
-                            + "do equipamento {} falhou: {}",
-                    evento.producaoId(),
-                    evento.equipamentoId(),
-                    exception.getMessage(),
-                    exception
-            );
-        }
+        processadorService.prepararInicioProducao(
+                evento.equipamentoId()
+        );
     }
 }

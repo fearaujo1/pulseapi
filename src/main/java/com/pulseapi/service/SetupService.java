@@ -67,7 +67,7 @@ public class SetupService {
                 .perfil(perfilAdmin)
                 .empresa(empresaSalva)
                 .status(StatusUsuario.ATIVO)
-                .primeiroAcesso(true)
+                .primeiroAcesso(false)
                 .build();
 
         usuarioRepository.save(admin);

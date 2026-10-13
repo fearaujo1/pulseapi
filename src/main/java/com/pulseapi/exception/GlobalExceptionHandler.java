@@ -2,12 +2,19 @@ package com.pulseapi.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(
+                    GlobalExceptionHandler.class
+            );
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleResourceNotFound(ResourceNotFoundException ex) {
@@ -48,10 +55,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGenericException(Exception ex) {
+        log.error("Erro interno não tratado: {}", ex.getMessage(), ex);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Ocorreu um erro interno inesperado."
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR,"Ocorreu um erro interno inesperado.");
         problemDetail.setTitle("Erro interno do servidor");
         return problemDetail;
     }
@@ -73,6 +79,15 @@ public class GlobalExceptionHandler {
                 "Você não tem permissão para acessar este recurso."
         );
         problemDetail.setTitle("Acesso negado");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ProblemDetail handleDisabledException(DisabledException exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                        "Este usuário está inativo. Entre em contato com o administrador.");
+        problemDetail.setTitle("Usuário inativo");
         return problemDetail;
     }
 }

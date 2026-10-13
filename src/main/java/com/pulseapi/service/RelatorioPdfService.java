@@ -8,10 +8,12 @@ import com.pulseapi.entity.ocorrencia.TipoOcorrencia;
 import com.pulseapi.repository.EmpresaRepository;
 import org.openpdf.text.*;
 import org.openpdf.text.pdf.*;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -182,12 +184,12 @@ public class RelatorioPdfService {
             PdfPTable table =
                     new PdfPTable(
                             new float[]{
-                                    1.4f,
-                                    2.1f,
+                                    1.2f,
+                                    2.2f,
+                                    1.8f,
+                                    1.6f,
                                     1.7f,
-                                    3.0f,
-                                    1.5f,
-                                    1.4f
+                                    1.6f
                             }
                     );
 
@@ -623,6 +625,631 @@ public class RelatorioPdfService {
         }
     }
 
+    // =========================================================
+// RELATÓRIO GERAL
+// =========================================================
+
+    public byte[] gerarPdfGeral(
+            LocalDate dataInicial,
+            LocalDate dataFinal,
+            String geradoPor
+    ) {
+        RelatorioGeralResponseDTO relatorio =
+                relatorioService.gerarRelatorioGeral(
+                        dataInicial,
+                        dataFinal,
+                        geradoPor
+                );
+
+        try (
+                ByteArrayOutputStream output =
+                        new ByteArrayOutputStream()
+        ) {
+            Document document =
+                    new Document(
+                            PageSize.A4.rotate(),
+                            30,
+                            30,
+                            36,
+                            45
+                    );
+
+            PdfWriter writer =
+                    PdfWriter.getInstance(
+                            document,
+                            output
+                    );
+
+            writer.setPageEvent(
+                    new RodapePdf()
+            );
+
+            document.open();
+
+            adicionarCabecalho(
+                    document,
+                    "Relatório Geral",
+                    "Visão consolidada das operações industriais do sistema",
+                    dataInicial,
+                    dataFinal
+            );
+
+            adicionarFiltros(
+                    document,
+                    "Responsável pela geração",
+                    relatorio.geradoPor()
+            );
+
+            adicionarEspaco(
+                    document,
+                    12
+            );
+
+            adicionarResumoExecutivo(
+                    document,
+                    relatorio
+            );
+
+            adicionarEspaco(
+                    document,
+                    14
+            );
+
+            adicionarSecaoProducoes(
+                    document,
+                    relatorio.producoes()
+            );
+
+            document.newPage();
+
+            adicionarSecaoImpressoesGeral(
+                    document,
+                    relatorio.impressoes()
+            );
+
+            document.newPage();
+
+            adicionarSecaoOcorrenciasGeral(
+                    document,
+                    relatorio.ocorrencias()
+            );
+
+            document.newPage();
+
+            adicionarSecaoEquipamentosGeral(
+                    document,
+                    relatorio.equipamentos()
+            );
+
+            document.close();
+
+            return output.toByteArray();
+
+        } catch (Exception exception) {
+            throw new RuntimeException(
+                    "Não foi possível gerar o PDF do relatório geral.",
+                    exception
+            );
+        }
+    }
+
+    private void adicionarResumoExecutivo(
+            Document document,
+            RelatorioGeralResponseDTO relatorio
+    ) throws DocumentException {
+        adicionarSecaoTitulo(
+                document,
+                "Resumo executivo"
+        );
+
+        PdfPTable resumo =
+                new PdfPTable(5);
+
+        resumo.setWidthPercentage(100);
+
+        adicionarResumoCelula(
+                resumo,
+                "Produções",
+                relatorio.producoes().total()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Itens planejados",
+                relatorio
+                        .producoes()
+                        .quantidadeTotalPlanejada()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Impressões",
+                relatorio.impressoes().total()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Ocorrências",
+                relatorio.ocorrencias().total()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Equipamentos",
+                relatorio.equipamentos().total()
+        );
+
+        document.add(resumo);
+    }
+
+    private void adicionarSecaoProducoes(
+            Document document,
+            RelatorioProducaoResponseDTO relatorio
+    ) throws DocumentException {
+        adicionarSecaoTitulo(
+                document,
+                "Produções"
+        );
+
+        PdfPTable resumo =
+                new PdfPTable(4);
+
+        resumo.setWidthPercentage(100);
+
+        adicionarResumoCelula(
+                resumo,
+                "Total",
+                relatorio.total()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Aguardando dados",
+                relatorio.aguardandoDados()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Prontas",
+                relatorio.prontas()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Em andamento",
+                relatorio.emAndamento()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Pausadas",
+                relatorio.pausadas()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Em avaliação",
+                relatorio.aguardandoAvaliacao()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Retrabalho",
+                relatorio.emRetrabalho()
+        );
+
+        adicionarResumoCelula(
+                resumo,
+                "Concluídas",
+                relatorio.concluidas()
+        );
+
+        document.add(resumo);
+
+        adicionarEspaco(
+                document,
+                12
+        );
+
+        PdfPTable table =
+                new PdfPTable(
+                        new float[]{
+                                1.7f,
+                                1.4f,
+                                1.8f,
+                                2.2f,
+                                1.8f,
+                                1.2f,
+                                1.5f
+                        }
+                );
+
+        configurarTabela(table);
+
+        adicionarCabecalhoTabela(
+                table,
+                "Ordem",
+                "Criação",
+                "Linha",
+                "Equipamento",
+                "Layout",
+                "Quantidade",
+                "Status"
+        );
+
+        boolean alternar = false;
+
+        for (
+                RelatorioProducaoItemDTO item :
+                relatorio.itens()
+        ) {
+            adicionarCelula(
+                    table,
+                    item.codigoOrdem(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    formatarDataHora(
+                            item.criadaEm()
+                    ),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.linhaNome(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.equipamentoNome(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.layoutNome(),
+                    alternar
+            );
+
+            adicionarCelulaCentralizada(
+                    table,
+                    item.quantidadeTotal(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    formatarEnum(
+                            item.status()
+                    ),
+                    alternar
+            );
+
+            alternar = !alternar;
+        }
+
+        document.add(table);
+
+        adicionarRodapeInformativo(
+                document,
+                relatorio.total()
+        );
+    }
+
+    private void adicionarSecaoImpressoesGeral(
+            Document document,
+            RelatorioImpressaoResponseDTO relatorio
+    ) throws DocumentException {
+        adicionarSecaoTitulo(
+                document,
+                "Impressões"
+        );
+
+        adicionarResumoImpressoes(
+                document,
+                relatorio
+        );
+
+        adicionarEspaco(
+                document,
+                12
+        );
+
+        PdfPTable table =
+                new PdfPTable(
+                        new float[]{
+                                1.4f,
+                                2.0f,
+                                1.7f,
+                                3.2f,
+                                1.5f,
+                                1.1f
+                        }
+                );
+
+        configurarTabela(table);
+
+        adicionarCabecalhoTabela(
+                table,
+                "Data",
+                "Equipamento",
+                "Layout",
+                "Payload",
+                "Status",
+                "Tentativas"
+        );
+
+        boolean alternar = false;
+
+        for (
+                RelatorioImpressaoItemDTO item :
+                relatorio.itens()
+        ) {
+            adicionarCelula(
+                    table,
+                    formatarDataHora(
+                            item.criadoEm()
+                    ),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.equipamentoNome(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.layoutNome(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.payloadMontado(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    formatarEnum(
+                            item.status()
+                    ),
+                    alternar
+            );
+
+            adicionarCelulaCentralizada(
+                    table,
+                    item.tentativas(),
+                    alternar
+            );
+
+            alternar = !alternar;
+        }
+
+        document.add(table);
+
+        adicionarRodapeInformativo(
+                document,
+                relatorio.total()
+        );
+    }
+
+    private void adicionarSecaoOcorrenciasGeral(
+            Document document,
+            RelatorioOcorrenciaResponseDTO relatorio
+    ) throws DocumentException {
+        adicionarSecaoTitulo(
+                document,
+                "Ocorrências"
+        );
+
+        adicionarResumoOcorrencias(
+                document,
+                relatorio
+        );
+
+        adicionarEspaco(
+                document,
+                12
+        );
+
+        PdfPTable table =
+                new PdfPTable(
+                        new float[]{
+                                1.4f,
+                                1.8f,
+                                2.0f,
+                                1.5f,
+                                1.5f,
+                                3.3f
+                        }
+                );
+
+        configurarTabela(table);
+
+        adicionarCabecalhoTabela(
+                table,
+                "Data",
+                "Equipamento",
+                "Título",
+                "Tipo",
+                "Status",
+                "Descrição"
+        );
+
+        boolean alternar = false;
+
+        for (
+                RelatorioOcorrenciaItemDTO item :
+                relatorio.itens()
+        ) {
+            adicionarCelula(
+                    table,
+                    formatarDataHora(
+                            item.criadoEm()
+                    ),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.equipamentoNome(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.titulo(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    formatarEnum(
+                            item.tipo()
+                    ),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    formatarEnum(
+                            item.status()
+                    ),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.descricao(),
+                    alternar
+            );
+
+            alternar = !alternar;
+        }
+
+        document.add(table);
+
+        adicionarRodapeInformativo(
+                document,
+                relatorio.total()
+        );
+    }
+
+    private void adicionarSecaoEquipamentosGeral(
+            Document document,
+            RelatorioEquipamentoResponseDTO relatorio
+    ) throws DocumentException {
+        adicionarSecaoTitulo(
+                document,
+                "Equipamentos"
+        );
+
+        adicionarResumoEquipamentos(
+                document,
+                relatorio
+        );
+
+        adicionarEspaco(
+                document,
+                12
+        );
+
+        PdfPTable table =
+                new PdfPTable(
+                        new float[]{
+                                1.3f,
+                                2.2f,
+                                1.6f,
+                                1.7f,
+                                1.5f,
+                                1.5f,
+                                1.4f
+                        }
+                );
+
+        configurarTabela(table);
+
+        adicionarCabecalhoTabela(
+                table,
+                "Código",
+                "Nome",
+                "Tipo",
+                "Modelo",
+                "Status",
+                "Conexão",
+                "IP"
+        );
+
+        boolean alternar = false;
+
+        for (
+                RelatorioEquipamentoItemDTO item :
+                relatorio.itens()
+        ) {
+            adicionarCelula(
+                    table,
+                    item.codigo(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.nome(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.tipo(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.modelo(),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    formatarEnum(
+                            item.status()
+                    ),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    formatarEnum(
+                            item.statusConexao()
+                    ),
+                    alternar
+            );
+
+            adicionarCelula(
+                    table,
+                    item.ip(),
+                    alternar
+            );
+
+            alternar = !alternar;
+        }
+
+        document.add(table);
+
+        adicionarRodapeInformativo(
+                document,
+                relatorio.total()
+        );
+    }
+
 
     // =========================================================
     // DOCUMENTO
@@ -672,7 +1299,7 @@ public class RelatorioPdfService {
         PdfPTable identidade =
                 new PdfPTable(
                         new float[]{
-                                1.2f,
+                                2.2f,
                                 5.8f
                         }
                 );
@@ -683,32 +1310,49 @@ public class RelatorioPdfService {
                 new PdfPCell();
 
         marca.setBackgroundColor(
-                AZUL
+                AZUL_ESCURO
         );
 
         marca.setBorder(
                 Rectangle.NO_BORDER
         );
 
-        marca.setPadding(12);
+        marca.setPaddingTop(10);
+        marca.setPaddingBottom(10);
+        marca.setPaddingLeft(12);
+        marca.setPaddingRight(12);
 
-        Paragraph pulse =
-                new Paragraph(
-                        "P",
-                        new Font(
-                                Font.HELVETICA,
-                                25,
-                                Font.BOLD,
-                                BRANCO
-                        )
-                );
-
-        pulse.setAlignment(
+        marca.setHorizontalAlignment(
                 Element.ALIGN_CENTER
         );
 
-        marca.addElement(pulse);
+        marca.setVerticalAlignment(
+                Element.ALIGN_MIDDLE
+        );
 
+        Image logo =
+                carregarLogo();
+
+        if (logo != null) {
+            marca.addElement(logo);
+        } else {
+            Paragraph pulse =
+                    new Paragraph(
+                            "AUTOPACK",
+                            new Font(
+                                    Font.HELVETICA,
+                                    15,
+                                    Font.BOLD,
+                                    BRANCO
+                            )
+                    );
+
+            pulse.setAlignment(
+                    Element.ALIGN_CENTER
+            );
+
+            marca.addElement(pulse);
+        }
 
         PdfPCell empresaCell =
                 new PdfPCell();
@@ -718,6 +1362,7 @@ public class RelatorioPdfService {
         );
 
         empresaCell.setPaddingLeft(15);
+
         empresaCell.setVerticalAlignment(
                 Element.ALIGN_MIDDLE
         );
@@ -785,7 +1430,7 @@ public class RelatorioPdfService {
 
         linhaCell.setFixedHeight(3);
         linhaCell.setBackgroundColor(
-                AZUL
+                AZUL_ESCURO
         );
 
         linhaCell.setBorder(
@@ -1756,6 +2401,42 @@ public class RelatorioPdfService {
 
             } catch (Exception ignored) {
             }
+        }
+    }
+
+    private Image carregarLogo() {
+        ClassPathResource resource =
+                new ClassPathResource(
+                        "static/images/logo-autopack.png"
+                );
+
+        if (!resource.exists()) {
+            return null;
+        }
+
+        try (
+                InputStream inputStream =
+                        resource.getInputStream()
+        ) {
+            byte[] imagemBytes =
+                    inputStream.readAllBytes();
+
+            Image logo =
+                    Image.getInstance(imagemBytes);
+
+            logo.scaleToFit(
+                    115,
+                    48
+            );
+
+            logo.setAlignment(
+                    Image.ALIGN_CENTER
+            );
+
+            return logo;
+
+        } catch (Exception exception) {
+            return null;
         }
     }
 }

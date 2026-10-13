@@ -13,7 +13,9 @@ import com.pulseapi.repository.EquipamentoRepository;
 import com.pulseapi.repository.FilaImpressaoRepository;
 import com.pulseapi.repository.OcorrenciaRepository;
 import org.springframework.stereotype.Service;
-
+import com.pulseapi.entity.producao.Producao;
+import com.pulseapi.entity.producao.StatusProducao;
+import com.pulseapi.repository.ProducaoRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -25,15 +27,18 @@ public class RelatorioService {
     private final FilaImpressaoRepository filaImpressaoRepository;
     private final OcorrenciaRepository ocorrenciaRepository;
     private final EquipamentoRepository equipamentoRepository;
+    private final ProducaoRepository producaoRepository;
 
     public RelatorioService(
             FilaImpressaoRepository filaImpressaoRepository,
             OcorrenciaRepository ocorrenciaRepository,
-            EquipamentoRepository equipamentoRepository
+            EquipamentoRepository equipamentoRepository,
+            ProducaoRepository producaoRepository
     ) {
         this.filaImpressaoRepository = filaImpressaoRepository;
         this.ocorrenciaRepository = ocorrenciaRepository;
         this.equipamentoRepository = equipamentoRepository;
+        this.producaoRepository = producaoRepository;
     }
 
     // ==============================
@@ -299,6 +304,215 @@ public class RelatorioService {
                 equipamento.getIp(),
                 equipamento.getPorta(),
                 equipamento.getProtocolo()
+        );
+    }
+
+    // =============================
+// RELATÓRIO DE PRODUÇÕES
+// =============================
+
+    public RelatorioProducaoResponseDTO gerarRelatorioProducoes(
+            LocalDate dataInicial,
+            LocalDate dataFinal
+    ) {
+        validarPeriodo(
+                dataInicial,
+                dataFinal
+        );
+
+        LocalDateTime inicio =
+                dataInicial.atStartOfDay();
+
+        LocalDateTime fim =
+                dataFinal.atTime(
+                        LocalTime.MAX
+                );
+
+        List<Producao> registros =
+                producaoRepository
+                        .buscarParaRelatorio(
+                                inicio,
+                                fim
+                        );
+
+        List<RelatorioProducaoItemDTO> itens =
+                registros.stream()
+                        .map(this::converterProducao)
+                        .toList();
+
+        long aguardandoDados =
+                contarProducoesPorStatus(
+                        registros,
+                        StatusProducao.AGUARDANDO_DADOS
+                );
+
+        long prontas =
+                contarProducoesPorStatus(
+                        registros,
+                        StatusProducao.PRONTA
+                );
+
+        long emAndamento =
+                contarProducoesPorStatus(
+                        registros,
+                        StatusProducao.EM_ANDAMENTO
+                );
+
+        long pausadas =
+                contarProducoesPorStatus(
+                        registros,
+                        StatusProducao.PAUSADA
+                );
+
+        long aguardandoAvaliacao =
+                contarProducoesPorStatus(
+                        registros,
+                        StatusProducao.AGUARDANDO_AVALIACAO
+                );
+
+        long emRetrabalho =
+                contarProducoesPorStatus(
+                        registros,
+                        StatusProducao.EM_RETRABALHO
+                );
+
+        long concluidas =
+                contarProducoesPorStatus(
+                        registros,
+                        StatusProducao.CONCLUIDA
+                );
+
+        long canceladas =
+                contarProducoesPorStatus(
+                        registros,
+                        StatusProducao.CANCELADA
+                );
+
+        long quantidadeTotalPlanejada =
+                registros.stream()
+                        .map(Producao::getQuantidadeTotal)
+                        .filter(
+                                quantidade ->
+                                        quantidade != null
+                        )
+                        .mapToLong(Long::longValue)
+                        .sum();
+
+        return new RelatorioProducaoResponseDTO(
+                dataInicial,
+                dataFinal,
+                (long) registros.size(),
+                aguardandoDados,
+                prontas,
+                emAndamento,
+                pausadas,
+                aguardandoAvaliacao,
+                emRetrabalho,
+                concluidas,
+                canceladas,
+                quantidadeTotalPlanejada,
+                itens
+        );
+    }
+
+    private long contarProducoesPorStatus(
+            List<Producao> producoes,
+            StatusProducao status
+    ) {
+        return producoes.stream()
+                .filter(
+                        producao ->
+                                producao.getStatus() == status
+                )
+                .count();
+    }
+
+    private RelatorioProducaoItemDTO converterProducao(
+            Producao producao
+    ) {
+        return new RelatorioProducaoItemDTO(
+                producao.getId(),
+                producao.getCodigoOrdem(),
+                producao.getStatus(),
+                producao.getQuantidadeTotal(),
+
+                producao.getLinha().getId(),
+                producao.getLinha().getNome(),
+
+                producao
+                        .getEquipamentoPrincipal()
+                        .getId(),
+
+                producao
+                        .getEquipamentoPrincipal()
+                        .getNome(),
+
+                producao
+                        .getLayoutPrincipal()
+                        .getId(),
+
+                producao
+                        .getLayoutPrincipal()
+                        .getNome(),
+
+                producao.getCriadoEm(),
+                producao.getIniciadaEm(),
+                producao.getConcluidaEm(),
+                producao.getCanceladaEm()
+        );
+    }
+
+
+// =============================
+// RELATÓRIO GERAL
+// =============================
+
+    public RelatorioGeralResponseDTO gerarRelatorioGeral(
+            LocalDate dataInicial,
+            LocalDate dataFinal,
+            String geradoPor
+    ) {
+        validarPeriodo(
+                dataInicial,
+                dataFinal
+        );
+
+        RelatorioProducaoResponseDTO producoes =
+                gerarRelatorioProducoes(
+                        dataInicial,
+                        dataFinal
+                );
+
+        RelatorioImpressaoResponseDTO impressoes =
+                gerarRelatorioImpressoes(
+                        dataInicial,
+                        dataFinal,
+                        null,
+                        null,
+                        null
+                );
+
+        RelatorioOcorrenciaResponseDTO ocorrencias =
+                gerarRelatorioOcorrencias(
+                        dataInicial,
+                        dataFinal,
+                        null,
+                        null,
+                        null
+                );
+
+        RelatorioEquipamentoResponseDTO equipamentos =
+                gerarRelatorioEquipamentos();
+
+        return new RelatorioGeralResponseDTO(
+                dataInicial,
+                dataFinal,
+                geradoPor,
+                LocalDateTime.now(),
+                producoes,
+                impressoes,
+                ocorrencias,
+                equipamentos
         );
     }
 

@@ -1,13 +1,22 @@
-import { api } from './api';
+import { api } from "./api";
 
 export const authService = {
     async login(payload) {
-        const response = await api.post('/auth/login', payload);
+        const response =
+            await api.post(
+                "/auth/login",
+                payload
+            );
+
         return response.data;
     },
 
-    async primeiroAcesso(payload) {
-        const response = await api.patch('/auth/primeiro-acesso', payload);
+    async buscarUsuarioAutenticado() {
+        const response =
+            await api.get(
+                "/auth/me"
+            );
+
         return response.data;
-    }
-}
+    },
+};

@@ -1,32 +1,46 @@
-import { Pencil, Trash2, Cable } from "lucide-react";
-import StatusBadge from "../common/StatusBadge.jsx"
+import {
+    Cable,
+    Pencil,
+    Trash2,
+} from "lucide-react";
+
+import StatusBadge from "../common/StatusBadge.jsx";
 
 function EquipmentCards({
                             equipamentos = [],
                             onEdit,
                             onDelete,
                             onIntegracao,
-                            canEdit = true,
-                            canDelete = true
-}) {
+                            canEdit = false,
+                            canDelete = false,
+                            canIntegrate = false,
+                        }) {
     if (equipamentos.length === 0) {
         return (
             <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">
                 Nenhum equipamento encontrado.
             </div>
-        )
+        );
     }
 
+    const possuiAcoes =
+        canIntegrate ||
+        canEdit ||
+        canDelete;
+
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {equipamentos.map((equipamento) =>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            {equipamentos.map((equipamento) => (
                 <div
                     key={equipamento.id}
                     className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
                 >
                     <div className="flex items-start justify-between gap-4">
                         <div>
-                            <p className="text-sm text-slate-500">{equipamento.codigo || "-"}</p>
+                            <p className="text-sm text-slate-500">
+                                {equipamento.codigo || "-"}
+                            </p>
+
                             <h3 className="mt-1 text-xl font-bold text-slate-900">
                                 {equipamento.nome || "-"}
                             </h3>
@@ -38,7 +52,9 @@ function EquipmentCards({
                                     Status
                                 </p>
 
-                                <StatusBadge status={equipamento.status} />
+                                <StatusBadge
+                                    status={equipamento.status}
+                                />
                             </div>
 
                             <div>
@@ -47,108 +63,127 @@ function EquipmentCards({
                                 </p>
 
                                 <StatusBadge
-                                    status={equipamento.statusConexao || "SEM_CONEXAO"}
+                                    status={
+                                        equipamento.statusConexao ||
+                                        "SEM_CONEXAO"
+                                    }
                                 />
                             </div>
                         </div>
                     </div>
 
-
-
                     <div className="mt-6 grid grid-cols-2 gap-4">
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-sm text-slate-500">
-                                Planta
-                            </p>
+                        <InfoCard
+                            label="Planta"
+                            value={equipamento.plantaNome}
+                        />
 
-                            <p className="mt-1 text-sm font-medium text-slate-800">
-                                {equipamento.plantaNome || "-"}
-                            </p>
-                        </div>
+                        <InfoCard
+                            label="Linha"
+                            value={equipamento.linhaNome}
+                        />
 
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-sm text-slate-500">
-                                Linha
-                            </p>
+                        <InfoCard
+                            label="Tipo"
+                            value={equipamento.tipo}
+                        />
 
-                            <p className="mt-1 text-sm font-medium text-slate-800">
-                                {equipamento.linhaNome || "-"}
-                            </p>
-                        </div>
+                        <InfoCard
+                            label="IP"
+                            value={equipamento.ip}
+                        />
 
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-sm text-slate-500">Tipo</p>
-                            <p className="mt-1 text-[13.5px] text-slate-800">
-                                {equipamento.tipo || "-"}
-                            </p>
-                        </div>
+                        <InfoCard
+                            label="Porta"
+                            value={equipamento.porta}
+                        />
 
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-sm text-slate-500">IP</p>
-                            <p className="mt-1 text-[13.5px] text-slate-800">
-                                {equipamento.ip || "-"}
-                            </p>
-                        </div>
+                        <InfoCard
+                            label="Protocolo"
+                            value={equipamento.protocolo}
+                        />
 
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-sm text-slate-500">Porta</p>
-                            <p className="mt-1 text-[13.5px] text-slate-800">
-                                {equipamento.porta || "-"}
-                            </p>
-                        </div>
+                        <InfoCard
+                            label="Fabricante"
+                            value={equipamento.fabricante}
+                        />
 
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-sm text-slate-500">Protocolo</p>
-                            <p className="mt-1 text-[13.5px] text-slate-800">
-                                {equipamento.protocolo || "-"}
-                            </p>
-                        </div>
-
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-sm text-slate-500">Fabricante</p>
-                            <p className="mt-1 text-[13.5px] text-slate-800">
-                                {equipamento.fabricante || "-"}
-                            </p>
-                        </div>
-
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-sm text-slate-500">Modelo</p>
-                            <p className="mt-1 text-[13.5px] text-slate-800">
-                                {equipamento.modelo || "-"}
-                            </p>
-                        </div>
+                        <InfoCard
+                            label="Modelo"
+                            value={equipamento.modelo}
+                        />
                     </div>
 
-                    <div className="mt-6 flex items-center justify-end gap-2">
-                        <button
-                            onClick={() => onIntegracao(equipamento)}
-                            className="p-2 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50 transition"
-                            title="Integração"
-                        >
-                            <Cable size={16} />
-                        </button>
+                    {possuiAcoes && (
+                        <div className="mt-6 flex items-center justify-end gap-2">
+                            {canIntegrate && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onIntegracao?.(
+                                            equipamento
+                                        )
+                                    }
+                                    className="rounded-xl border border-blue-200 p-2 text-blue-600 transition hover:bg-blue-50"
+                                    title="Integração"
+                                    aria-label={`Abrir integração do equipamento ${equipamento.nome}`}
+                                >
+                                    <Cable size={16} />
+                                </button>
+                            )}
 
-                        {canEdit && (
-                            <button
-                                onClick={() => onEdit(equipamento)}
-                                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition"
-                                title="Editar"
-                            >
-                                <Pencil size={16} />
-                            </button>
-                        )}
-                        {canDelete && (
-                            <button
-                                onClick={() => onDelete(equipamento)}
-                                className="p-2 rounded-xl border border-slate-200 text-red-600 hover:bg-red-50 transition"
-                                title="Excluir"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        )}
-                    </div>
+                            {canEdit && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onEdit?.(
+                                            equipamento
+                                        )
+                                    }
+                                    className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
+                                    title="Editar"
+                                    aria-label={`Editar equipamento ${equipamento.nome}`}
+                                >
+                                    <Pencil size={16} />
+                                </button>
+                            )}
+
+                            {canDelete && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onDelete?.(
+                                            equipamento
+                                        )
+                                    }
+                                    className="rounded-xl border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
+                                    title="Excluir"
+                                    aria-label={`Excluir equipamento ${equipamento.nome}`}
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
-            )}
+            ))}
+        </div>
+    );
+}
+
+function InfoCard({
+                      label,
+                      value,
+                  }) {
+    return (
+        <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">
+                {label}
+            </p>
+
+            <p className="mt-1 text-[13.5px] text-slate-800">
+                {value ?? "-"}
+            </p>
         </div>
     );
 }

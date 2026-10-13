@@ -288,4 +288,13 @@ public class DominoCommands {
                 EOT
         };
     }
+
+    public static byte[] consultarNiveisLiquidos() {
+        return new byte[] {
+                ESC,
+                0x79, // y
+                QUERY,
+                EOT
+        };
+    }
 }

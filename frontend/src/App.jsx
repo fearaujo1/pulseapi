@@ -6,38 +6,54 @@ import {
 } from "react-router-dom";
 
 import { Toaster } from "react-hot-toast";
-import { AuthProvider } from "./contexts/AuthContext.jsx";
 
+import {
+    AuthProvider,
+} from "./contexts/AuthContext.jsx";
+import PublicRoute from "./routes/PublicRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import FirstAccessRoute from "./routes/FirstAccessRoute";
 import SetupRoute from "./routes/SetupRoute";
 import InitialRoute from "./routes/InitialRoute";
 import RoleRoute from "./routes/RoleRoute";
 
 import AppLayout from "./components/layout/AppLayout.jsx";
-
-import EquipamentosPage from "./pages/EquipamentosPage";
-import LoginPage from "./pages/LoginPage";
-import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
-import UsuariosPage from "./pages/UsuariosPage.jsx";
-import SetupPage from "./pages/SetupPage.jsx";
+import { ACESSOS } from "./config/accessControl.js";
+import AcessoNegadoPage from "./pages/AcessoNegadoPage.jsx";
+import ConfiguracoesPage from "./pages/ConfiguracoesPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
-import EventosPage from "./pages/EventosPage.jsx";
-import RegistrarOcorrenciaPage from "./pages/RegistrarOcorrenciaPage.jsx";
 import EmDesenvolvimentoPage from "./pages/EmDesenvolvimentoPage.jsx";
 import EquipamentoIntegracaoPage from "./pages/EquipamentoIntegracaoPage.jsx";
+import EquipamentosPage from "./pages/EquipamentosPage";
+import EventosPage from "./pages/EventosPage.jsx";
 import FilaImpressaoPage from "./pages/FilaImpressaoPage";
 import LayoutsImpressaoPage from "./pages/LayoutsImpressaoPage.jsx";
+import LoginPage from "./pages/LoginPage";
 import NovaImpressaoPage from "./pages/NovaImpressaoPage.jsx";
-import RelatoriosPage from "./pages/RelatoriosPage.jsx";
-import ConfiguracoesPage from "./pages/ConfiguracoesPage.jsx";
 import PlantasLinhasPage from "./pages/PlantasLinhasPage.jsx";
 import ProducoesPage from "./pages/ProducoesPage.jsx";
+import RegistrarOcorrenciaPage from "./pages/RegistrarOcorrenciaPage.jsx";
+import RelatoriosPage from "./pages/RelatoriosPage.jsx";
+import SetupPage from "./pages/SetupPage.jsx";
+import UsuariosPage from "./pages/UsuariosPage.jsx";
+
+function protegerPorPerfil(
+    componente,
+    perfis
+) {
+    return (
+        <RoleRoute
+            allowedProfiles={perfis}
+        >
+            {componente}
+        </RoleRoute>
+    );
+}
 
 function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
-
                 <Toaster
                     position="top-right"
                     toastOptions={{
@@ -51,10 +67,9 @@ function App() {
                 />
 
                 <Routes>
-
-                    {/* ==================================== */}
-                    {/* ROTAS PÚBLICAS / CONFIGURAÇÃO       */}
-                    {/* ==================================== */}
+                    {/* ================================== */}
+                    {/* ROTAS PÚBLICAS                    */}
+                    {/* ================================== */}
 
                     <Route
                         path="/"
@@ -72,24 +87,16 @@ function App() {
 
                     <Route
                         path="/login"
-                        element={<LoginPage />}
+                        element={
+                            <PublicRoute>
+                                <LoginPage />
+                            </PublicRoute>
+                        }
                     />
 
-                    <Route
-                        path="/primeiro-acesso"
-                        element={<PrimeiroAcessoPage />}
-                    />
-
-
-                    {/* ==================================== */}
-                    {/* ÁREA INTERNA DO SISTEMA              */}
-                    {/*                                     */}
-                    {/* AppLayout reserva 270px à esquerda  */}
-                    {/* para a Sidebar no desktop.           */}
-                    {/*                                     */}
-                    {/* Cada página continua possuindo      */}
-                    {/* sua própria Topbar.                  */}
-                    {/* ==================================== */}
+                    {/* ================================== */}
+                    {/* ÁREA AUTENTICADA                   */}
+                    {/* ================================== */}
 
                     <Route
                         element={
@@ -98,177 +105,151 @@ function App() {
                             </ProtectedRoute>
                         }
                     >
+                        <Route
+                            path="/acesso-negado"
+                            element={
+                                <AcessoNegadoPage />
+                            }
+                        />
 
-                        {/* ================================ */}
-                        {/* ROTAS GERAIS                     */}
-                        {/* ================================ */}
+                        {/* ============================== */}
+                        {/* TODOS OS PERFIS                */}
+                        {/* ============================== */}
 
                         <Route
                             path="/dashboard"
-                            element={<DashboardPage />}
+                            element={protegerPorPerfil(
+                                <DashboardPage />,
+                                ACESSOS.DASHBOARD
+                            )}
                         />
 
                         <Route
                             path="/equipamentos"
-                            element={<EquipamentosPage />}
-                        />
-
-                        <Route
-                            path="/equipamentos/:id/integracao"
-                            element={<EquipamentoIntegracaoPage />}
+                            element={protegerPorPerfil(
+                                <EquipamentosPage />,
+                                ACESSOS.EQUIPAMENTOS
+                            )}
                         />
 
                         <Route
                             path="/producoes"
-                            element={<ProducoesPage />}
+                            element={protegerPorPerfil(
+                                <ProducoesPage />,
+                                ACESSOS.PRODUCOES
+                            )}
                         />
 
                         <Route
                             path="/linhas"
-                            element={<PlantasLinhasPage />}
+                            element={protegerPorPerfil(
+                                <PlantasLinhasPage />,
+                                ACESSOS.LINHAS
+                            )}
                         />
+
                         <Route
                             path="/produtos"
-                            element={<EmDesenvolvimentoPage />}
+                            element={protegerPorPerfil(
+                                <EmDesenvolvimentoPage />,
+                                ACESSOS.PRODUTOS
+                            )}
                         />
 
-                        {/*
-                            OPERADOR pode criar impressão.
-
-                            O POST /fila-impressao permite:
-                            ADMIN / GESTOR / SUPERVISOR / OPERADOR
-                        */}
                         <Route
                             path="/fila-impressao/nova"
-                            element={<NovaImpressaoPage />}
+                            element={protegerPorPerfil(
+                                <NovaImpressaoPage />,
+                                ACESSOS.NOVA_IMPRESSAO
+                            )}
                         />
 
                         <Route
                             path="/registrar-parada"
-                            element={<RegistrarOcorrenciaPage />}
+                            element={protegerPorPerfil(
+                                <RegistrarOcorrenciaPage />,
+                                ACESSOS.REGISTRAR_PARADA
+                            )}
                         />
 
+                        {/* ============================== */}
+                        {/* GESTÃO                         */}
+                        {/* ADMIN/GESTOR/SUPERVISOR        */}
+                        {/* ============================== */}
 
-                        {/* ================================ */}
-                        {/* ADMIN / GESTOR / SUPERVISOR      */}
-                        {/* ================================ */}
+                        <Route
+                            path="/equipamentos/:id/integracao"
+                            element={protegerPorPerfil(
+                                <EquipamentoIntegracaoPage />,
+                                ACESSOS.INTEGRACAO_EQUIPAMENTO
+                            )}
+                        />
 
                         <Route
                             path="/eventos"
-                            element={
-                                <RoleRoute
-                                    allowedProfiles={[
-                                        "ADMIN",
-                                        "GESTOR",
-                                        "SUPERVISOR",
-                                    ]}
-                                >
-                                    <EventosPage />
-                                </RoleRoute>
-                            }
+                            element={protegerPorPerfil(
+                                <EventosPage />,
+                                ACESSOS.EVENTOS
+                            )}
                         />
 
-                        {/*
-                            Por enquanto a tela usa
-                            GET /fila-impressao,
-                            que é uma listagem GLOBAL.
-
-                            OPERADOR será incluído depois,
-                            quando filtrarmos pela linha dele.
-                        */}
                         <Route
                             path="/fila-impressao"
-                            element={
-                                <RoleRoute
-                                    allowedProfiles={[
-                                        "ADMIN",
-                                        "GESTOR",
-                                        "SUPERVISOR",
-                                    ]}
-                                >
-                                    <FilaImpressaoPage />
-                                </RoleRoute>
-                            }
+                            element={protegerPorPerfil(
+                                <FilaImpressaoPage />,
+                                ACESSOS.FILA_IMPRESSAO
+                            )}
                         />
 
                         <Route
                             path="/layouts-impressao"
-                            element={
-                                <RoleRoute
-                                    allowedProfiles={[
-                                        "ADMIN",
-                                        "GESTOR",
-                                        "SUPERVISOR",
-                                    ]}
-                                >
-                                    <LayoutsImpressaoPage />
-                                </RoleRoute>
-                            }
+                            element={protegerPorPerfil(
+                                <LayoutsImpressaoPage />,
+                                ACESSOS.LAYOUTS_IMPRESSAO
+                            )}
                         />
 
                         <Route
                             path="/relatorios"
-                            element={
-                                <RoleRoute
-                                    allowedProfiles={[
-                                        "ADMIN",
-                                        "GESTOR",
-                                        "SUPERVISOR",
-                                    ]}
-                                >
-                                    <RelatoriosPage />
-                                </RoleRoute>
-                            }
+                            element={protegerPorPerfil(
+                                <RelatoriosPage />,
+                                ACESSOS.RELATORIOS
+                            )}
                         />
 
                         <Route
                             path="/historico"
-                            element={
-                                <RoleRoute
-                                    allowedProfiles={[
-                                        "ADMIN",
-                                        "GESTOR",
-                                        "SUPERVISOR",
-                                    ]}
-                                >
-                                    <EmDesenvolvimentoPage />
-                                </RoleRoute>
-                            }
+                            element={protegerPorPerfil(
+                                <EmDesenvolvimentoPage />,
+                                ACESSOS.HISTORICO
+                            )}
                         />
 
-
-                        {/* ================================ */}
-                        {/* ADMIN                            */}
-                        {/* ================================ */}
+                        {/* ============================== */}
+                        {/* ADMINISTRAÇÃO                  */}
+                        {/* SOMENTE ADMIN                  */}
+                        {/* ============================== */}
 
                         <Route
                             path="/usuarios"
-                            element={
-                                <RoleRoute
-                                    allowedProfiles={["ADMIN"]}
-                                >
-                                    <UsuariosPage />
-                                </RoleRoute>
-                            }
+                            element={protegerPorPerfil(
+                                <UsuariosPage />,
+                                ACESSOS.USUARIOS
+                            )}
                         />
 
                         <Route
                             path="/configuracoes"
-                            element={
-                                <RoleRoute
-                                    allowedProfiles={["ADMIN"]}
-                                >
-                                    <ConfiguracoesPage />
-                                </RoleRoute>
-                            }
+                            element={protegerPorPerfil(
+                                <ConfiguracoesPage />,
+                                ACESSOS.CONFIGURACOES
+                            )}
                         />
-
                     </Route>
 
-
-                    {/* ==================================== */}
-                    {/* FALLBACK                             */}
-                    {/* ==================================== */}
+                    {/* ================================== */}
+                    {/* ROTA DESCONHECIDA                  */}
+                    {/* ================================== */}
 
                     <Route
                         path="*"
@@ -279,7 +260,6 @@ function App() {
                             />
                         }
                     />
-
                 </Routes>
             </BrowserRouter>
         </AuthProvider>

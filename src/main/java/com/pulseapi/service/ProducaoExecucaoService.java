@@ -15,6 +15,7 @@ import com.pulseapi.entity.producao.Producao;
 import com.pulseapi.entity.producao.ProducaoItem;
 import com.pulseapi.entity.producao.StatusProducao;
 import com.pulseapi.entity.producao.StatusProducaoItem;
+import com.pulseapi.event.DashboardAtualizadoEvent;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.exception.ResourceNotFoundException;
 import com.pulseapi.repository.FilaImpressaoRepository;
@@ -36,6 +37,11 @@ import java.util.Set;
 import com.pulseapi.integration.domino.service.DominoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.pulseapi.dto.notificacao.NotificacaoContextoDTO;
+import com.pulseapi.entity.notificacao.TipoNotificacao;
+import com.pulseapi.entity.ocorrencia.Ocorrencia;
+import com.pulseapi.entity.producao.MotivoPausa;
+import com.pulseapi.entity.equipamento.StatusConexaoEquipamento;
 
 @Service
 public class ProducaoExecucaoService {
@@ -58,6 +64,8 @@ public class ProducaoExecucaoService {
     private final ApplicationEventPublisher eventPublisher;
     private final int capacidadeBuffer;
     private final DominoService dominoService;
+    private final OcorrenciaService ocorrenciaService;
+    private final NotificacaoService notificacaoService;
 
     public ProducaoExecucaoService(
             ProducaoRepository producaoRepository,
@@ -70,10 +78,14 @@ public class ProducaoExecucaoService {
                     "${pulseapi.fila-impressao.capacidade-buffer:50}"
             )
             int capacidadeBuffer,
-            DominoService dominoService
+            DominoService dominoService,
+            OcorrenciaService ocorrenciaService,
+            NotificacaoService notificacaoService
     ) {
         if (capacidadeBuffer < 1 || capacidadeBuffer > 4096) {
-            throw new IllegalArgumentException("A capacidade do buffer deve estar entre 1 e 4096");
+            throw new IllegalArgumentException(
+                    "A capacidade do buffer deve estar entre 1 e 4096"
+            );
         }
 
         this.producaoRepository = producaoRepository;
@@ -84,6 +96,8 @@ public class ProducaoExecucaoService {
         this.eventPublisher = eventPublisher;
         this.capacidadeBuffer = capacidadeBuffer;
         this.dominoService = dominoService;
+        this.ocorrenciaService = ocorrenciaService;
+        this.notificacaoService = notificacaoService;
     }
 
     @Transactional
@@ -142,23 +156,25 @@ public class ProducaoExecucaoService {
                         .map(FilaImpressao::getId)
                         .toList();
 
-        List<ProducaoItem> primeirosItens =
-                itemRepository
-                        .findTop2ByProducaoIdAndStatusOrderBySequenciaAsc(
-                                producaoId,
-                                StatusProducaoItem.AGUARDANDO
-                        );
-
         /*
-         * O evento é recebido somente depois do commit.
-         * Depois disso, o listener:
-         * 1. Confirma o Layout;
-         * 2. Envia os itens ao FIFO;
-         * 3. Executa o Software Print Go;
-         * 4. Deixa o primeiro item pronto para impressão
+         * O evento será processado antes do commit.
          *
+         * O listener:
+         * 1. Valida a comunicação com a impressora;
+         * 2. Confirma o layout;
+         * 3. Envia os itens ao FIFO;
+         * 4. Executa o Software Print Go;
+         * 5. Deixa o primeiro item pronto para impressão.
+         *
+         * Se qualquer etapa falhar, a exceção cancela esta transação
+         * e a produção permanece no estado PRONTA.
          */
         eventPublisher.publishEvent(new ProducaoIniciadaEvent(producao.getId(), equipamento.getId()));
+
+        publicarAtualizacaoDashboard(
+                "PRODUCAO_INICIADA",
+                producao.getId()
+        );
 
         return new InicioProducaoResponseDTO(
                 producao.getId(),
@@ -167,8 +183,8 @@ public class ProducaoExecucaoService {
                 filaIds.size(),
                 filaIds,
                 "Produção iniciada com "
-                    + filaIds.size()
-                    + " item(ns) preparados para o buffer da impressora."
+                        + filaIds.size()
+                        + " item(ns) preparados para o buffer da impressora."
         );
     }
 
@@ -309,6 +325,11 @@ public class ProducaoExecucaoService {
                 producao
         );
 
+        publicarAtualizacaoDashboard(
+                "PRODUCAO_PAUSADA",
+                producao.getId()
+        );
+
         return new ControleProducaoResponseDTO(
                 producao.getId(),
                 producao.getStatus(),
@@ -345,17 +366,11 @@ public class ProducaoExecucaoService {
             );
         }
 
+        /*
+         * Primeiro identificamos o equipamento correspondente
+         * à etapa que será retomada.
+         */
         Equipamento equipamento;
-
-        producao.setStatus(
-                statusRetomada
-        );
-
-        producao.setStatusAntesPausa(null);
-
-        producaoRepository.saveAndFlush(
-                producao
-        );
 
         if (statusRetomada
                 == StatusProducao.EM_ANDAMENTO) {
@@ -363,9 +378,49 @@ public class ProducaoExecucaoService {
             equipamento =
                     producao.getEquipamentoPrincipal();
 
-            validarEquipamento(
-                    equipamento
+        } else {
+            equipamento =
+                    producao.getEquipamentoRetrabalho();
+        }
+
+        if (equipamento == null) {
+            throw new BusinessException(
+                    "A produção não possui equipamento configurado "
+                            + "para a etapa que será retomada."
             );
+        }
+
+        validarEquipamento(equipamento);
+
+        /*
+         * Impede que a produção seja retomada enquanto
+         * o equipamento permanece marcado como desconectado.
+         */
+        if (equipamento.getStatusConexao()
+                != StatusConexaoEquipamento.CONECTADO) {
+            throw new BusinessException(
+                    "A produção não pode ser retomada porque "
+                            + "o equipamento permanece sem conexão."
+            );
+        }
+
+        /*
+         * Somente depois de todas as validações alteramos
+         * o estado da produção.
+         */
+        producao.setStatus(
+                statusRetomada
+        );
+
+        producao.setStatusAntesPausa(null);
+        producao.setMotivoPausa(null);
+
+        producaoRepository.saveAndFlush(
+                producao
+        );
+
+        if (statusRetomada
+                == StatusProducao.EM_ANDAMENTO) {
 
             abastecerJanelaPrincipal(
                     producao
@@ -376,13 +431,6 @@ public class ProducaoExecucaoService {
             );
 
         } else {
-            equipamento =
-                    producao.getEquipamentoRetrabalho();
-
-            validarEquipamento(
-                    equipamento
-            );
-
             abastecerJanelaRetrabalho(
                     producao
             );
@@ -393,8 +441,11 @@ public class ProducaoExecucaoService {
         }
 
         /*
-         * O listener receberá este evento somente depois do commit.
-         * Ele preencherá o FIFO e habilitará o cabeçote.
+         * O listener prepara o FIFO, confirma o layout
+         * e habilita o cabeçote.
+         *
+         * Caso essa preparação lance uma exceção antes da
+         * confirmação da transação, a retomada será desfeita.
          */
         eventPublisher.publishEvent(
                 new ProducaoIniciadaEvent(
@@ -403,13 +454,19 @@ public class ProducaoExecucaoService {
                 )
         );
 
+        publicarAtualizacaoDashboard(
+                "PRODUCAO_RETOMADA",
+                producao.getId()
+        );
+
         return new ControleProducaoResponseDTO(
                 producao.getId(),
                 producao.getStatus(),
                 StatusProducao.PAUSADA,
                 0,
                 LocalDateTime.now(),
-                "Produção retomada. A impressora será preparada após a confirmação da operação."
+                "Produção retomada. A impressora será preparada "
+                        + "após a confirmação da operação."
         );
     }
 
@@ -522,6 +579,11 @@ public class ProducaoExecucaoService {
         producao.setCanceladaEm(agora);
 
         producaoRepository.save(producao);
+
+        publicarAtualizacaoDashboard(
+                "PRODUCAO_CANCELADA",
+                producao.getId()
+        );
 
         return new CancelamentoProducaoResponseDTO(
                 producao.getId(),
@@ -725,6 +787,11 @@ public class ProducaoExecucaoService {
                 verificarFimImpressaoPrincipal(producao);
             }
 
+            publicarAtualizacaoDashboard(
+                    "ITEM_IMPRESSO",
+                    producao.getId()
+            );
+
             return;
         }
 
@@ -756,6 +823,11 @@ public class ProducaoExecucaoService {
                 abastecerJanelaRetrabalho(producao);
                 verificarFimRetrabalho(producao);
             }
+
+            publicarAtualizacaoDashboard(
+                    "ITEM_RETRABALHO_IMPRESSO",
+                    producao.getId()
+            );
         }
     }
 
@@ -931,6 +1003,11 @@ public class ProducaoExecucaoService {
 
             producaoRepository.save(producao);
 
+            publicarAtualizacaoDashboard(
+                    "PRODUCAO_CONCLUIDA",
+                    producao.getId()
+            );
+
             return new FinalizacaoAvaliacaoResponseDTO(
                     producaoId,
                     producao.getStatus(),
@@ -993,6 +1070,11 @@ public class ProducaoExecucaoService {
                         producao.getId(),
                         equipamento.getId()
                 )
+        );
+
+        publicarAtualizacaoDashboard(
+                "PRODUCAO_EM_RETRABALHO",
+                producao.getId()
         );
     }
 
@@ -1281,4 +1363,205 @@ public class ProducaoExecucaoService {
             );
         }
     }
+
+    @Transactional
+    public void pausarPorPerdaDeConexao(
+            Long equipamentoId,
+            LocalDateTime ocorridoEm
+    ) {
+        List<Producao> producoes =
+                producaoRepository
+                        .buscarAtivasPorEquipamentoParaAtualizacao(
+                                equipamentoId
+                        );
+
+        if (producoes.isEmpty()) {
+            log.info(
+                    "O equipamento {} perdeu conexão, mas não possui "
+                            + "produção ativa.",
+                    equipamentoId
+            );
+
+            return;
+        }
+
+        for (Producao producao : producoes) {
+            pausarAutomaticamente(
+                    producao,
+                    equipamentoId,
+                    ocorridoEm
+            );
+        }
+    }
+
+    private void pausarAutomaticamente(
+            Producao producao,
+            Long equipamentoId,
+            LocalDateTime ocorridoEm
+    ) {
+        StatusProducao statusAnterior =
+                producao.getStatus();
+
+        EtapaFilaProducao etapaAtual;
+        Equipamento equipamento;
+
+        if (statusAnterior == StatusProducao.EM_RETRABALHO) {
+            etapaAtual = EtapaFilaProducao.RETRABALHO;
+            equipamento = producao.getEquipamentoRetrabalho();
+        } else {
+            etapaAtual = EtapaFilaProducao.PRINCIPAL;
+            equipamento = producao.getEquipamentoPrincipal();
+        }
+
+        if (equipamento == null
+                || !equipamento.getId().equals(equipamentoId)) {
+            log.warn(
+                    "O equipamento {} não corresponde à etapa atual "
+                            + "da produção {}.",
+                    equipamentoId,
+                    producao.getId()
+            );
+
+            return;
+        }
+
+        /*
+         * Não chamamos a Domino aqui.
+         *
+         * A conexão já foi perdida, portanto comandos como
+         * desabilitar cabeçote e limpar FIFO falhariam.
+         */
+        Set<StatusFilaImpressao> statusCancelaveis =
+                Set.of(
+                        StatusFilaImpressao.PENDENTE,
+                        StatusFilaImpressao.ENVIANDO,
+                        StatusFilaImpressao.ENVIADO_FIFO,
+                        StatusFilaImpressao.PRONTO_IMPRESSAO,
+                        StatusFilaImpressao.ERRO
+                );
+
+        List<FilaImpressao> filasAfetadas =
+                filaRepository
+                        .findAllByProducaoItemProducaoIdAndStatusInOrderByOrdemFilaAsc(
+                                producao.getId(),
+                                statusCancelaveis
+                        );
+
+        for (FilaImpressao fila : filasAfetadas) {
+            fila.setStatus(
+                    StatusFilaImpressao.CANCELADO
+            );
+
+            fila.setMensagemErro(
+                    limitarMensagem(
+                            "Registro removido da fila devido à perda "
+                                    + "de conexão com o equipamento."
+                    )
+            );
+
+            ProducaoItem item =
+                    fila.getProducaoItem();
+
+            if (item == null) {
+                continue;
+            }
+
+            if (etapaAtual == EtapaFilaProducao.PRINCIPAL
+                    && fila.getEtapaProducao()
+                    == EtapaFilaProducao.PRINCIPAL
+                    && item.getStatus()
+                    == StatusProducaoItem.EM_IMPRESSAO) {
+
+                item.setStatus(
+                        StatusProducaoItem.AGUARDANDO
+                );
+
+                item.setMensagemErro(
+                        "Item devolvido para a fila após perda de conexão."
+                );
+
+                itemRepository.save(item);
+            }
+
+            if (etapaAtual == EtapaFilaProducao.RETRABALHO
+                    && fila.getEtapaProducao()
+                    == EtapaFilaProducao.RETRABALHO
+                    && item.getStatus()
+                    == StatusProducaoItem.EM_RETRABALHO) {
+
+                item.setStatus(
+                        StatusProducaoItem.AGUARDANDO_RETRABALHO
+                );
+
+                item.setMensagemErro(
+                        "Item devolvido para retrabalho após perda de conexão."
+                );
+
+                itemRepository.save(item);
+            }
+        }
+
+        filaRepository.saveAll(filasAfetadas);
+
+        producao.setStatusAntesPausa(
+                statusAnterior
+        );
+
+        producao.setStatus(
+                StatusProducao.PAUSADA
+        );
+
+        producao.setMotivoPausa(
+                MotivoPausa.PERDA_CONEXAO_EQUIPAMENTO
+        );
+
+        producaoRepository.save(producao);
+
+        publicarAtualizacaoDashboard(
+                "PRODUCAO_PAUSADA_SEM_CONEXAO",
+                producao.getId()
+        );
+
+        Ocorrencia ocorrencia =
+                ocorrenciaService.registrarPerdaConexao(
+                        equipamento,
+                        producao.getId(),
+                        ocorridoEm
+                );
+
+        notificacaoService.notificar(
+                TipoNotificacao.EQUIPAMENTO_SEM_CONEXAO,
+                "Equipamento sem conexão",
+                "O equipamento "
+                        + equipamento.getNome()
+                        + " perdeu a conexão durante a produção "
+                        + producao.getCodigoOrdem()
+                        + ". A produção foi pausada automaticamente.",
+                new NotificacaoContextoDTO(
+                        equipamento.getId(),
+                        ocorrencia.getId(),
+                        producao.getId(),
+                        null
+                )
+        );
+
+        log.warn(
+                "Produção {} pausada automaticamente após a perda "
+                        + "de conexão com o equipamento {}.",
+                producao.getId(),
+                equipamento.getId()
+        );
+    }
+    private void publicarAtualizacaoDashboard(
+            String tipo,
+            Long recursoId
+    ) {
+        eventPublisher.publishEvent(
+                DashboardAtualizadoEvent.criar(
+                        tipo,
+                        recursoId
+                )
+        );
+    }
+
 }

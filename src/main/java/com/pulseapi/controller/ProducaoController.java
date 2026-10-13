@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 import com.pulseapi.service.ProducaoExecucaoService;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/producoes")
@@ -251,5 +253,27 @@ public class ProducaoController {
                         dto
                 )
         );
+    }
+
+    @PostMapping(
+            value = "/{id}/itens/csv",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    @PreAuthorize(
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
+    )
+    public ResponseEntity<ProducaoItensLoteResponseDTO>
+    importarItensCsv(
+            @PathVariable Long id,
+            @RequestPart("arquivo") MultipartFile arquivo
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(
+                        producaoItemService.importarCsv(
+                                id,
+                                arquivo
+                        )
+                );
     }
 }

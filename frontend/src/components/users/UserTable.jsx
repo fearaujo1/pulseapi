@@ -1,6 +1,7 @@
 import {
     KeyRound,
     Pencil,
+    Power,
     Trash2,
 } from "lucide-react";
 
@@ -80,8 +81,9 @@ function UserTable({
                        usuarios = [],
                        loading = false,
                        onEdit,
+                       onResetPassword,
                        onToggleStatus,
-                       onDelete
+                       onDelete,
                    }) {
     if (loading) {
         return (
@@ -221,7 +223,7 @@ function UserTable({
                                         <button
                                             type="button"
                                             onClick={() => onEdit(usuario)}
-                                            className="rounded-xl border border-slate-200 p-2 transition hover:bg-slate-100"
+                                            className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
                                             title="Editar usuário"
                                             aria-label={`Editar ${usuario.nome}`}
                                         >
@@ -230,8 +232,22 @@ function UserTable({
 
                                         <button
                                             type="button"
-                                            onClick={() => onToggleStatus(usuario)}
-                                            className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
+                                            onClick={() =>
+                                                onResetPassword(usuario)
+                                            }
+                                            className="rounded-xl border border-blue-200 p-2 text-blue-600 transition hover:bg-blue-50"
+                                            title="Redefinir senha"
+                                            aria-label={`Redefinir senha de ${usuario.nome}`}
+                                        >
+                                            <KeyRound size={16} />
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                onToggleStatus(usuario)
+                                            }
+                                            className="rounded-xl border border-amber-200 p-2 text-amber-600 transition hover:bg-amber-50"
                                             title={
                                                 usuario.status === "ATIVO"
                                                     ? "Inativar usuário"
@@ -243,7 +259,7 @@ function UserTable({
                                                     : `Ativar ${usuario.nome}`
                                             }
                                         >
-                                            <KeyRound size={16} />
+                                            <Power size={16} />
                                         </button>
 
                                         <button

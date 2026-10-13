@@ -2,19 +2,16 @@ package com.pulseapi.service;
 
 import com.pulseapi.dto.auth.LoginRequestDTO;
 import com.pulseapi.dto.auth.LoginResponseDTO;
-import com.pulseapi.dto.auth.PrimeiroAcessoRequestDTO;
 import com.pulseapi.entity.configuracao.ConfiguracaoSistema;
 import com.pulseapi.entity.usuario.Turno;
 import com.pulseapi.entity.usuario.Usuario;
 import com.pulseapi.exception.BusinessException;
 import com.pulseapi.repository.UsuarioRepository;
 import com.pulseapi.security.TokenService;
-import com.pulseapi.util.SenhaValidator;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
@@ -26,20 +23,17 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
     private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder;
     private final ConfiguracaoSistemaService configuracaoSistemaService;
 
     public AuthService(
             AuthenticationManager authenticationManager,
             TokenService tokenService,
             UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder,
             ConfiguracaoSistemaService configuracaoSistemaService
     ) {
         this.authenticationManager = authenticationManager;
         this.tokenService = tokenService;
         this.usuarioRepository = usuarioRepository;
-        this.passwordEncoder = passwordEncoder;
         this.configuracaoSistemaService = configuracaoSistemaService;
     }
 
@@ -83,7 +77,6 @@ public class AuthService {
                 usuario.getNome(),
                 usuario.getEmail(),
                 usuario.getPerfil().getNome(),
-                usuario.getPrimeiroAcesso(),
                 token,
                 mensagem
         );
@@ -220,7 +213,7 @@ public class AuthService {
         int duracaoPermitida =
                 duracaoTurno
                         + (toleranciaMinutos * 2);
-        
+
         if (duracaoPermitida >= 24 * 60) {
             return true;
         }
@@ -249,66 +242,5 @@ public class AuthService {
         return atualAjustado >= inicioPermitido
                 &&
                 atualAjustado <= fimPermitido;
-    }
-
-
-    // =========================================================
-    // PRIMEIRO ACESSO
-    // =========================================================
-
-    public void trocarSenhaPrimeiroAcesso(
-            String email,
-            PrimeiroAcessoRequestDTO dto
-    ) {
-
-        Usuario usuario =
-                usuarioRepository.findByEmail(email)
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        "Usuário não encontrado."
-                                )
-                        );
-
-        if (!usuario.getPrimeiroAcesso()) {
-            throw new BusinessException(
-                    "Este usuário não está em primeiro acesso."
-            );
-        }
-
-        if (
-                !dto.getNovaSenha()
-                        .equals(
-                                dto.getConfirmarSenha()
-                        )
-        ) {
-            throw new BusinessException(
-                    "A senha e a confirmação não conferem."
-            );
-        }
-
-        SenhaValidator.validarSenhaForte(
-                dto.getNovaSenha()
-        );
-
-        if (
-                passwordEncoder.matches(
-                        dto.getNovaSenha(),
-                        usuario.getSenhaHash()
-                )
-        ) {
-            throw new BusinessException(
-                    "A nova senha não pode ser igual à senha temporária."
-            );
-        }
-
-        usuario.setSenhaHash(
-                passwordEncoder.encode(
-                        dto.getNovaSenha()
-                )
-        );
-
-        usuario.setPrimeiroAcesso(false);
-
-        usuarioRepository.save(usuario);
     }
 }

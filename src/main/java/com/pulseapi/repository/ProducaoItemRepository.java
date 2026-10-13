@@ -92,4 +92,13 @@ public interface ProducaoItemRepository
             Long itemId,
             Long producaoId
     );
+
+    @Query("""
+        select coalesce(max(item.sequencia), 0)
+        from ProducaoItem item
+        where item.producao.id = :producaoId
+        """)
+    Integer buscarMaiorSequencia(
+            @Param("producaoId") Long producaoId
+    );
 }

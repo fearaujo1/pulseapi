@@ -7,6 +7,10 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../contexts/AuthContext.jsx";
+import {
+    ACOES,
+    podeExecutar,
+} from "../config/accessControl.js";
 import { plantaService } from "../services/plantaService.js";
 import { linhaService } from "../services/linhaService.js";
 
@@ -25,10 +29,38 @@ import LinhaResponsaveisModal from "../components/lines/LinhaResponsaveisModal.j
 function PlantasLinhasPage() {
     const { usuario } = useAuth();
 
-    const canManage = [
-        "ADMIN",
-        "GESTOR",
-    ].includes(usuario?.perfil);
+    const perfil =
+        usuario?.perfil;
+
+    const podeCriar =
+        podeExecutar(
+            perfil,
+            ACOES.ESTRUTURA_CRIAR
+        );
+
+    const podeEditar =
+        podeExecutar(
+            perfil,
+            ACOES.ESTRUTURA_EDITAR
+        );
+
+    const podeExcluir =
+        podeExecutar(
+            perfil,
+            ACOES.ESTRUTURA_EXCLUIR
+        );
+
+    const podeGerenciarResponsaveis =
+        podeExecutar(
+            perfil,
+            ACOES.LINHA_GERENCIAR_RESPONSAVEIS
+        );
+
+    const canManage =
+        podeCriar ||
+        podeEditar ||
+        podeExcluir ||
+        podeGerenciarResponsaveis;
 
     const [plantas, setPlantas] = useState([]);
     const [linhas, setLinhas] = useState([]);
@@ -156,22 +188,48 @@ function PlantasLinhasPage() {
         carregarLinhas,
     ]);
 
+    function informarAcessoNegado() {
+        toast.error(
+            "Você não possui permissão para realizar esta operação."
+        );
+    }
+
     function abrirNovaPlanta() {
+        if (!podeCriar) {
+            informarAcessoNegado();
+            return;
+        }
+
         setPlantaEmEdicao(null);
         setPlantaModalOpen(true);
     }
 
     function abrirResponsaveis(linha) {
+        if (!podeGerenciarResponsaveis) {
+            informarAcessoNegado();
+            return;
+        }
+
         setLinhaResponsaveis(linha);
         setResponsaveisModalOpen(true);
     }
 
     function abrirEdicaoPlanta(planta) {
+        if (!podeEditar) {
+            informarAcessoNegado();
+            return;
+        }
+
         setPlantaEmEdicao(planta);
         setPlantaModalOpen(true);
     }
 
     function abrirNovaLinha() {
+        if (!podeCriar) {
+            informarAcessoNegado();
+            return;
+        }
+
         if (!plantaSelecionada) {
             toast.error(
                 "Selecione uma planta."
@@ -184,11 +242,23 @@ function PlantasLinhasPage() {
     }
 
     function abrirEdicaoLinha(linha) {
+        if (!podeEditar) {
+            informarAcessoNegado();
+            return;
+        }
+
         setLinhaEmEdicao(linha);
         setLinhaModalOpen(true);
     }
 
     async function salvarPlanta(formData) {
+        const permitido = plantaEmEdicao ? podeEditar : podeCriar;
+
+        if (!permitido) {
+            informarAcessoNegado();
+            return;
+        }
+
         try {
             setSubmitLoading(true);
 
@@ -230,6 +300,18 @@ function PlantasLinhasPage() {
     }
 
     async function salvarLinha(formData) {
+        const permitido = linhaEmEdicao ? podeEditar : podeCriar;
+
+        if (!permitido) {
+            informarAcessoNegado();
+            return;
+        }
+
+        if (!plantaSelecionada) {
+            toast.error("Selecione uma planta.");
+            return;
+        }
+
         try {
             setSubmitLoading(true);
 
@@ -269,6 +351,11 @@ function PlantasLinhasPage() {
     }
 
     function solicitarExclusaoPlanta(planta) {
+        if (!podeExcluir) {
+            informarAcessoNegado();
+            return;
+        }
+
         setItemParaExcluir({
             tipo: "PLANTA",
             item: planta,
@@ -276,6 +363,11 @@ function PlantasLinhasPage() {
     }
 
     function solicitarExclusaoLinha(linha) {
+        if (!podeExcluir) {
+            informarAcessoNegado();
+            return;
+        }
+
         setItemParaExcluir({
             tipo: "LINHA",
             item: linha,
@@ -283,6 +375,11 @@ function PlantasLinhasPage() {
     }
 
     async function confirmarExclusao() {
+        if (!podeExcluir) {
+            informarAcessoNegado();
+            return;
+        }
+
         if (!itemParaExcluir?.item?.id) {
             return;
         }
@@ -377,7 +474,7 @@ function PlantasLinhasPage() {
                     <ContentCard
                         title="Plantas"
                         headerActions={
-                            canManage && (
+                            podeCriar && (
                                 <button
                                     type="button"
                                     onClick={
@@ -408,7 +505,7 @@ function PlantasLinhasPage() {
                                 onDelete={
                                     solicitarExclusaoPlanta
                                 }
-                                canManage={canManage}
+                                canManage={podeEditar || podeExcluir}
                             />
                         )}
                     </ContentCard>
@@ -420,7 +517,7 @@ function PlantasLinhasPage() {
                                 : "Linhas"
                         }
                         headerActions={
-                            canManage && (
+                            podeCriar && (
                                 <button
                                     type="button"
                                     onClick={
@@ -456,12 +553,9 @@ function PlantasLinhasPage() {
                 </div>
             </main>
 
-            {plantaModalOpen && (
+            {plantaModalOpen && (plantaEmEdicao ? podeEditar : podeCriar) && (
                 <PlantaFormModal
-                    key={
-                        plantaEmEdicao?.id ??
-                        "nova-planta"
-                    }
+                    key={plantaEmEdicao?.id ?? "nova-planta"}
                     isOpen={plantaModalOpen}
                     initialData={plantaEmEdicao}
                     loading={submitLoading}
@@ -473,34 +567,43 @@ function PlantasLinhasPage() {
                 />
             )}
 
-            {linhaModalOpen &&
-                plantaSelecionada && (
-                    <LinhaFormModal
-                        key={
-                            linhaEmEdicao?.id ??
-                            "nova-linha"
+            {linhaModalOpen && plantaSelecionada && (linhaEmEdicao ? podeEditar : podeCriar) && (
+                <LinhaFormModal
+                    key={
+                        linhaEmEdicao?.id ??
+                        "nova-linha"
+                    }
+                    isOpen={linhaModalOpen}
+                    planta={
+                        plantaSelecionada
+                    }
+                    initialData={
+                        linhaEmEdicao
+                    }
+                    loading={
+                        submitLoading
+                    }
+                    onSubmit={
+                        salvarLinha
+                    }
+                    onClose={() => {
+                        if (submitLoading) {
+                            return;
                         }
-                        isOpen={linhaModalOpen}
-                        planta={
-                            plantaSelecionada
-                        }
-                        initialData={
-                            linhaEmEdicao
-                        }
-                        loading={submitLoading}
-                        onSubmit={salvarLinha}
-                        onClose={() => {
-                            setLinhaModalOpen(
-                                false
-                            );
-                            setLinhaEmEdicao(
-                                null
-                            );
-                        }}
-                    />
-                )}
 
-            {responsaveisModalOpen &&
+                        setLinhaModalOpen(
+                            false
+                        );
+
+                        setLinhaEmEdicao(
+                            null
+                        );
+                    }}
+                />
+            )}
+
+            {podeGerenciarResponsaveis &&
+                responsaveisModalOpen &&
                 linhaResponsaveis && (
                     <LinhaResponsaveisModal
                         key={linhaResponsaveis.id}
@@ -513,56 +616,58 @@ function PlantasLinhasPage() {
                     />
                 )}
 
-            <ConfirmDeleteModal
-                isOpen={Boolean(itemParaExcluir)}
-                onClose={() =>
-                    setItemParaExcluir(null)
-                }
-                onConfirm={confirmarExclusao}
-                loading={deleteLoading}
-                title={
-                    itemParaExcluir?.tipo ===
-                    "PLANTA"
-                        ? "Excluir Planta"
-                        : "Excluir Linha"
-                }
-                description={
-                    itemParaExcluir?.tipo ===
-                    "PLANTA"
-                        ? "Confirme a exclusão desta planta."
-                        : "Confirme a exclusão desta linha."
-                }
-                warningMessage={
-                    itemParaExcluir?.tipo ===
-                    "PLANTA"
-                        ? "Plantas que possuem linhas não podem ser excluídas."
-                        : "Linhas que possuem equipamentos não podem ser excluídas."
-                }
-                itemLabel={
-                    itemParaExcluir?.tipo ===
-                    "PLANTA"
-                        ? "Planta selecionada"
-                        : "Linha selecionada"
-                }
-                itemName={
-                    itemParaExcluir?.item?.nome
-                }
-                details={[
-                    {
-                        label: "Código",
-                        value:
-                        itemParaExcluir?.item
-                            ?.codigo,
-                    },
-                    {
-                        label: "Status",
-                        value:
-                        itemParaExcluir?.item
-                            ?.status,
-                    },
-                ]}
-                confirmText="Confirmar Exclusão"
-            />
+            {podeExcluir && (
+                <ConfirmDeleteModal
+                    isOpen={Boolean(itemParaExcluir)}
+                    onClose={() =>
+                        setItemParaExcluir(null)
+                    }
+                    onConfirm={confirmarExclusao}
+                    loading={deleteLoading}
+                    title={
+                        itemParaExcluir?.tipo ===
+                        "PLANTA"
+                            ? "Excluir Planta"
+                            : "Excluir Linha"
+                    }
+                    description={
+                        itemParaExcluir?.tipo ===
+                        "PLANTA"
+                            ? "Confirme a exclusão desta planta."
+                            : "Confirme a exclusão desta linha."
+                    }
+                    warningMessage={
+                        itemParaExcluir?.tipo ===
+                        "PLANTA"
+                            ? "Plantas que possuem linhas não podem ser excluídas."
+                            : "Linhas que possuem equipamentos não podem ser excluídas."
+                    }
+                    itemLabel={
+                        itemParaExcluir?.tipo ===
+                        "PLANTA"
+                            ? "Planta selecionada"
+                            : "Linha selecionada"
+                    }
+                    itemName={
+                        itemParaExcluir?.item?.nome
+                    }
+                    details={[
+                        {
+                            label: "Código",
+                            value:
+                            itemParaExcluir?.item
+                                ?.codigo,
+                        },
+                        {
+                            label: "Status",
+                            value:
+                            itemParaExcluir?.item
+                                ?.status,
+                        },
+                    ]}
+                    confirmText="Confirmar Exclusão"
+                />
+            )}
         </div>
     );
 }

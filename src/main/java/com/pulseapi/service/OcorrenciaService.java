@@ -1,8 +1,8 @@
 package com.pulseapi.service;
 
-import com.pulseapi.dto.parada.OcorrenciaRequestDTO;
-import com.pulseapi.dto.parada.OcorrenciaResponseDTO;
-import com.pulseapi.dto.parada.OcorrenciaStatusDTO;
+import com.pulseapi.dto.ocorrencia.OcorrenciaRequestDTO;
+import com.pulseapi.dto.ocorrencia.OcorrenciaResponseDTO;
+import com.pulseapi.dto.ocorrencia.OcorrenciaStatusDTO;
 import com.pulseapi.entity.equipamento.Equipamento;
 import com.pulseapi.entity.ocorrencia.Ocorrencia;
 import com.pulseapi.entity.ocorrencia.StatusOcorrencia;
@@ -12,6 +12,11 @@ import com.pulseapi.repository.OcorrenciaRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import com.pulseapi.entity.ocorrencia.OrigemOcorrencia;
+import com.pulseapi.entity.ocorrencia.TipoOcorrencia;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 public class OcorrenciaService {
@@ -114,5 +119,32 @@ public class OcorrenciaService {
                 ocorrencia.getEquipamento() != null ? ocorrencia.getEquipamento().getNome() : null,
                 ocorrencia.getEquipamento() != null ? ocorrencia.getEquipamento().getCodigo() : null
         );
+    }
+
+    @Transactional
+    public Ocorrencia registrarPerdaConexao(
+            Equipamento equipamento,
+            Long producaoId,
+            LocalDateTime detectadoEm
+    ) {
+        String descricao =
+                "A conexão com o equipamento "
+                        + equipamento.getNome()
+                        + " foi perdida durante a execução da produção "
+                        + producaoId
+                        + ". A produção foi pausada automaticamente.";
+
+        Ocorrencia ocorrencia =
+                Ocorrencia.builder()
+                        .titulo("Perda de conexão com equipamento")
+                        .descricao(descricao)
+                        .tipo(TipoOcorrencia.FALHA_EQUIPAMENTO)
+                        .status(StatusOcorrencia.ABERTA)
+                        .equipamento(equipamento)
+                        .origem(OrigemOcorrencia.SISTEMA)
+                        .detectadoEm(detectadoEm)
+                        .build();
+
+        return ocorrenciaRepository.save(ocorrencia);
     }
 }

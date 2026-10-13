@@ -25,7 +25,7 @@ public class LinhaController {
     }
 
     @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR')"
+            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
     )
     @PostMapping
     public ResponseEntity<LinhaResponseDTO> cadastrar(

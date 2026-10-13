@@ -23,7 +23,6 @@ export const configuracaoService = {
         return response.data;
     },
 
-
     // =====================================================
     // CONFIGURAÇÃO GERAL
     // =====================================================
@@ -45,7 +44,6 @@ export const configuracaoService = {
         return response.data;
     },
 
-
     // =====================================================
     // TURNOS
     // =====================================================
@@ -53,6 +51,14 @@ export const configuracaoService = {
     async listarTurnos() {
         const response = await api.get(
             "/configuracoes/turnos"
+        );
+
+        return response.data;
+    },
+
+    async buscarTurno(id) {
+        const response = await api.get(
+            `/configuracoes/turnos/${id}`
         );
 
         return response.data;
@@ -80,5 +86,29 @@ export const configuracaoService = {
         await api.delete(
             `/configuracoes/turnos/${id}`
         );
+    },
+
+    // =====================================================
+    // NOTIFICAÇÕES
+    // =====================================================
+
+    async listarConfiguracoesNotificacao() {
+        const response = await api.get(
+            "/configuracoes/notificacoes"
+        );
+
+        return response.data;
+    },
+
+    async atualizarConfiguracaoNotificacao(
+        tipo,
+        payload
+    ) {
+        const response = await api.put(
+            `/configuracoes/notificacoes/${tipo}`,
+            payload
+        );
+
+        return response.data;
     },
 };

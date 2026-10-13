@@ -61,4 +61,25 @@ export const relatorioService = {
 
         return response.data;
     },
+
+    async gerarRelatorioGeral(params) {
+        const response = await api.get(
+            "/relatorios/geral",
+            { params }
+        );
+
+        return response.data;
+    },
+
+    async exportarPdfGeral(params) {
+        const response = await api.get(
+            "/relatorios/geral/pdf",
+            {
+                params,
+                responseType: "blob",
+            }
+        );
+
+        return response.data;
+    },
 };

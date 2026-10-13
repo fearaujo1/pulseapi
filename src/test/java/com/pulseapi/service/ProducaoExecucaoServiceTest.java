@@ -3,6 +3,7 @@ package com.pulseapi.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pulseapi.dto.producao.CancelarProducaoRequestDTO;
 import com.pulseapi.entity.equipamento.Equipamento;
+import com.pulseapi.entity.equipamento.StatusConexaoEquipamento;
 import com.pulseapi.entity.impressao.EtapaFilaProducao;
 import com.pulseapi.entity.impressao.FilaImpressao;
 import com.pulseapi.entity.impressao.LayoutImpressao;
@@ -68,6 +69,12 @@ class ProducaoExecucaoServiceTest {
     @Mock
     private DominoService dominoService;
 
+    @Mock
+    private OcorrenciaService ocorrenciaService;
+
+    @Mock
+    private NotificacaoService notificacaoService;
+
     private ProducaoExecucaoService service;
 
     @BeforeEach
@@ -81,7 +88,9 @@ class ProducaoExecucaoServiceTest {
                         objectMapper,
                         eventPublisher,
                         50,
-                        dominoService
+                        dominoService,
+                        ocorrenciaService,
+                        notificacaoService
                 );
     }
 
@@ -247,6 +256,18 @@ class ProducaoExecucaoServiceTest {
         producao.setStatusAntesPausa(
                 StatusProducao.EM_ANDAMENTO
         );
+
+        /*
+         * A retomada somente é permitida quando o equipamento
+         * está explicitamente conectado.
+         *
+         * Este stubbing fica neste teste para não gerar
+         * UnnecessaryStubbing nos demais cenários.
+         */
+        when(equipamento.getStatusConexao())
+                .thenReturn(
+                        StatusConexaoEquipamento.CONECTADO
+                );
 
         when(
                 producaoRepository

@@ -17,6 +17,15 @@ import {
 
 import toast from "react-hot-toast";
 
+import {
+    useAuth,
+} from "../contexts/AuthContext.jsx";
+
+import {
+    ACOES,
+    podeExecutar,
+} from "../config/accessControl.js";
+
 import Topbar from "../components/layout/Topbar.jsx";
 import PageHeader from "../components/common/PageHeader.jsx";
 import ContentCard from "../components/common/ContentCard.jsx";
@@ -34,7 +43,20 @@ import {
     producaoService,
 } from "../services/producaoService.js";
 
+const STATUS_FINALIZADOS = [
+    "CONCLUIDA",
+    "CANCELADA",
+];
+
 function ProducoesPage() {
+    const { usuario } = useAuth();
+
+    const podeCriar =
+        podeExecutar(
+            usuario?.perfil,
+            ACOES.PRODUCAO_CRIAR
+        );
+
     const [producoes, setProducoes] =
         useState([]);
 
@@ -56,62 +78,78 @@ function ProducoesPage() {
     const [visualizacao, setVisualizacao] =
         useState("ATIVAS");
 
-    const STATUS_FINALIZADOS = [
-        "CONCLUIDA",
-        "CANCELADA",
-    ];
-
     const [
         producaoSelecionadaId,
         setProducaoSelecionadaId,
     ] = useState(null);
 
     const carregarProducoes =
-        useCallback(async (
-            showLoading = true
-        ) => {
-            try {
-                if (showLoading) {
-                    setLoading(true);
+        useCallback(
+            async (
+                showLoading = true,
+                showError = true
+            ) => {
+                try {
+                    if (showLoading) {
+                        setLoading(true);
+                    }
+
+                    const data =
+                        await producaoService
+                            .listar();
+
+                    setProducoes(
+                        Array.isArray(data)
+                            ? data
+                            : []
+                    );
+                } catch (error) {
+                    console.error(
+                        "Erro ao carregar produções:",
+                        error
+                    );
+
+                    if (showLoading) {
+                        setProducoes([]);
+                    }
+
+                    if (showError) {
+                        toast.error(
+                            error.response?.data?.detail ||
+                            error.response?.data?.message ||
+                            "Não foi possível carregar as produções."
+                        );
+                    }
+                } finally {
+                    if (showLoading) {
+                        setLoading(false);
+                    }
                 }
-
-                const data =
-                    await producaoService.listar();
-
-                setProducoes(
-                    Array.isArray(data)
-                        ? data
-                        : []
-                );
-            } catch (error) {
-                console.error(
-                    "Erro ao carregar produções:",
-                    error
-                );
-
-                setProducoes([]);
-
-                toast.error(
-                    error?.response?.data?.detail ||
-                    "Não foi possível carregar as produções."
-                );
-            } finally {
-                if (showLoading) {
-                    setLoading(false);
-                }
-            }
-        }, []);
+            },
+            []
+        );
 
     useEffect(() => {
+        carregarProducoes(
+            true,
+            true
+        );
+
         const intervaloId =
-            window.setInterval(() => {
-                carregarProducoes(false);
-            },
+            window.setInterval(
+                () => {
+                    carregarProducoes(
+                        false,
+                        false
+                    );
+                },
                 5000
             );
 
         return () => {
-            window.clearInterval(intervaloId);
+            window.clearInterval(
+                intervaloId
+            );
         };
     }, [carregarProducoes]);
 
@@ -125,18 +163,21 @@ function ProducoesPage() {
             return producoes.filter(
                 (producao) => {
                     const finalizada =
-                        STATUS_FINALIZADOS.includes(
-                            producao.status
-                        );
+                        STATUS_FINALIZADOS
+                            .includes(
+                                producao.status
+                            );
 
                     const correspondeVisualizacao =
-                        visualizacao === "HISTORICO"
+                        visualizacao ===
+                        "HISTORICO"
                             ? finalizada
                             : !finalizada;
 
                     const correspondeStatus =
                         !status ||
-                        producao.status === status;
+                        producao.status ===
+                        status;
 
                     const correspondeBusca =
                         !termo ||
@@ -146,10 +187,12 @@ function ProducoesPage() {
                         producao.linhaNome
                             ?.toLowerCase()
                             .includes(termo) ||
-                        producao.equipamentoPrincipalNome
+                        producao
+                            .equipamentoPrincipalNome
                             ?.toLowerCase()
                             .includes(termo) ||
-                        producao.equipamentoRetrabalhoNome
+                        producao
+                            .equipamentoRetrabalhoNome
                             ?.toLowerCase()
                             .includes(termo);
 
@@ -173,25 +216,15 @@ function ProducoesPage() {
                 producaoStatusMap
             ).filter(([value]) => {
                 const finalizado =
-                    STATUS_FINALIZADOS.includes(
-                        value
-                    );
+                    STATUS_FINALIZADOS
+                        .includes(value);
 
-                return visualizacao === "HISTORICO"
+                return visualizacao ===
+                "HISTORICO"
                     ? finalizado
                     : !finalizado;
             });
         }, [visualizacao]);
-
-    function alterarVisualizacao(
-        novaVisualizacao
-    ) {
-        setVisualizacao(
-            novaVisualizacao
-        );
-
-        setStatus("");
-    }
 
     const total =
         producoes.length;
@@ -220,33 +253,72 @@ function ProducoesPage() {
             "CONCLUIDA"
         );
 
+    function informarAcessoNegado() {
+        toast.error(
+            "Você não possui permissão para realizar esta operação."
+        );
+    }
+
+    function alterarVisualizacao(
+        novaVisualizacao
+    ) {
+        setVisualizacao(
+            novaVisualizacao
+        );
+
+        setStatus("");
+    }
+
     function selecionarProducao(
         producao
     ) {
+        if (!producao?.id) {
+            return;
+        }
+
         setProducaoSelecionadaId(
             producao.id
         );
     }
 
     function abrirNovaProducao() {
+        if (!podeCriar) {
+            informarAcessoNegado();
+            return;
+        }
+
         setIsFormOpen(true);
+    }
+
+    function fecharFormulario() {
+        if (submitLoading) {
+            return;
+        }
+
+        setIsFormOpen(false);
     }
 
     async function cadastrarProducao(
         payload
     ) {
+        if (!podeCriar) {
+            informarAcessoNegado();
+            return;
+        }
+
         try {
             setSubmitLoading(true);
 
             const novaProducao =
-                await producaoService.cadastrar(
-                    payload
-                );
+                await producaoService
+                    .cadastrar(payload);
 
-            setProducoes((anteriores) => [
-                novaProducao,
-                ...anteriores,
-            ]);
+            setProducoes(
+                (anteriores) => [
+                    novaProducao,
+                    ...anteriores,
+                ]
+            );
 
             setIsFormOpen(false);
 
@@ -282,7 +354,10 @@ function ProducoesPage() {
                         <button
                             type="button"
                             onClick={() =>
-                                carregarProducoes(true)
+                                carregarProducoes(
+                                    true,
+                                    true
+                                )
                             }
                             disabled={loading}
                             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
@@ -299,16 +374,18 @@ function ProducoesPage() {
                             Atualizar
                         </button>
 
-                        <button
-                            type="button"
-                            onClick={
-                                abrirNovaProducao
-                            }
-                            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                        >
-                            <Plus size={17} />
-                            Nova produção
-                        </button>
+                        {podeCriar && (
+                            <button
+                                type="button"
+                                onClick={
+                                    abrirNovaProducao
+                                }
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                            >
+                                <Plus size={17} />
+                                Nova produção
+                            </button>
+                        )}
                     </div>
                 </PageHeader>
 
@@ -341,7 +418,9 @@ function ProducoesPage() {
 
                     <SummaryCard
                         title="Em avaliação"
-                        value={aguardandoAvaliacao}
+                        value={
+                            aguardandoAvaliacao
+                        }
                         subtitle="Aguardando validação"
                         icon={
                             <ClipboardList
@@ -383,10 +462,6 @@ function ProducoesPage() {
                     title="Ordens de Produção"
                     subtitle={`${producoesFiltradas.length} registro(s) encontrado(s)`}
                 >
-                    {/* ====================================== */}
-                    {/* SELETOR: EM ANDAMENTO / HISTÓRICO     */}
-                    {/* ====================================== */}
-
                     <div className="mb-5 flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <p className="text-sm font-semibold text-slate-900">
@@ -406,11 +481,17 @@ function ProducoesPage() {
                                         "ATIVAS"
                                     )
                                 }
-                                className={`flex-1 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition sm:flex-none${
-                                    visualizacao === "ATIVAS"
+                                className={`
+                                    flex-1 whitespace-nowrap
+                                    rounded-lg px-4 py-2
+                                    text-sm font-semibold
+                                    transition sm:flex-none
+                                    ${
+                                    visualizacao ===
+                                    "ATIVAS"
                                         ? "bg-white text-blue-600 shadow-sm"
                                         : "text-slate-500 hover:text-slate-800"
-                                    }
+                                }
                                 `}
                             >
                                 Em andamento
@@ -423,21 +504,23 @@ function ProducoesPage() {
                                         "HISTORICO"
                                     )
                                 }
-                                className={`flex-1 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition sm:flex-none ${
-                                    visualizacao === "HISTORICO"
+                                className={`
+                                    flex-1 whitespace-nowrap
+                                    rounded-lg px-4 py-2
+                                    text-sm font-semibold
+                                    transition sm:flex-none
+                                    ${
+                                    visualizacao ===
+                                    "HISTORICO"
                                         ? "bg-white text-blue-600 shadow-sm"
                                         : "text-slate-500 hover:text-slate-800"
-                                    }
+                                }
                                 `}
                             >
                                 Concluídas e canceladas
                             </button>
                         </div>
                     </div>
-
-                    {/* ====================================== */}
-                    {/* FILTROS                                */}
-                    {/* ====================================== */}
 
                     <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_16rem]">
                         <div className="flex h-11 min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-blue-500 focus-within:bg-white">
@@ -449,9 +532,12 @@ function ProducoesPage() {
                             <input
                                 type="search"
                                 value={busca}
-                                onChange={(event) =>
+                                onChange={(
+                                    event
+                                ) =>
                                     setBusca(
-                                        event.target.value
+                                        event.target
+                                            .value
                                     )
                                 }
                                 placeholder="Buscar por ordem, linha ou equipamento..."
@@ -461,9 +547,12 @@ function ProducoesPage() {
 
                         <select
                             value={status}
-                            onChange={(event) =>
+                            onChange={(
+                                event
+                            ) =>
                                 setStatus(
-                                    event.target.value
+                                    event.target
+                                        .value
                                 )
                             }
                             className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-blue-500"
@@ -481,39 +570,46 @@ function ProducoesPage() {
                                         key={value}
                                         value={value}
                                     >
-                                        {config.label}
+                                        {
+                                            config.label
+                                        }
                                     </option>
                                 )
                             )}
                         </select>
                     </div>
 
-                    {/* ====================================== */}
-                    {/* TABELA                                 */}
-                    {/* ====================================== */}
-
                     <ProducoesTable
-                        producoes={producoesFiltradas}
+                        producoes={
+                            producoesFiltradas
+                        }
                         loading={loading}
-                        onSelect={selecionarProducao}
+                        onSelect={
+                            selecionarProducao
+                        }
                     />
                 </ContentCard>
             </main>
 
-            <ProducaoFormModal
-                isOpen={isFormOpen}
-                onClose={() => {
-                    if (!submitLoading) {
-                        setIsFormOpen(false);
+            {podeCriar && (
+                <ProducaoFormModal
+                    isOpen={isFormOpen}
+                    onClose={
+                        fecharFormulario
                     }
-                }}
-                onSubmit={cadastrarProducao}
-                submitLoading={submitLoading}
-            />
+                    onSubmit={
+                        cadastrarProducao
+                    }
+                    submitLoading={
+                        submitLoading
+                    }
+                />
+            )}
 
             <ProducaoDetalhesModal
                 isOpen={
-                    producaoSelecionadaId !== null
+                    producaoSelecionadaId !==
+                    null
                 }
                 producaoId={
                     producaoSelecionadaId
@@ -524,7 +620,10 @@ function ProducoesPage() {
                     )
                 }
                 onUpdated={() =>
-                    carregarProducoes(false)
+                    carregarProducoes(
+                        false,
+                        true
+                    )
                 }
             />
         </div>

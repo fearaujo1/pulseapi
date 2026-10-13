@@ -13,7 +13,7 @@ import { configuracaoService} from "../services/configuracaoService.js";
 import UserFormModal from "../components/users/UserFormModal";
 import UserFilters from "../components/users/UserFilters";
 import UserTable from "../components/users/UserTable";
-
+import RedefinirSenhaUsuarioModal from "../components/users/RedefinirSenhaUsuarioModal.jsx";
 import SummaryCard from "../components/common/SummaryCard.jsx";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal.jsx";
 import Pagination from "../components/common/Pagination.jsx";
@@ -60,6 +60,10 @@ function UsuariosPage() {
     // Tratamento de turnos
     const [turnos, setTurnos] = useState([]);
 
+
+    const [usuarioParaRedefinirSenha, setUsuarioParaRedefinirSenha,] = useState(null);
+    const [redefinindoSenha, setRedefinindoSenha,] = useState(false);
+
     async function carregarUsuarios() {
         try {
             setLoading(true);
@@ -87,7 +91,7 @@ function UsuariosPage() {
             const payload = {
                 nome: formData.nome,
                 email: formData.email,
-                senhaTemporaria: formData.senhaTemporaria,
+                senha: formData.senha,
                 telefone: formData.telefone || null,
                 perfilId: Number(formData.perfilId || 4),
                 turnoIds: Number(formData.perfilId) === 4 ? formData.turnoIds || [] : [],
@@ -287,6 +291,44 @@ function UsuariosPage() {
         }
     }
 
+    function handleResetPassword(usuario) {
+        setUsuarioParaRedefinirSenha(usuario);
+    }
+
+    async function handleConfirmResetPassword(payload) {
+        if (!usuarioParaRedefinirSenha?.id) {
+            return;
+        }
+
+        try {
+            setRedefinindoSenha(true);
+
+            await usuarioService.redefinirSenha(
+                usuarioParaRedefinirSenha.id,
+                payload
+            );
+
+            setUsuarioParaRedefinirSenha(null);
+
+            toast.success(
+                "Senha redefinida com sucesso."
+            );
+        } catch (error) {
+            console.error(
+                "Erro ao redefinir senha:",
+                error
+            );
+
+            toast.error(
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                "Não foi possível redefinir a senha."
+            );
+        } finally {
+            setRedefinindoSenha(false);
+        }
+    }
+
     return (
         <div className="min-h-screen bg-[#f5f7fb]">
             <Topbar />
@@ -392,9 +434,11 @@ function UsuariosPage() {
                             usuarios={usuariosPaginados}
                             loading={loading}
                             onEdit={handleEditUsuario}
+                            onResetPassword={handleResetPassword}
                             onToggleStatus={handleToggleStatusUsuario}
                             onDelete={handleDeleteUsuario}
                         />
+
 
                         {!loading && (
                             <Pagination
@@ -458,6 +502,18 @@ function UsuariosPage() {
                     },
                 ]}
                 confirmText="Excluir Usuário"
+            />
+
+            <RedefinirSenhaUsuarioModal
+                isOpen={Boolean(usuarioParaRedefinirSenha)}
+                usuario={usuarioParaRedefinirSenha}
+                loading={redefinindoSenha}
+                onClose={() => {
+                    if (!redefinindoSenha) {
+                        setUsuarioParaRedefinirSenha(null);
+                    }
+                }}
+                onSubmit={handleConfirmResetPassword}
             />
         </div>
     );

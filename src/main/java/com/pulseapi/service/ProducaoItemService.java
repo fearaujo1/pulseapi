@@ -18,14 +18,9 @@ import com.pulseapi.repository.ProducaoItemRepository;
 import com.pulseapi.repository.ProducaoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +30,12 @@ public class ProducaoItemService {
     private final ProducaoItemRepository itemRepository;
     private final PayloadMontadorService payloadMontadorService;
     private final ObjectMapper objectMapper;
+
+    private static final long TAMANHO_MAXIMO_CSV =
+            5L * 1024L * 1024L;
+
+    private static final int QUANTIDADE_MAXIMA_ITENS_CSV =
+            500;
 
     public ProducaoItemService(
             ProducaoRepository producaoRepository,
@@ -125,6 +126,575 @@ public class ProducaoItemService {
                 novosItens.size(),
                 quantidadeTotalAtual
         );
+    }
+
+    @Transactional
+    public ProducaoItensLoteResponseDTO importarCsv(
+            Long producaoId,
+            MultipartFile arquivo
+    ) {
+        Producao producao =
+                producaoRepository
+                        .buscarPorIdParaAtualizacao(producaoId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Produção não encontrada."
+                                )
+                        );
+
+        validarProducaoAceitaDados(producao);
+        validarArquivoCsv(arquivo);
+
+        var layout = producao.getLayoutPrincipal();
+
+        if (
+                layout == null ||
+                        layout.getCampos() == null ||
+                        layout.getCampos().isEmpty()
+        ) {
+            throw new BusinessException(
+                    "O layout selecionado não possui campos configurados."
+            );
+        }
+
+        Map<String, String> camposEsperados =
+                new LinkedHashMap<>();
+
+        layout.getCampos().forEach(campo -> {
+            String chaveOriginal =
+                    campo.getChave().trim();
+
+            String chaveNormalizada =
+                    normalizarCabecalho(chaveOriginal);
+
+            if (
+                    camposEsperados.put(
+                            chaveNormalizada,
+                            chaveOriginal
+                    ) != null
+            ) {
+                throw new BusinessException(
+                        "O layout possui campos duplicados: "
+                                + chaveOriginal
+                );
+            }
+        });
+
+        CsvConteudo csv = lerCsv(arquivo);
+
+        validarCabecalhoCsv(
+                csv.cabecalhos(),
+                camposEsperados
+        );
+
+        if (csv.linhas().isEmpty()) {
+            throw new BusinessException(
+                    "O arquivo CSV não possui itens para importação."
+            );
+        }
+
+        if (
+                csv.linhas().size()
+                        > QUANTIDADE_MAXIMA_ITENS_CSV
+        ) {
+            throw new BusinessException(
+                    "Cada arquivo CSV pode possuir no máximo "
+                            + QUANTIDADE_MAXIMA_ITENS_CSV
+                            + " itens."
+            );
+        }
+
+        int maiorSequencia =
+                itemRepository.buscarMaiorSequencia(
+                        producaoId
+                );
+
+        List<ProducaoItem> novosItens =
+                new ArrayList<>();
+
+        for (
+                int indiceLinha = 0;
+                indiceLinha < csv.linhas().size();
+                indiceLinha++
+        ) {
+            List<String> colunas =
+                    csv.linhas().get(indiceLinha);
+
+            int numeroLinhaCsv =
+                    indiceLinha + 2;
+
+            if (
+                    colunas.size()
+                            != csv.cabecalhos().size()
+            ) {
+                throw new BusinessException(
+                        "A linha "
+                                + numeroLinhaCsv
+                                + " possui "
+                                + colunas.size()
+                                + " colunas, mas o cabeçalho possui "
+                                + csv.cabecalhos().size()
+                                + "."
+                );
+            }
+
+            Map<String, String> valores =
+                    new LinkedHashMap<>();
+
+            for (
+                    int indiceColuna = 0;
+                    indiceColuna < csv.cabecalhos().size();
+                    indiceColuna++
+            ) {
+                String cabecalho =
+                        csv.cabecalhos()
+                                .get(indiceColuna);
+
+                String cabecalhoNormalizado =
+                        normalizarCabecalho(cabecalho);
+
+                String chaveLayout =
+                        camposEsperados.get(
+                                cabecalhoNormalizado
+                        );
+
+                valores.put(
+                        chaveLayout,
+                        colunas.get(indiceColuna).trim()
+                );
+            }
+
+            int sequencia =
+                    maiorSequencia
+                            + indiceLinha
+                            + 1;
+
+            try {
+                payloadMontadorService.montar(
+                        layout.getId(),
+                        valores
+                );
+            } catch (BusinessException exception) {
+                throw new BusinessException(
+                        "Erro na linha "
+                                + numeroLinhaCsv
+                                + ": "
+                                + exception.getMessage()
+                );
+            }
+
+            ProducaoItem item =
+                    ProducaoItem.builder()
+                            .producao(producao)
+                            .sequencia(sequencia)
+                            .referenciaExterna(null)
+                            .valoresJson(
+                                    converterParaJson(
+                                            valores
+                                    )
+                            )
+                            .status(
+                                    StatusProducaoItem.AGUARDANDO
+                            )
+                            .build();
+
+            novosItens.add(item);
+        }
+
+        itemRepository.saveAll(novosItens);
+
+        long quantidadeTotalAtual =
+                itemRepository.countByProducaoId(
+                        producaoId
+                );
+
+        return new ProducaoItensLoteResponseDTO(
+                producaoId,
+                csv.linhas().size(),
+                novosItens.size(),
+                quantidadeTotalAtual
+        );
+    }
+
+    private void validarArquivoCsv(
+            MultipartFile arquivo
+    ) {
+        if (
+                arquivo == null ||
+                        arquivo.isEmpty()
+        ) {
+            throw new BusinessException(
+                    "Selecione um arquivo CSV para importar."
+            );
+        }
+
+        if (
+                arquivo.getSize()
+                        > TAMANHO_MAXIMO_CSV
+        ) {
+            throw new BusinessException(
+                    "O arquivo CSV não pode ultrapassar 5 MB."
+            );
+        }
+
+        String nomeArquivo =
+                arquivo.getOriginalFilename();
+
+        if (
+                nomeArquivo == null ||
+                        !nomeArquivo
+                                .toLowerCase(Locale.ROOT)
+                                .endsWith(".csv")
+        ) {
+            throw new BusinessException(
+                    "O arquivo selecionado deve possuir a extensão .csv."
+            );
+        }
+    }
+
+    private void validarCabecalhoCsv(
+            List<String> cabecalhos,
+            Map<String, String> camposEsperados
+    ) {
+        if (cabecalhos.isEmpty()) {
+            throw new BusinessException(
+                    "O arquivo CSV não possui cabeçalho."
+            );
+        }
+
+        Set<String> cabecalhosNormalizados =
+                new LinkedHashSet<>();
+
+        for (String cabecalho : cabecalhos) {
+            if (
+                    cabecalho == null ||
+                            cabecalho.isBlank()
+            ) {
+                throw new BusinessException(
+                        "O cabeçalho do CSV possui uma coluna sem nome."
+                );
+            }
+
+            String normalizado =
+                    normalizarCabecalho(cabecalho);
+
+            if (
+                    !cabecalhosNormalizados.add(
+                            normalizado
+                    )
+            ) {
+                throw new BusinessException(
+                        "O cabeçalho do CSV possui uma coluna duplicada: "
+                                + cabecalho.trim()
+                );
+            }
+        }
+
+        Set<String> camposFaltantes =
+                new LinkedHashSet<>(
+                        camposEsperados.keySet()
+                );
+
+        camposFaltantes.removeAll(
+                cabecalhosNormalizados
+        );
+
+        Set<String> camposAdicionais =
+                new LinkedHashSet<>(
+                        cabecalhosNormalizados
+                );
+
+        camposAdicionais.removeAll(
+                camposEsperados.keySet()
+        );
+
+        if (
+                camposFaltantes.isEmpty() &&
+                        camposAdicionais.isEmpty()
+        ) {
+            return;
+        }
+
+        List<String> mensagens =
+                new ArrayList<>();
+
+        if (!camposFaltantes.isEmpty()) {
+            List<String> nomesFaltantes =
+                    camposFaltantes.stream()
+                            .map(camposEsperados::get)
+                            .toList();
+
+            mensagens.add(
+                    "campos ausentes: "
+                            + String.join(
+                            ", ",
+                            nomesFaltantes
+                    )
+            );
+        }
+
+        if (!camposAdicionais.isEmpty()) {
+            mensagens.add(
+                    "campos não reconhecidos: "
+                            + String.join(
+                            ", ",
+                            camposAdicionais
+                    )
+            );
+        }
+
+        throw new BusinessException(
+                "O cabeçalho do CSV não corresponde ao layout. "
+                        + String.join("; ", mensagens)
+                        + ". Campos esperados: "
+                        + String.join(
+                        ", ",
+                        camposEsperados.values()
+                )
+                        + "."
+        );
+    }
+
+    private CsvConteudo lerCsv(
+            MultipartFile arquivo
+    ) {
+        try {
+            String conteudo =
+                    new String(
+                            arquivo.getBytes(),
+                            StandardCharsets.UTF_8
+                    );
+
+            if (
+                    !conteudo.isEmpty() &&
+                            conteudo.charAt(0) == '\uFEFF'
+            ) {
+                conteudo =
+                        conteudo.substring(1);
+            }
+
+            conteudo = conteudo
+                    .replace("\r\n", "\n")
+                    .replace('\r', '\n');
+
+            String[] linhasArquivo =
+                    conteudo.split("\n", -1);
+
+            int indiceCabecalho = -1;
+
+            for (
+                    int indice = 0;
+                    indice < linhasArquivo.length;
+                    indice++
+            ) {
+                if (!linhasArquivo[indice].isBlank()) {
+                    indiceCabecalho = indice;
+                    break;
+                }
+            }
+
+            if (indiceCabecalho < 0) {
+                throw new BusinessException(
+                        "O arquivo CSV está vazio."
+                );
+            }
+
+            char delimitador =
+                    detectarDelimitador(
+                            linhasArquivo[indiceCabecalho]
+                    );
+
+            List<String> cabecalhos =
+                    analisarLinhaCsv(
+                            linhasArquivo[indiceCabecalho],
+                            delimitador,
+                            indiceCabecalho + 1
+                    );
+
+            List<List<String>> linhas =
+                    new ArrayList<>();
+
+            for (
+                    int indice = indiceCabecalho + 1;
+                    indice < linhasArquivo.length;
+                    indice++
+            ) {
+                String linha =
+                        linhasArquivo[indice];
+
+                if (linha.isBlank()) {
+                    continue;
+                }
+
+                linhas.add(
+                        analisarLinhaCsv(
+                                linha,
+                                delimitador,
+                                indice + 1
+                        )
+                );
+            }
+
+            return new CsvConteudo(
+                    cabecalhos,
+                    linhas
+            );
+
+        } catch (BusinessException exception) {
+            throw exception;
+
+        } catch (Exception exception) {
+            throw new BusinessException(
+                    "Não foi possível ler o arquivo CSV."
+            );
+        }
+    }
+
+    private char detectarDelimitador(
+            String cabecalho
+    ) {
+        int quantidadePontoVirgula =
+                contarDelimitadorForaDeAspas(
+                        cabecalho,
+                        ';'
+                );
+
+        int quantidadeVirgula =
+                contarDelimitadorForaDeAspas(
+                        cabecalho,
+                        ','
+                );
+
+        if (
+                quantidadePontoVirgula == 0 &&
+                        quantidadeVirgula == 0
+        ) {
+            return ';';
+        }
+
+        return quantidadePontoVirgula
+                >= quantidadeVirgula
+                ? ';'
+                : ',';
+    }
+
+    private int contarDelimitadorForaDeAspas(
+            String linha,
+            char delimitador
+    ) {
+        boolean dentroDeAspas = false;
+        int quantidade = 0;
+
+        for (
+                int indice = 0;
+                indice < linha.length();
+                indice++
+        ) {
+            char caractere =
+                    linha.charAt(indice);
+
+            if (caractere == '"') {
+                if (
+                        dentroDeAspas &&
+                                indice + 1 < linha.length() &&
+                                linha.charAt(indice + 1) == '"'
+                ) {
+                    indice++;
+                    continue;
+                }
+
+                dentroDeAspas =
+                        !dentroDeAspas;
+
+            } else if (
+                    caractere == delimitador &&
+                            !dentroDeAspas
+            ) {
+                quantidade++;
+            }
+        }
+
+        return quantidade;
+    }
+
+    private List<String> analisarLinhaCsv(
+            String linha,
+            char delimitador,
+            int numeroLinha
+    ) {
+        List<String> colunas =
+                new ArrayList<>();
+
+        StringBuilder valorAtual =
+                new StringBuilder();
+
+        boolean dentroDeAspas = false;
+
+        for (
+                int indice = 0;
+                indice < linha.length();
+                indice++
+        ) {
+            char caractere =
+                    linha.charAt(indice);
+
+            if (caractere == '"') {
+                if (
+                        dentroDeAspas &&
+                                indice + 1 < linha.length() &&
+                                linha.charAt(indice + 1) == '"'
+                ) {
+                    valorAtual.append('"');
+                    indice++;
+                } else {
+                    dentroDeAspas =
+                            !dentroDeAspas;
+                }
+
+            } else if (
+                    caractere == delimitador &&
+                            !dentroDeAspas
+            ) {
+                colunas.add(
+                        valorAtual.toString().trim()
+                );
+
+                valorAtual.setLength(0);
+
+            } else {
+                valorAtual.append(caractere);
+            }
+        }
+
+        if (dentroDeAspas) {
+            throw new BusinessException(
+                    "A linha "
+                            + numeroLinha
+                            + " possui aspas não finalizadas."
+            );
+        }
+
+        colunas.add(
+                valorAtual.toString().trim()
+        );
+
+        return colunas;
+    }
+
+    private record CsvConteudo(
+            List<String> cabecalhos,
+            List<List<String>> linhas
+    ) {
+    }
+
+    private String normalizarCabecalho(
+            String valor
+    ) {
+        return valor == null
+                ? ""
+                : valor
+                .trim()
+                .toUpperCase(Locale.ROOT);
     }
 
     @Transactional(readOnly = true)

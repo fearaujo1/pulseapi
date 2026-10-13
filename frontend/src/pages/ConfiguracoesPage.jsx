@@ -2,10 +2,6 @@ import { useEffect, useState } from "react";
 import {
     Building2,
     Bell,
-    Cable,
-    DatabaseBackup,
-    Palette,
-    ScrollText,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Topbar from "../components/layout/Topbar";
@@ -15,7 +11,8 @@ import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import ConfiguracaoMenu from "../components/configurations/ConfiguracaoMenu";
 import GeralTab from "../components/configurations/GeralTab";
 import TurnoModal from "../components/configurations/TurnoModal";
-import EmBreveTab from "../components/configurations/EmBreveTab";
+import NotificacoesTab from "../components/configurations/NotificacoesTab.jsx";
+
 
 const tabs = [
     {
@@ -28,26 +25,6 @@ const tabs = [
         label: "Notificações",
         icon: Bell,
     },
-    {
-        id: "integracoes",
-        label: "Integrações",
-        icon: Cable,
-    },
-    {
-        id: "backup",
-        label: "Backup",
-        icon: DatabaseBackup,
-    },
-    {
-        id: "aparencia",
-        label: "Aparência",
-        icon: Palette,
-    },
-    {
-        id: "logs",
-        label: "Logs",
-        icon: ScrollText,
-    },
 ];
 
 function ConfiguracoesPage() {
@@ -59,6 +36,10 @@ function ConfiguracoesPage() {
 
     const [turnoToDelete, setTurnoToDelete] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+
+    // Estados para Configuração de Notificações
+    const [configuracoesNotificacao, setConfiguracoesNotificacao] = useState([]);
+    const [savingNotificacaoTipo, setSavingNotificacaoTipo] = useState("");
 
     const [configGeral, setConfigGeral] =
         useState({
@@ -87,10 +68,12 @@ function ConfiguracoesPage() {
                 empresaData,
                 configData,
                 turnosData,
+                notificacoesData,
             ] = await Promise.all([
                 configuracaoService.buscarEmpresa(),
                 configuracaoService.buscarConfiguracaoGeral(),
                 configuracaoService.listarTurnos(),
+                configuracaoService.listarConfiguracoesNotificacao(),
             ]);
 
             setEmpresa(empresaData);
@@ -106,6 +89,12 @@ function ConfiguracoesPage() {
             setTurnos(
                 Array.isArray(turnosData)
                     ? turnosData
+                    : []
+            );
+
+            setConfiguracoesNotificacao(
+                Array.isArray(notificacoesData)
+                    ? notificacoesData
                     : []
             );
 
@@ -330,6 +319,63 @@ function ConfiguracoesPage() {
         }
     }
 
+    function alterarConfiguracaoNotificacao(
+        tipo,
+        campo,
+        valor
+    ) {
+        setConfiguracoesNotificacao((anteriores) =>
+            anteriores.map((configuracao) =>
+                configuracao.tipo === tipo
+                    ? {
+                        ...configuracao,
+                        [campo]: valor,
+                    }
+                    : configuracao
+            )
+        );
+    }
+
+    async function salvarConfiguracaoNotificacao(configuracao) {
+        try {
+            setSavingNotificacaoTipo(configuracao.tipo);
+
+            const atualizada = await configuracaoService
+                .atualizarConfiguracaoNotificacao(
+                    configuracao.tipo,
+                    {
+                        notificacaoSistemaAtiva:
+                            Boolean(configuracao.notificacaoSistemaAtiva),
+                        notificacaoEmailAtiva:
+                            Boolean(configuracao.notificacaoEmailAtiva),
+                    }
+                );
+
+            setConfiguracoesNotificacao(
+                (anteriores) =>
+                    anteriores.map((item) =>
+                        item.tipo === atualizada.tipo
+                            ? atualizada
+                            : item
+                        )
+            );
+
+            toast.success("Configuração de notificação atualizada.");
+        } catch (error) {
+            console.error(
+                "Erro ao salvar notificação:",
+                error
+            );
+
+            toast.error(error.response?.data?.detail ||
+            "Não foi possível salvar a configuração."
+            );
+
+            await carregarDados();
+        } finally {
+            setSavingNotificacaoTipo("");
+        }
+    }
 
     if (loading) {
         return (
@@ -414,13 +460,12 @@ function ConfiguracoesPage() {
                             />
                         )}
 
-                        {activeTab !== "geral" && (
-                            <EmBreveTab
-                                tab={tabs.find(
-                                    (tab) =>
-                                        tab.id ===
-                                        activeTab
-                                )}
+                        {activeTab === "notificacoes" && (
+                            <NotificacoesTab
+                                configuracoes={configuracoesNotificacao}
+                                savingTipo={savingNotificacaoTipo}
+                                onChange={alterarConfiguracaoNotificacao}
+                                onSave={salvarConfiguracaoNotificacao}
                             />
                         )}
 

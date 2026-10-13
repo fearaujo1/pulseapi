@@ -1,13 +1,13 @@
 import { useState } from "react";
+
 import {
-    X,
-    User,
-    Mail,
-    Lock,
-    ChevronDown,
-    Info,
-    Clock3,
     Check,
+    ChevronDown,
+    Clock3,
+    Lock,
+    Mail,
+    User,
+    X,
 } from "lucide-react";
 
 function UserFormModal({
@@ -256,13 +256,11 @@ function UserFormModal({
 
                         {!isEditMode && (
                             <div>
-
                                 <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
-                                    Senha temporária *
+                                    Senha *
                                 </label>
 
-                                <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 focus-within:border-blue-500">
-
+                                <div className="flex h-10 w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 focus-within:border-blue-500">
                                     <Lock
                                         size={17}
                                         className="text-slate-400"
@@ -270,18 +268,14 @@ function UserFormModal({
 
                                     <input
                                         type="password"
-                                        name="senhaTemporaria"
-                                        value={
-                                            formData.senhaTemporaria
-                                        }
-                                        onChange={
-                                            handleChange
-                                        }
-                                        placeholder="Senha temporária"
-                                        className="w-full bg-transparent outline-none text-[13px]"
+                                        name="senha"
+                                        value={formData.senha}
+                                        onChange={handleChange}
+                                        placeholder="Defina a senha do usuário"
+                                        autoComplete="new-password"
+                                        className="w-full bg-transparent text-[13px] outline-none"
                                         required
                                     />
-
                                 </div>
                             </div>
                         )}
@@ -501,35 +495,6 @@ function UserFormModal({
                         </div>
                     )}
 
-
-                    {/* PRIMEIRO ACESSO */}
-
-                    {!isEditMode && (
-                        <div className="mt-8 rounded-2xl border border-blue-200 bg-blue-50 p-5">
-
-                            <div className="flex gap-3">
-
-                                <Info
-                                    className="mt-0.5 text-blue-600"
-                                    size={20}
-                                />
-
-                                <div>
-                                    <p className="text-[14.5px] font-semibold text-blue-700">
-                                        Primeiro acesso
-                                    </p>
-
-                                    <p className="mt-1 text-[12.5px] text-blue-700/90">
-                                        O usuário deverá alterar a senha temporária no primeiro login.
-                                    </p>
-                                </div>
-
-                            </div>
-
-                        </div>
-                    )}
-
-
                     {/* BOTÕES */}
 
                     <div className="mt-8 flex justify-end gap-3">
@@ -583,7 +548,7 @@ function criarFormInicial(initialData) {
         nome: initialData?.nome || "",
         email: initialData?.email || "",
         telefone: initialData?.telefone || "",
-        senhaTemporaria: "",
+        senha: "",
         perfilId: initialData?.perfilId
             ? String(initialData.perfilId)
             : "4",

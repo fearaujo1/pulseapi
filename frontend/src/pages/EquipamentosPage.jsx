@@ -1,10 +1,37 @@
-import { useEffect, useMemo, useState} from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext.jsx";
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+
+import {
+    useNavigate,
+} from "react-router-dom";
+
 import toast from "react-hot-toast";
+
+import {
+    CheckCircle2,
+    Cpu,
+    Plus,
+    Wrench,
+} from "lucide-react";
+
+import {
+    useAuth,
+} from "../contexts/AuthContext.jsx";
+
+import {
+    ACOES,
+    podeExecutar,
+} from "../config/accessControl.js";
+
+import {
+    equipamentosService,
+} from "../services/equipamentosService";
+
 import Topbar from "../components/layout/Topbar";
-import { Plus, Cpu, CheckCircle2, Wrench, Factory } from "lucide-react";
-import { equipamentosService } from "../services/equipamentosService";
 
 import EquipmentFilters from "../components/equipment/EquipmentFilters";
 import EquipmentFormModal from "../components/equipment/EquipmentFormModal";
@@ -19,155 +46,381 @@ import PageHeader from "../components/common/PageHeader.jsx";
 import ContentCard from "../components/common/ContentCard.jsx";
 
 function EquipamentosPage() {
-
     const navigate = useNavigate();
     const { usuario } = useAuth();
 
+    const perfil =
+        usuario?.perfil;
 
-    const podeCriar = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)
-    const podeEditar = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)
-    const podeExcluir = ["ADMIN", "GESTOR", "SUPERVISOR"].includes(usuario?.perfil)
+    const podeCriar =
+        podeExecutar(
+            perfil,
+            ACOES.EQUIPAMENTO_CRIAR
+        );
 
+    const podeEditar =
+        podeExecutar(
+            perfil,
+            ACOES.EQUIPAMENTO_EDITAR
+        );
 
-    const [equipamentos, setEquipamentos] = useState([]);
+    const podeExcluir =
+        podeExecutar(
+            perfil,
+            ACOES.EQUIPAMENTO_EXCLUIR
+        );
 
-    const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("");
-    const [typeFilter, setTypeFilter] = useState("");
+    const podeIntegrar =
+        podeExecutar(
+            perfil,
+            ACOES.EQUIPAMENTO_INTEGRAR
+        );
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [submitLoading, setSubmitLoading] = useState(false);
+    const [equipamentos, setEquipamentos] =
+        useState([]);
 
-    const [selectedEquipamento, setSelectedEquipamento] = useState(null);
+    const [search, setSearch] =
+        useState("");
 
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [deleteLoading, setDeleteLoading] = useState(false);
-    const [equipamentoToDelete, setEquipamentoToDelete] = useState(null);
+    const [statusFilter, setStatusFilter] =
+        useState("");
 
-    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [typeFilter, setTypeFilter] =
+        useState("");
 
-    const [currentPage, setCurrentPage] = useState(1);
+    const [isModalOpen, setIsModalOpen] =
+        useState(false);
+
+    const [submitLoading, setSubmitLoading] =
+        useState(false);
+
+    const [
+        selectedEquipamento,
+        setSelectedEquipamento,
+    ] = useState(null);
+
+    const [
+        isDeleteModalOpen,
+        setIsDeleteModalOpen,
+    ] = useState(false);
+
+    const [deleteLoading, setDeleteLoading] =
+        useState(false);
+
+    const [
+        equipamentoToDelete,
+        setEquipamentoToDelete,
+    ] = useState(null);
+
+    const [debouncedSearch, setDebouncedSearch] =
+        useState("");
+
+    const [currentPage, setCurrentPage] =
+        useState(1);
+
     const itemsPerPage = 5;
 
-    const [sortField, setSortField] = useState(null);
-    const [sortDirection, setSortDirection] = useState("asc")
+    const [sortField, setSortField] =
+        useState(null);
 
-    const [initialLoading, setInitialLoading] = useState(true);
+    const [sortDirection, setSortDirection] =
+        useState("asc");
 
-    const [viewMode, setViewMode] = useState("table");
+    const [initialLoading, setInitialLoading] =
+        useState(true);
 
-    async function carregarEquipamentos(showLoading = false) {
-        try {
-            if (showLoading) {
-                setInitialLoading(true);
-            }
+    const [viewMode, setViewMode] =
+        useState("table");
 
-            const data = await equipamentosService.listar();
-            setEquipamentos(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error("Erro ao carregar equipamentos:", error);
-            console.error("Resposta:", error.response);
-            setEquipamentos([]);
-            toast.error("Erro ao carregar equipamentos.");
-        } finally {
-            if (showLoading) {
-                setInitialLoading(false);
-            }
-        }
-    }
+    const carregarEquipamentos =
+        useCallback(
+            async (
+                showLoading = false,
+                showError = true
+            ) => {
+                try {
+                    if (showLoading) {
+                        setInitialLoading(true);
+                    }
+
+                    const data =
+                        await equipamentosService
+                            .listar();
+
+                    setEquipamentos(
+                        Array.isArray(data)
+                            ? data
+                            : []
+                    );
+                } catch (error) {
+                    console.error(
+                        "Erro ao carregar equipamentos:",
+                        error
+                    );
+
+                    if (showLoading) {
+                        setEquipamentos([]);
+                    }
+
+                    if (showError) {
+                        toast.error(
+                            error.response?.data?.detail ||
+                            error.response?.data?.message ||
+                            "Erro ao carregar equipamentos."
+                        );
+                    }
+                } finally {
+                    if (showLoading) {
+                        setInitialLoading(false);
+                    }
+                }
+            },
+            []
+        );
 
     useEffect(() => {
-        carregarEquipamentos(true);
-    }, []);
+        carregarEquipamentos(
+            true,
+            true
+        );
+
+        const intervalId =
+            window.setInterval(
+                () => {
+                    carregarEquipamentos(
+                        false,
+                        false
+                    );
+                },
+                10000
+            );
+
+        return () => {
+            window.clearInterval(
+                intervalId
+            );
+        };
+    }, [carregarEquipamentos]);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            carregarEquipamentos(false);
-        }, 10000); // 10 segundos
+        const timerId =
+            window.setTimeout(
+                () => {
+                    setDebouncedSearch(
+                        search
+                    );
+                },
+                300
+            );
 
-        return () => clearInterval(interval);
-    }, []);
+        return () => {
+            window.clearTimeout(
+                timerId
+            );
+        };
+    }, [search]);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [debouncedSearch, statusFilter, typeFilter]);
+    }, [
+        debouncedSearch,
+        statusFilter,
+        typeFilter,
+    ]);
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearch(search);
-        }, 300);
+    const equipamentosFiltrados =
+        useMemo(() => {
+            if (!Array.isArray(equipamentos)) {
+                return [];
+            }
 
-        return () => clearTimeout(timer);
-    }, [search]);
+            const searchLower =
+                debouncedSearch
+                    .trim()
+                    .toLowerCase();
 
-    const equipamentosFiltrados = useMemo(() => {
-        if (!Array.isArray(equipamentos)) return [];
+            return equipamentos.filter(
+                (item) => {
+                    const matchSearch =
+                        !searchLower ||
+                        item.nome
+                            ?.toLowerCase()
+                            .includes(
+                                searchLower
+                            ) ||
+                        item.codigo
+                            ?.toLowerCase()
+                            .includes(
+                                searchLower
+                            ) ||
+                        item.plantaNome
+                            ?.toLowerCase()
+                            .includes(
+                                searchLower
+                            ) ||
+                        item.linhaNome
+                            ?.toLowerCase()
+                            .includes(
+                                searchLower
+                            );
 
-        const searchLower = debouncedSearch.trim().toLowerCase();
+                    const matchStatus =
+                        !statusFilter ||
+                        item.status ===
+                        statusFilter;
 
-        return equipamentos.filter((item) => {
-            const matchSearch =
-                !searchLower ||
-                item.nome
-                    ?.toLowerCase()
-                    .includes(searchLower) ||
-                item.codigo
-                    ?.toLowerCase()
-                    .includes(searchLower) ||
-                item.plantaNome
-                    ?.toLowerCase()
-                    .includes(searchLower) ||
-                item.linhaNome
-                    ?.toLowerCase()
-                    .includes(searchLower);
+                    const matchType =
+                        !typeFilter ||
+                        item.tipo ===
+                        typeFilter;
 
-            const matchStatus = !statusFilter || item.status === statusFilter;
-            const matchType = !typeFilter || item.tipo === typeFilter;
+                    return (
+                        matchSearch &&
+                        matchStatus &&
+                        matchType
+                    );
+                }
+            );
+        }, [
+            equipamentos,
+            debouncedSearch,
+            statusFilter,
+            typeFilter,
+        ]);
 
-            return matchSearch && matchStatus && matchType;
-        });
-    }, [equipamentos, debouncedSearch, statusFilter, typeFilter]);
+    const equipamentosOrdenados =
+        useMemo(() => {
+            if (!Array.isArray(
+                equipamentosFiltrados
+            )) {
+                return [];
+            }
 
-    const equipamentosOrdenados = useMemo(() => {
-        if (!Array.isArray(equipamentosFiltrados)) return [];
+            if (!sortField) {
+                return equipamentosFiltrados;
+            }
 
-        if (!sortField) return equipamentosFiltrados;
+            return [
+                ...equipamentosFiltrados,
+            ].sort((a, b) => {
+                const aValue =
+                    String(
+                        a[sortField] ?? ""
+                    ).toLowerCase();
 
-        return [...equipamentosFiltrados].sort((a, b) => {
-            const aValue = a[sortField]?.toLowerCase?.() || "";
-            const bValue = b[sortField]?.toLowerCase?.() || "";
+                const bValue =
+                    String(
+                        b[sortField] ?? ""
+                    ).toLowerCase();
 
-            if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-            if (aValue > bValue) return sortDirection === "desc" ? 1 : -1;
-            return 0;
-        });
-    }, [equipamentosFiltrados, sortField, sortDirection]);
+                const comparacao =
+                    aValue.localeCompare(
+                        bValue,
+                        "pt-BR"
+                    );
 
-    const totalPages = Math.ceil(equipamentosFiltrados.length / itemsPerPage);
+                return sortDirection ===
+                "asc"
+                    ? comparacao
+                    : -comparacao;
+            });
+        }, [
+            equipamentosFiltrados,
+            sortField,
+            sortDirection,
+        ]);
 
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const equipamentosPaginados = equipamentosOrdenados.slice(startIndex, endIndex);
+    const totalPages =
+        Math.ceil(
+            equipamentosOrdenados.length /
+            itemsPerPage
+        );
 
-    const total = equipamentos.length;
-    const ativos = equipamentos.filter((e) => e.status === "ATIVO").length;
-    const manutencao = equipamentos.filter((e) => e.status === "EM_MANUTENCAO").length;
+    const startIndex =
+        (currentPage - 1) *
+        itemsPerPage;
 
-    const tipos = useMemo(() => {
-        if (!Array.isArray(equipamentos)) return [];
-        return [...new Set(equipamentos.map((e) => e.tipo).filter(Boolean))];
-    }, [equipamentos]);
+    const endIndex =
+        startIndex +
+        itemsPerPage;
 
-    async function handleCreateEquipamento(formData) {
+    const equipamentosPaginados =
+        equipamentosOrdenados.slice(
+            startIndex,
+            endIndex
+        );
+
+    const total =
+        equipamentos.length;
+
+    const ativos =
+        equipamentos.filter(
+            (equipamento) =>
+                equipamento.status ===
+                "ATIVO"
+        ).length;
+
+    const manutencao =
+        equipamentos.filter(
+            (equipamento) =>
+                equipamento.status ===
+                "EM_MANUTENCAO"
+        ).length;
+
+    const tipos =
+        useMemo(() => {
+            if (!Array.isArray(equipamentos)) {
+                return [];
+            }
+
+            return [
+                ...new Set(
+                    equipamentos
+                        .map(
+                            (equipamento) =>
+                                equipamento.tipo
+                        )
+                        .filter(Boolean)
+                ),
+            ];
+        }, [equipamentos]);
+
+    function informarAcessoNegado() {
+        toast.error(
+            "Você não possui permissão para realizar esta operação."
+        );
+    }
+
+    async function handleCreateEquipamento(
+        formData
+    ) {
+        if (!podeCriar) {
+            informarAcessoNegado();
+            return;
+        }
+
         try {
             setSubmitLoading(true);
-            await  equipamentosService.cadastrar(formData);
+
+            await equipamentosService
+                .cadastrar(formData);
+
             setIsModalOpen(false);
-            await carregarEquipamentos();
-            toast.success("Criado com sucesso!");
+
+            await carregarEquipamentos(
+                false,
+                true
+            );
+
+            toast.success(
+                "Equipamento criado com sucesso!"
+            );
         } catch (error) {
-            console.error("Erro ao criar equipamento: ", error);
-            console.error("Resposta: ", error.response?.data);
+            console.error(
+                "Erro ao criar equipamento:",
+                error
+            );
+
             toast.error(
                 error.response?.data?.detail ||
                 error.response?.data?.message ||
@@ -178,21 +431,46 @@ function EquipamentosPage() {
         }
     }
 
-    async function handleUpdateEquipamento(formData) {
+    async function handleUpdateEquipamento(
+        formData
+    ) {
+        if (!podeEditar) {
+            informarAcessoNegado();
+            return;
+        }
+
+        if (!selectedEquipamento?.id) {
+            toast.error(
+                "Nenhum equipamento foi selecionado."
+            );
+            return;
+        }
+
         try {
             setSubmitLoading(true);
 
-            await equipamentosService.atualizar(
-                selectedEquipamento.id,
-                formData,
-            );
+            await equipamentosService
+                .atualizar(
+                    selectedEquipamento.id,
+                    formData
+                );
+
             setIsModalOpen(false);
             setSelectedEquipamento(null);
-            await carregarEquipamentos();
-            toast.success("Atualizado com sucesso!");
+
+            await carregarEquipamentos(
+                false,
+                true
+            );
+
+            toast.success(
+                "Equipamento atualizado com sucesso!"
+            );
         } catch (error) {
-            console.error("Erro ao atualizar equipamento: ", error);
-            console.error("Resposta: ", error.response?.data);
+            console.error(
+                "Erro ao atualizar equipamento:",
+                error
+            );
 
             toast.error(
                 error.response?.data?.detail ||
@@ -205,23 +483,49 @@ function EquipamentosPage() {
     }
 
     async function handleConfirmDelete() {
-        if (!equipamentoToDelete?.id) return;
+        if (!podeExcluir) {
+            informarAcessoNegado();
+            return;
+        }
+
+        if (!equipamentoToDelete?.id) {
+            return;
+        }
 
         try {
             setDeleteLoading(true);
-            const idExcluido = equipamentoToDelete.id;
-            const tipoExcluido = equipamentoToDelete.tipo; // Guarda o tipo antes de deletar
 
-            await equipamentosService.deletar(idExcluido);
+            const idExcluido =
+                equipamentoToDelete.id;
 
-            const novaLista = Array.isArray(equipamentos)
-                ? equipamentos.filter((e) => e.id !== idExcluido)
-                : [];
+            const tipoExcluido =
+                equipamentoToDelete.tipo;
 
-            setEquipamentos(novaLista);
+            await equipamentosService
+                .deletar(idExcluido);
 
-            if (typeFilter === tipoExcluido) {
-                const tipoExisteAinda = novaLista.some(e => e.tipo === tipoExcluido);
+            const novaLista =
+                equipamentos.filter(
+                    (equipamento) =>
+                        equipamento.id !==
+                        idExcluido
+                );
+
+            setEquipamentos(
+                novaLista
+            );
+
+            if (
+                typeFilter ===
+                tipoExcluido
+            ) {
+                const tipoExisteAinda =
+                    novaLista.some(
+                        (equipamento) =>
+                            equipamento.tipo ===
+                            tipoExcluido
+                    );
+
                 if (!tipoExisteAinda) {
                     setTypeFilter("");
                 }
@@ -230,10 +534,14 @@ function EquipamentosPage() {
             setIsDeleteModalOpen(false);
             setEquipamentoToDelete(null);
 
-            toast.success("Removido com sucesso!");
+            toast.success(
+                "Equipamento removido com sucesso!"
+            );
         } catch (error) {
-            console.error("Erro ao excluir equipamento:", error);
-            console.error("Resposta:", error.response?.data);
+            console.error(
+                "Erro ao excluir equipamento:",
+                error
+            );
 
             toast.error(
                 error.response?.data?.detail ||
@@ -246,30 +554,88 @@ function EquipamentosPage() {
     }
 
     function handleNovo() {
+        if (!podeCriar) {
+            informarAcessoNegado();
+            return;
+        }
+
+        setSelectedEquipamento(null);
         setIsModalOpen(true);
     }
 
     function handleEdit(equipamento) {
-        setSelectedEquipamento(equipamento);
+        if (!podeEditar) {
+            informarAcessoNegado();
+            return;
+        }
+
+        setSelectedEquipamento(
+            equipamento
+        );
+
         setIsModalOpen(true);
     }
 
     function handleDelete(equipamento) {
-        setEquipamentoToDelete(equipamento);
+        if (!podeExcluir) {
+            informarAcessoNegado();
+            return;
+        }
+
+        setEquipamentoToDelete(
+            equipamento
+        );
+
         setIsDeleteModalOpen(true);
     }
 
     function handleIntegracao(equipamento) {
-        navigate(`/equipamentos/${equipamento.id}/integracao`);
+        if (!podeIntegrar) {
+            informarAcessoNegado();
+            return;
+        }
+
+        if (!equipamento?.id) {
+            return;
+        }
+
+        navigate(
+            `/equipamentos/${equipamento.id}/integracao`
+        );
     }
 
     function handleSort(field) {
         if (sortField === field) {
-            setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-        } else {
-            setSortField(field);
-            setSortDirection("asc");
+            setSortDirection(
+                (direction) =>
+                    direction === "asc"
+                        ? "desc"
+                        : "asc"
+            );
+
+            return;
         }
+
+        setSortField(field);
+        setSortDirection("asc");
+    }
+
+    function fecharModalFormulario() {
+        if (submitLoading) {
+            return;
+        }
+
+        setIsModalOpen(false);
+        setSelectedEquipamento(null);
+    }
+
+    function fecharModalExclusao() {
+        if (deleteLoading) {
+            return;
+        }
+
+        setIsDeleteModalOpen(false);
+        setEquipamentoToDelete(null);
     }
 
     return (
@@ -288,61 +654,104 @@ function EquipamentosPage() {
                             className="flex h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
                         >
                             <Plus size={15} />
-                            Novo Equipamento
+                            Novo equipamento
                         </button>
                     )}
                 </PageHeader>
 
-                <section className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+                <section className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
                     <SummaryCard
-                        title="Total de Equipamentos"
+                        title="Total de equipamentos"
                         value={total}
                         subtitle="Cadastrados no sistema"
-                        icon={<Cpu size={28} className="text-blue-600" />}
+                        icon={
+                            <Cpu
+                                size={28}
+                                className="text-blue-600"
+                            />
+                        }
                         className="border-blue-200 bg-blue-50"
                     />
 
                     <SummaryCard
-                        title="Equipamentos Ativos"
+                        title="Equipamentos ativos"
                         value={ativos}
-                        subtitle={`${total > 0 ? Math.round((ativos / total) * 100) : 0}% do total`}
-                        icon={<CheckCircle2 size={28} className="text-green-600" />}
+                        subtitle={`${
+                            total > 0
+                                ? Math.round(
+                                    (
+                                        ativos /
+                                        total
+                                    ) *
+                                    100
+                                )
+                                : 0
+                        }% do total`}
+                        icon={
+                            <CheckCircle2
+                                size={28}
+                                className="text-green-600"
+                            />
+                        }
                         className="border-green-200 bg-green-50"
                     />
 
                     <SummaryCard
-                        title="Em Manutenção"
+                        title="Em manutenção"
                         value={manutencao}
                         subtitle="Equipamentos em manutenção"
-                        icon={<Wrench size={28} className="text-amber-600" />}
+                        icon={
+                            <Wrench
+                                size={28}
+                                className="text-amber-600"
+                            />
+                        }
                         className="border-slate-200 bg-white"
                     />
                 </section>
 
                 <ContentCard
-                    title="Lista de Equipamentos"
+                    title="Lista de equipamentos"
                     headerActions={
                         <div className="flex h-12 items-center rounded-2xl border border-slate-200 bg-white p-1">
                             <button
                                 type="button"
-                                onClick={() => setViewMode("table")}
-                                className={`h-full rounded-xl px-4 text-sm transition ${
-                                    viewMode === "table"
+                                onClick={() =>
+                                    setViewMode(
+                                        "table"
+                                    )
+                                }
+                                className={`
+                                    h-full rounded-xl
+                                    px-4 text-sm transition
+                                    ${
+                                    viewMode ===
+                                    "table"
                                         ? "bg-blue-600 text-white"
                                         : "text-slate-600 hover:bg-slate-50"
-                                }`}
+                                }
+                                `}
                             >
                                 Tabela
                             </button>
 
                             <button
                                 type="button"
-                                onClick={() => setViewMode("cards")}
-                                className={`h-full rounded-xl px-4 text-sm transition ${
-                                    viewMode === "cards"
+                                onClick={() =>
+                                    setViewMode(
+                                        "cards"
+                                    )
+                                }
+                                className={`
+                                    h-full rounded-xl
+                                    px-4 text-sm transition
+                                    ${
+                                    viewMode ===
+                                    "cards"
                                         ? "bg-blue-600 text-white"
                                         : "text-slate-600 hover:bg-slate-50"
-                                }`}
+                                }
+                                `}
                             >
                                 Cards
                             </button>
@@ -353,10 +762,18 @@ function EquipamentosPage() {
                         <EquipmentFilters
                             search={search}
                             setSearch={setSearch}
-                            statusFilter={statusFilter}
-                            setStatusFilter={setStatusFilter}
-                            typeFilter={typeFilter}
-                            setTypeFilter={setTypeFilter}
+                            statusFilter={
+                                statusFilter
+                            }
+                            setStatusFilter={
+                                setStatusFilter
+                            }
+                            typeFilter={
+                                typeFilter
+                            }
+                            setTypeFilter={
+                                setTypeFilter
+                            }
                             tipos={tipos}
                         />
                     </div>
@@ -364,107 +781,199 @@ function EquipamentosPage() {
                     {initialLoading ? (
                         <TableSkeleton
                             rows={5}
-                            columns={7}
+                            columns={
+                                podeEditar ||
+                                podeExcluir ||
+                                podeIntegrar
+                                    ? 7
+                                    : 6
+                            }
                             minWidth="70rem"
                         />
                     ) : (
                         <>
-                            {viewMode === "table" ? (
+                            {viewMode ===
+                            "table" ? (
                                 <EquipmentTable
-                                    equipamentos={equipamentosPaginados}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                    onIntegracao={handleIntegracao}
-                                    onSort={handleSort}
-                                    sortField={sortField}
-                                    sortDirection={sortDirection}
-                                    canEdit={podeEditar}
-                                    canDelete={podeExcluir}
+                                    equipamentos={
+                                        equipamentosPaginados
+                                    }
+                                    onEdit={
+                                        handleEdit
+                                    }
+                                    onDelete={
+                                        handleDelete
+                                    }
+                                    onIntegracao={
+                                        handleIntegracao
+                                    }
+                                    onSort={
+                                        handleSort
+                                    }
+                                    sortField={
+                                        sortField
+                                    }
+                                    sortDirection={
+                                        sortDirection
+                                    }
+                                    canEdit={
+                                        podeEditar
+                                    }
+                                    canDelete={
+                                        podeExcluir
+                                    }
+                                    canIntegrate={
+                                        podeIntegrar
+                                    }
                                 />
                             ) : (
                                 <EquipmentCards
-                                    equipamentos={equipamentosPaginados}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                    onIntegracao={handleIntegracao}
-                                    canEdit={podeEditar}
-                                    canDelete={podeExcluir}
+                                    equipamentos={
+                                        equipamentosPaginados
+                                    }
+                                    onEdit={
+                                        handleEdit
+                                    }
+                                    onDelete={
+                                        handleDelete
+                                    }
+                                    onIntegracao={
+                                        handleIntegracao
+                                    }
+                                    canEdit={
+                                        podeEditar
+                                    }
+                                    canDelete={
+                                        podeExcluir
+                                    }
+                                    canIntegrate={
+                                        podeIntegrar
+                                    }
                                 />
                             )}
 
-                            <Pagination
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={setCurrentPage}
-                            />
+                            {totalPages > 1 && (
+                                <Pagination
+                                    currentPage={
+                                        currentPage
+                                    }
+                                    totalPages={
+                                        totalPages
+                                    }
+                                    onPageChange={
+                                        setCurrentPage
+                                    }
+                                />
+                            )}
                         </>
                     )}
                 </ContentCard>
             </main>
-            {isModalOpen && (
-                <EquipmentFormModal
-                    key={selectedEquipamento?.id ?? "novo-equipamento"}
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setSelectedEquipamento(null);
-                    }}
-                    onSubmit={
-                        selectedEquipamento
-                            ? handleUpdateEquipamento
-                            : handleCreateEquipamento
+
+            {isModalOpen &&
+                (
+                    selectedEquipamento
+                        ? podeEditar
+                        : podeCriar
+                ) && (
+                    <EquipmentFormModal
+                        key={
+                            selectedEquipamento?.id ??
+                            "novo-equipamento"
+                        }
+                        isOpen={
+                            isModalOpen
+                        }
+                        onClose={
+                            fecharModalFormulario
+                        }
+                        onSubmit={
+                            selectedEquipamento
+                                ? handleUpdateEquipamento
+                                : handleCreateEquipamento
+                        }
+                        loading={
+                            submitLoading
+                        }
+                        mode={
+                            selectedEquipamento
+                                ? "edit"
+                                : "create"
+                        }
+                        initialData={
+                            selectedEquipamento
+                        }
+                    />
+                )}
+
+            {podeExcluir && (
+                <ConfirmDeleteModal
+                    isOpen={
+                        isDeleteModalOpen
                     }
-                    loading={submitLoading}
-                    mode={selectedEquipamento ? "edit" : "create"}
-                    initialData={selectedEquipamento}
+                    onClose={
+                        fecharModalExclusao
+                    }
+                    onConfirm={
+                        handleConfirmDelete
+                    }
+                    loading={
+                        deleteLoading
+                    }
+                    title="Excluir equipamento"
+                    description="Confirme a exclusão deste equipamento."
+                    warningMessage="O equipamento será removido permanentemente do sistema."
+                    itemLabel="Equipamento selecionado"
+                    itemName={
+                        equipamentoToDelete?.nome
+                    }
+                    details={[
+                        {
+                            label: "Código",
+                            value:
+                            equipamentoToDelete
+                                ?.codigo,
+                        },
+                        {
+                            label: "Planta",
+                            value:
+                            equipamentoToDelete
+                                ?.plantaNome,
+                        },
+                        {
+                            label: "Linha",
+                            value:
+                            equipamentoToDelete
+                                ?.linhaNome,
+                        },
+                        {
+                            label: "Tipo",
+                            value:
+                            equipamentoToDelete
+                                ?.tipo,
+                        },
+                        {
+                            label: "IP",
+                            value:
+                            equipamentoToDelete
+                                ?.ip,
+                        },
+                        {
+                            label: "Porta",
+                            value:
+                            equipamentoToDelete
+                                ?.porta,
+                        },
+                        {
+                            label: "Protocolo",
+                            value:
+                            equipamentoToDelete
+                                ?.protocolo,
+                        },
+                    ]}
+                    confirmText="Excluir equipamento"
                 />
             )}
-
-            <ConfirmDeleteModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => {
-                    setIsDeleteModalOpen(false);
-                    setEquipamentoToDelete(null);
-                }}
-                onConfirm={handleConfirmDelete}
-                loading={deleteLoading}
-                title="Excluir Equipamento"
-                description="Confirme a exclusão deste equipamento."
-                warningMessage="O equipamento será removido permanentemente do sistema."
-                itemLabel="Equipamento selecionado"
-                itemName={equipamentoToDelete?.nome}
-                details={[
-                    {
-                        label: "Código",
-                        value: equipamentoToDelete?.codigo,
-                    },
-                    {
-                        label: "Planta",
-                        value: equipamentoToDelete?.plantaNome,
-                    },
-                    {
-                        label: "Linha",
-                        value: equipamentoToDelete?.linhaNome,
-                    },
-                    {
-                        label: "Tipo",
-                        value: equipamentoToDelete?.tipo,
-                    },
-                    {
-                        label: "IP",
-                        value: equipamentoToDelete?.ip,
-                    },
-                    {
-                        label: "Porta",
-                        value: equipamentoToDelete?.porta,
-                    },
-                    {
-                        label: "Protocolo",
-                        value: equipamentoToDelete?.protocolo,
-                    },
-                ]}
-                confirmText="Excluir Equipamento"
-            />
         </div>
     );
 }
