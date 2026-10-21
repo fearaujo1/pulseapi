@@ -12,6 +12,7 @@ import {
 import toast from "react-hot-toast";
 
 import {
+    AlertTriangle,
     CheckCircle2,
     Cpu,
     Plus,
@@ -38,12 +39,12 @@ import EquipmentFormModal from "../components/equipment/EquipmentFormModal";
 import EquipmentTable from "../components/equipment/EquipmentTable";
 import EquipmentCards from "../components/equipment/EquipmentCards.jsx";
 
-import SummaryCard from "../components/common/SummaryCard.jsx";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal.jsx";
-import TableSkeleton from "../components/common/TableSkeleton.jsx";
+import {TableSkeleton} from "../components/common/table/index.js";
 import Pagination from "../components/common/Pagination.jsx";
 import PageHeader from "../components/common/PageHeader.jsx";
 import ContentCard from "../components/common/ContentCard.jsx";
+import SummaryCard from "../components/common/SummaryCard.jsx";
 
 function EquipamentosPage() {
     const navigate = useNavigate();
@@ -638,11 +639,25 @@ function EquipamentosPage() {
         setEquipamentoToDelete(null);
     }
 
+    const indicadoresEquipamentos = useMemo(() => {
+        const total = equipamentos.length;
+        const operacionais = equipamentos.filter(e => e.status === "OPERACIONAL" || e.status === "ATIVO").length;
+        const manutencao = equipamentos.filter(e => e.status === "MANUTENCAO").length;
+        const falha = equipamentos.filter(e => e.status === "FALHA" || e.status === "INATIVO").length;
+
+        return [
+            { label: "Equipamentos", value: total, detail: "cadastrados", icon: Cpu, color: "bg-blue-50 text-blue-600" },
+            { label: "Operacionais", value: operacionais, detail: "em produção", icon: CheckCircle2, color: "bg-emerald-50 text-emerald-600" },
+            { label: "Manutenção", value: manutencao, detail: "preventiva/corretiva", icon: Wrench, color: "bg-amber-50 text-amber-600" },
+            { label: "Com Falha", value: falha, detail: "indisponíveis", icon: AlertTriangle, color: "bg-rose-50 text-rose-600" },
+        ];
+    }, [equipamentos]);
+
     return (
         <div className="min-h-screen bg-[#f5f7fb]">
             <Topbar />
 
-            <main className="p-4 md:p-6">
+            <main className="mx-auto w-full max-w-[1800px] px-4 py-5 md:px-6 lg:px-8">
                 <PageHeader
                     title="Equipamentos"
                     description="Cadastro e gestão de equipamentos industriais"
@@ -651,7 +666,7 @@ function EquipamentosPage() {
                         <button
                             type="button"
                             onClick={handleNovo}
-                            className="flex h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700"
                         >
                             <Plus size={15} />
                             Novo equipamento
@@ -659,61 +674,15 @@ function EquipamentosPage() {
                     )}
                 </PageHeader>
 
-                <section className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-                    <SummaryCard
-                        title="Total de equipamentos"
-                        value={total}
-                        subtitle="Cadastrados no sistema"
-                        icon={
-                            <Cpu
-                                size={28}
-                                className="text-blue-600"
-                            />
-                        }
-                        className="border-blue-200 bg-blue-50"
-                    />
-
-                    <SummaryCard
-                        title="Equipamentos ativos"
-                        value={ativos}
-                        subtitle={`${
-                            total > 0
-                                ? Math.round(
-                                    (
-                                        ativos /
-                                        total
-                                    ) *
-                                    100
-                                )
-                                : 0
-                        }% do total`}
-                        icon={
-                            <CheckCircle2
-                                size={28}
-                                className="text-green-600"
-                            />
-                        }
-                        className="border-green-200 bg-green-50"
-                    />
-
-                    <SummaryCard
-                        title="Em manutenção"
-                        value={manutencao}
-                        subtitle="Equipamentos em manutenção"
-                        icon={
-                            <Wrench
-                                size={28}
-                                className="text-amber-600"
-                            />
-                        }
-                        className="border-slate-200 bg-white"
-                    />
-                </section>
+                <SummaryCard
+                    items={indicadoresEquipamentos}
+                />
 
                 <ContentCard
                     title="Lista de equipamentos"
+                    subtitle={`${equipamentosFiltrados.length} registro(s) encontrado(s)`}
                     headerActions={
-                        <div className="flex h-12 items-center rounded-2xl border border-slate-200 bg-white p-1">
+                        <div className="flex h-10 items-center rounded-xl border border-slate-200 bg-slate-100 p-1">
                             <button
                                 type="button"
                                 onClick={() =>
@@ -723,7 +692,7 @@ function EquipamentosPage() {
                                 }
                                 className={`
                                     h-full rounded-xl
-                                    px-4 text-sm transition
+                                    px-3 text-xs font-semibold transition
                                     ${
                                     viewMode ===
                                     "table"
@@ -744,7 +713,7 @@ function EquipamentosPage() {
                                 }
                                 className={`
                                     h-full rounded-xl
-                                    px-4 text-sm transition
+                                    px-3 text-xs font-semibold transition
                                     ${
                                     viewMode ===
                                     "cards"
@@ -778,81 +747,78 @@ function EquipamentosPage() {
                         />
                     </div>
 
-                    {initialLoading ? (
-                        <TableSkeleton
-                            rows={5}
-                            columns={
-                                podeEditar ||
-                                podeExcluir ||
-                                podeIntegrar
-                                    ? 7
-                                    : 6
-                            }
-                            minWidth="70rem"
-                        />
-                    ) : (
-                        <>
-                            {viewMode ===
-                            "table" ? (
-                                <EquipmentTable
-                                    equipamentos={
-                                        equipamentosPaginados
-                                    }
-                                    onEdit={
-                                        handleEdit
-                                    }
-                                    onDelete={
-                                        handleDelete
-                                    }
-                                    onIntegracao={
-                                        handleIntegracao
-                                    }
-                                    onSort={
-                                        handleSort
-                                    }
-                                    sortField={
-                                        sortField
-                                    }
-                                    sortDirection={
-                                        sortDirection
-                                    }
-                                    canEdit={
-                                        podeEditar
-                                    }
-                                    canDelete={
-                                        podeExcluir
-                                    }
-                                    canIntegrate={
-                                        podeIntegrar
-                                    }
-                                />
-                            ) : (
-                                <EquipmentCards
-                                    equipamentos={
-                                        equipamentosPaginados
-                                    }
-                                    onEdit={
-                                        handleEdit
-                                    }
-                                    onDelete={
-                                        handleDelete
-                                    }
-                                    onIntegracao={
-                                        handleIntegracao
-                                    }
-                                    canEdit={
-                                        podeEditar
-                                    }
-                                    canDelete={
-                                        podeExcluir
-                                    }
-                                    canIntegrate={
-                                        podeIntegrar
-                                    }
-                                />
-                            )}
+                    <>
+                        {viewMode === "table" ? (
+                            <EquipmentTable
+                                equipamentos={
+                                    equipamentosPaginados
+                                }
+                                loading={
+                                    initialLoading
+                                }
+                                onEdit={
+                                    handleEdit
+                                }
+                                onDelete={
+                                    handleDelete
+                                }
+                                onIntegracao={
+                                    handleIntegracao
+                                }
+                                onSort={
+                                    handleSort
+                                }
+                                sortField={
+                                    sortField
+                                }
+                                sortDirection={
+                                    sortDirection
+                                }
+                                canEdit={
+                                    podeEditar
+                                }
+                                canDelete={
+                                    podeExcluir
+                                }
+                                canIntegrate={
+                                    podeIntegrar
+                                }
+                            />
+                        ) : initialLoading ? (
+                            <TableSkeleton
+                                rows={5}
+                                columns={2}
+                                minWidth="100%"
+                                actionColumn={false}
+                            />
+                        ) : (
+                            <EquipmentCards
+                                equipamentos={
+                                    equipamentosPaginados
+                                }
+                                onEdit={
+                                    handleEdit
+                                }
+                                onDelete={
+                                    handleDelete
+                                }
+                                onIntegracao={
+                                    handleIntegracao
+                                }
+                                canEdit={
+                                    podeEditar
+                                }
+                                canDelete={
+                                    podeExcluir
+                                }
+                                canIntegrate={
+                                    podeIntegrar
+                                }
+                            />
+                        )}
 
-                            {totalPages > 1 && (
+                        {!initialLoading &&
+                            totalPages > 1 && (
                                 <Pagination
                                     currentPage={
                                         currentPage
@@ -865,8 +831,7 @@ function EquipamentosPage() {
                                     }
                                 />
                             )}
-                        </>
-                    )}
+                    </>
                 </ContentCard>
             </main>
 

@@ -12,7 +12,6 @@ import {
 } from "./contexts/AuthContext.jsx";
 import PublicRoute from "./routes/PublicRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import FirstAccessRoute from "./routes/FirstAccessRoute";
 import SetupRoute from "./routes/SetupRoute";
 import InitialRoute from "./routes/InitialRoute";
 import RoleRoute from "./routes/RoleRoute";
@@ -23,13 +22,10 @@ import AcessoNegadoPage from "./pages/AcessoNegadoPage.jsx";
 import ConfiguracoesPage from "./pages/ConfiguracoesPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import EmDesenvolvimentoPage from "./pages/EmDesenvolvimentoPage.jsx";
-import EquipamentoIntegracaoPage from "./pages/EquipamentoIntegracaoPage.jsx";
 import EquipamentosPage from "./pages/EquipamentosPage";
 import EventosPage from "./pages/EventosPage.jsx";
-import FilaImpressaoPage from "./pages/FilaImpressaoPage";
 import LayoutsImpressaoPage from "./pages/LayoutsImpressaoPage.jsx";
 import LoginPage from "./pages/LoginPage";
-import NovaImpressaoPage from "./pages/NovaImpressaoPage.jsx";
 import PlantasLinhasPage from "./pages/PlantasLinhasPage.jsx";
 import ProducoesPage from "./pages/ProducoesPage.jsx";
 import RegistrarOcorrenciaPage from "./pages/RegistrarOcorrenciaPage.jsx";
@@ -84,6 +80,33 @@ function App() {
                             </SetupRoute>
                         }
                     />
+
+                    {import.meta.env.DEV && (
+                        <Route
+                            path="/preview/setup"
+                            element={
+                                <SetupPage previewMode />
+                            }
+                        />
+                    )}
+
+                    {import.meta.env.DEV && (
+                        <Route
+                            path="/preview/acesso-negado"
+                            element={
+                                <AcessoNegadoPage previewMode />
+                            }
+                        />
+                    )}
+
+                    {import.meta.env.DEV && (
+                        <Route
+                            path="/preview/em-desenvolvimento"
+                            element={
+                                <EmDesenvolvimentoPage previewMode />
+                            }
+                        />
+                    )}
 
                     <Route
                         path="/login"
@@ -156,13 +179,6 @@ function App() {
                             )}
                         />
 
-                        <Route
-                            path="/fila-impressao/nova"
-                            element={protegerPorPerfil(
-                                <NovaImpressaoPage />,
-                                ACESSOS.NOVA_IMPRESSAO
-                            )}
-                        />
 
                         <Route
                             path="/registrar-parada"
@@ -178,26 +194,10 @@ function App() {
                         {/* ============================== */}
 
                         <Route
-                            path="/equipamentos/:id/integracao"
-                            element={protegerPorPerfil(
-                                <EquipamentoIntegracaoPage />,
-                                ACESSOS.INTEGRACAO_EQUIPAMENTO
-                            )}
-                        />
-
-                        <Route
                             path="/eventos"
                             element={protegerPorPerfil(
                                 <EventosPage />,
                                 ACESSOS.EVENTOS
-                            )}
-                        />
-
-                        <Route
-                            path="/fila-impressao"
-                            element={protegerPorPerfil(
-                                <FilaImpressaoPage />,
-                                ACESSOS.FILA_IMPRESSAO
                             )}
                         />
 

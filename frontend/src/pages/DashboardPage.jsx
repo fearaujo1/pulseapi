@@ -9,6 +9,8 @@ import {
 import {
     Activity,
     AlertTriangle,
+    ArrowRight,
+    CheckCircle2,
     ClipboardList,
     Droplets,
     Factory,
@@ -16,6 +18,7 @@ import {
     Loader2,
     PackageCheck,
     Plus,
+    Radio,
     RefreshCw,
     Wifi,
     WifiOff,
@@ -24,62 +27,27 @@ import {
 import { useNavigate } from "react-router-dom";
 
 import Topbar from "../components/layout/Topbar.jsx";
-import SummaryCard from "../components/common/SummaryCard.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
-import {
-    dashboardService,
-} from "../services/dashboardService.js";
+import { dashboardService } from "../services/dashboardService.js";
 import { websocketService } from "../services/websocketService.js";
 
-const producaoStatusMap = {
-    EM_ANDAMENTO: {
-        label: "Em andamento",
-        className:
-            "border-emerald-200 bg-emerald-50 text-emerald-700",
-        progressClass: "bg-emerald-500",
-    },
-
-    PAUSADA: {
-        label: "Pausada",
-        className:
-            "border-amber-200 bg-amber-50 text-amber-700",
-        progressClass: "bg-amber-500",
-    },
-
-    AGUARDANDO_AVALIACAO: {
-        label: "Aguardando avaliação",
-        className:
-            "border-violet-200 bg-violet-50 text-violet-700",
-        progressClass: "bg-violet-500",
-    },
-
-    EM_RETRABALHO: {
-        label: "Em retrabalho",
-        className:
-            "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700",
-        progressClass: "bg-fuchsia-500",
-    },
-};
+import {
+    producaoStatusMap,
+} from "../config/statusMaps.js";
 
 function DashboardPage() {
     const navigate = useNavigate();
     const { token } = useAuth();
 
-    const [resumo, setResumo] =
-        useState(null);
-
-    const [loading, setLoading] =
-        useState(true);
-
-    const [refreshing, setRefreshing] =
+    const [resumo, setResumo] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [erro, setErro] = useState("");
+    const [tempoRealConectado, setTempoRealConectado] =
         useState(false);
 
-    const [erro, setErro] =
-        useState("");
-
-    const atualizacaoPendenteRef =
-        useRef(null);
+    const atualizacaoPendenteRef = useRef(null);
 
     const carregarResumo = useCallback(
         async ({
@@ -159,11 +127,6 @@ function DashboardPage() {
                         evento
                     );
 
-                    /*
-                     * Um pequeno debounce impede várias consultas REST
-                     * seguidas quando diversos itens são impressos
-                     * em um intervalo muito curto.
-                     */
                     if (atualizacaoPendenteRef.current) {
                         clearTimeout(
                             atualizacaoPendenteRef.current
@@ -182,18 +145,30 @@ function DashboardPage() {
                 },
 
                 onConectado: () => {
+                    if (componenteAtivo) {
+                        setTempoRealConectado(true);
+                    }
+
                     console.info(
                         "Dashboard conectado às atualizações em tempo real."
                     );
                 },
 
                 onDesconectado: () => {
+                    if (componenteAtivo) {
+                        setTempoRealConectado(false);
+                    }
+
                     console.warn(
                         "Dashboard desconectado das atualizações em tempo real."
                     );
                 },
 
                 onErro: (mensagem) => {
+                    if (componenteAtivo) {
+                        setTempoRealConectado(false);
+                    }
+
                     console.error(
                         "Atualização em tempo real indisponível:",
                         mensagem
@@ -203,6 +178,7 @@ function DashboardPage() {
 
         return () => {
             componenteAtivo = false;
+            setTempoRealConectado(false);
 
             if (atualizacaoPendenteRef.current) {
                 clearTimeout(
@@ -224,106 +200,94 @@ function DashboardPage() {
             });
         }, 60000);
 
-        return () => {
-            clearInterval(intervalo);
-        };
+        return () => clearInterval(intervalo);
     }, [carregarResumo]);
 
-    const alertas =
-        useMemo(() => {
-            if (!resumo) {
-                return [];
+    const alertas = useMemo(() => {
+        if (!resumo) {
+            return [];
+        }
+
+        const novosAlertas = [];
+
+        for (const producao of resumo.producoes || []) {
+            const equipamento =
+                resumo.equipamentos?.find(
+                    (item) =>
+                        item.equipamentoId ===
+                        producao.equipamentoId
+                );
+
+            if (
+                producao.status === "EM_ANDAMENTO" &&
+                equipamento?.statusConexao !== "CONECTADO"
+            ) {
+                novosAlertas.push({
+                    id: `producao-${producao.producaoId}`,
+                    tipo: "danger",
+                    titulo:
+                        "Produção em andamento sem conexão",
+                    descricao:
+                        `${producao.codigoOrdem} está vinculada ao equipamento ` +
+                        `${producao.equipamentoNome}, que está sem conexão.`,
+                });
+            }
+        }
+
+        for (
+            const equipamento of
+        resumo.equipamentos || []
+            ) {
+            if (
+                equipamento.consultaLiquidosDisponivel &&
+                equipamento.tinta?.sensorConectado &&
+                equipamento.tinta.percentualMaximo <= 24
+            ) {
+                novosAlertas.push({
+                    id: `tinta-${equipamento.equipamentoId}`,
+                    tipo: "danger",
+                    titulo: "Nível de tinta baixo",
+                    descricao:
+                        `${equipamento.equipamentoNome}: ` +
+                        `${equipamento.tinta.descricao}.`,
+                });
             }
 
-            const novosAlertas = [];
-
-            for (
-                const producao of
-            resumo.producoes || []
-                ) {
-                const equipamento =
-                    resumo.equipamentos?.find(
-                        (item) =>
-                            item.equipamentoId
-                            === producao.equipamentoId
-                    );
-
-                if (
-                    producao.status ===
-                    "EM_ANDAMENTO" &&
-                    equipamento?.statusConexao !==
-                    "CONECTADO"
-                ) {
-                    novosAlertas.push({
-                        id:
-                            `producao-${producao.producaoId}`,
-                        tipo: "danger",
-                        titulo:
-                            "Produção em andamento sem conexão",
-                        descricao:
-                            `${producao.codigoOrdem} está vinculada ao equipamento ${producao.equipamentoNome}, que está sem conexão.`,
-                    });
-                }
+            if (
+                equipamento.consultaLiquidosDisponivel &&
+                equipamento.makeup?.sensorConectado &&
+                equipamento.makeup.percentualMaximo <= 24
+            ) {
+                novosAlertas.push({
+                    id: `makeup-${equipamento.equipamentoId}`,
+                    tipo: "warning",
+                    titulo: "Nível de make-up baixo",
+                    descricao:
+                        `${equipamento.equipamentoNome}: ` +
+                        `${equipamento.makeup.descricao}.`,
+                });
             }
+        }
 
-            for (
-                const equipamento of
-            resumo.equipamentos || []
-                ) {
-                if (
-                    equipamento
-                        .consultaLiquidosDisponivel &&
-                    equipamento.tinta
-                        ?.sensorConectado &&
-                    equipamento.tinta
-                        ?.percentualMaximo <= 24
-                ) {
-                    novosAlertas.push({
-                        id:
-                            `tinta-${equipamento.equipamentoId}`,
-                        tipo: "danger",
-                        titulo: "Nível de tinta baixo",
-                        descricao:
-                            `${equipamento.equipamentoNome}: ${equipamento.tinta.descricao}.`,
-                    });
-                }
-
-                if (
-                    equipamento
-                        .consultaLiquidosDisponivel &&
-                    equipamento.makeup
-                        ?.sensorConectado &&
-                    equipamento.makeup
-                        ?.percentualMaximo <= 24
-                ) {
-                    novosAlertas.push({
-                        id:
-                            `makeup-${equipamento.equipamentoId}`,
-                        tipo: "warning",
-                        titulo: "Nível de make-up baixo",
-                        descricao:
-                            `${equipamento.equipamentoNome}: ${equipamento.makeup.descricao}.`,
-                    });
-                }
-            }
-
-            return novosAlertas;
-        }, [resumo]);
+        return novosAlertas;
+    }, [resumo]);
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#f5f7fb]">
+            <div className="min-h-screen bg-[#f4f6f9]">
                 <Topbar />
 
-                <main className="flex min-h-[70vh] items-center justify-center">
-                    <div className="flex flex-col items-center gap-3 text-slate-500">
-                        <Loader2
-                            size={30}
-                            className="animate-spin text-blue-600"
-                        />
+                <main className="flex min-h-[calc(100vh-64px)] items-center justify-center">
+                    <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <Loader2
+                                size={22}
+                                className="animate-spin text-blue-600"
+                            />
+                        </div>
 
-                        <p className="text-sm font-medium">
-                            Carregando dashboard...
+                        <p className="mt-4 text-sm font-medium text-slate-600">
+                            Carregando visão operacional...
                         </p>
                     </div>
                 </main>
@@ -331,506 +295,508 @@ function DashboardPage() {
         );
     }
 
-    const producoes =
-        resumo?.producoes || [];
-
-    const equipamentos =
-        resumo?.equipamentos || [];
+    const producoes = resumo?.producoes || [];
+    const equipamentos = resumo?.equipamentos || [];
 
     return (
-        <div className="min-h-screen bg-[#f5f7fb]">
+        <div className="min-h-screen bg-[#f4f6f9]">
             <Topbar />
 
-            <main className="p-4 md:p-6">
-                <header className="mb-7 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">
-                            Dashboard de Produção
-                        </h1>
-
-                        <p className="mt-1 text-sm text-slate-600 md:text-base">
-                            Acompanhamento das produções e equipamentos em tempo real
-                        </p>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={atualizarManualmente}
-                        disabled={refreshing}
-                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        <RefreshCw
-                            size={17}
-                            className={
-                                refreshing
-                                    ? "animate-spin"
-                                    : ""
-                            }
-                        />
-
-                        {refreshing
-                            ? "Atualizando..."
-                            : "Atualizar"}
-                    </button>
-                </header>
+            <main className="mx-auto w-full max-w-[1800px] px-4 py-5 md:px-6 lg:px-8">
+                <DashboardHeader
+                    refreshing={refreshing}
+                    tempoRealConectado={
+                        tempoRealConectado
+                    }
+                    atualizadoEm={resumo?.atualizadoEm}
+                    onRefresh={atualizarManualmente}
+                />
 
                 {erro && (
-                    <section className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4">
-                        <div className="flex items-start gap-3">
-                            <AlertTriangle
-                                size={20}
-                                className="mt-0.5 shrink-0 text-red-600"
-                            />
-
-                            <div>
-                                <p className="font-semibold text-red-700">
-                                    Falha na atualização
-                                </p>
-
-                                <p className="mt-1 text-sm text-red-600">
-                                    {erro}
-                                </p>
-                            </div>
-                        </div>
-                    </section>
+                    <ErrorMessage mensagem={erro} />
                 )}
 
                 {alertas.length > 0 && (
-                    <section className="mb-7 space-y-3">
-                        {alertas.map((alerta) => (
-                            <DashboardAlert
-                                key={alerta.id}
-                                alerta={alerta}
+                    <section className="mb-5">
+                        <div className="mb-3 flex items-center gap-2">
+                            <AlertTriangle
+                                size={16}
+                                className="text-amber-500"
                             />
-                        ))}
+
+                            <h2 className="text-sm font-semibold text-slate-800">
+                                Atenção necessária
+                            </h2>
+
+                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-[11px] font-bold text-amber-700">
+                                {alertas.length}
+                            </span>
+                        </div>
+
+                        <div className="grid gap-3 xl:grid-cols-2">
+                            {alertas.map((alerta) => (
+                                <DashboardAlert
+                                    key={alerta.id}
+                                    alerta={alerta}
+                                />
+                            ))}
+                        </div>
                     </section>
                 )}
 
-                <section className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-                    <SummaryCard
-                        title="Produções Ativas"
-                        value={
-                            resumo
-                                ?.quantidadeProducoesAtivas ??
-                            0
-                        }
-                        subtitle="Em execução ou avaliação"
-                        icon={
-                            <ClipboardList
-                                size={30}
-                                className="text-blue-600"
-                            />
-                        }
-                        className="border-blue-200 bg-blue-50"
-                    />
+                <DashboardSummary
+                    resumo={resumo}
+                />
 
-                    <SummaryCard
-                        title="Progresso Geral"
-                        value={
-                            `${formatarPercentual(
-                                resumo
-                                    ?.percentualGeralProcessado
-                            )}%`
-                        }
-                        subtitle={
-                            `${resumo?.quantidadeItensProcessados ?? 0} de ${resumo?.quantidadeTotalItens ?? 0} itens`
-                        }
-                        icon={
-                            <Activity
-                                size={30}
-                                className="text-emerald-600"
-                            />
-                        }
-                        className="border-emerald-200 bg-emerald-50"
-                    />
-
-                    <SummaryCard
-                        title="Equipamentos Conectados"
-                        value={
-                            `${resumo?.quantidadeEquipamentosConectados ?? 0}/${resumo?.quantidadeEquipamentosRelacionados ?? 0}`
-                        }
-                        subtitle="Associados às produções ativas"
-                        icon={
-                            <Wifi
-                                size={30}
-                                className="text-violet-600"
-                            />
-                        }
-                        className="border-violet-200 bg-violet-50"
-                    />
-
-                    <SummaryCard
-                        title="Itens Concluídos"
-                        value={
-                            resumo
-                                ?.quantidadeItensConcluidos ??
-                            0
-                        }
-                        subtitle="Finalizados após avaliação"
-                        icon={
-                            <PackageCheck
-                                size={30}
-                                className="text-slate-700"
-                            />
-                        }
-                        className="border-slate-200 bg-white"
-                    />
-                </section>
-
-                <section className="mb-8 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-                    <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h2 className="text-lg font-bold text-slate-950">
-                                Progresso geral
-                            </h2>
-
-                            <p className="mt-1 text-sm text-slate-500">
-                                Percentual processado entre todas as produções ativas
-                            </p>
-                        </div>
-
-                        <span className="text-2xl font-bold text-slate-950">
-                            {formatarPercentual(
-                                resumo
-                                    ?.percentualGeralProcessado
-                            )}
-                            %
-                        </span>
-                    </div>
-
-                    <ProgressBar
-                        percentage={
-                            resumo
-                                ?.percentualGeralProcessado ??
-                            0
-                        }
-                        className="bg-blue-600"
-                        heightClass="h-3"
-                    />
-
-                    <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
-                        <span>
-                            Total:{" "}
-                            <strong className="text-slate-900">
-                                {resumo
-                                        ?.quantidadeTotalItens ??
-                                    0}
-                            </strong>
-                        </span>
-
-                        <span>
-                            Processados:{" "}
-                            <strong className="text-slate-900">
-                                {resumo
-                                        ?.quantidadeItensProcessados ??
-                                    0}
-                            </strong>
-                        </span>
-
-                        <span>
-                            Concluídos:{" "}
-                            <strong className="text-slate-900">
-                                {resumo
-                                        ?.quantidadeItensConcluidos ??
-                                    0}
-                            </strong>
-                        </span>
-                    </div>
-                </section>
-
-                <section className="mb-9">
-                    <SectionHeader
-                        title="Produções ativas"
-                        description="Progresso individual das ordens em execução, pausa, avaliação ou retrabalho"
-                    />
-
-                    {producoes.length === 0 ? (
-                        <EmptyState
+                <div className="mt-5 grid items-start gap-5 2xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.75fr)]">
+                    <section className="min-w-0">
+                        <SectionPanel
+                            title="Produções ativas"
+                            description="Acompanhamento das ordens em operação"
                             icon={ClipboardList}
-                            title="Nenhuma produção ativa"
-                            description="Não existem produções em andamento neste momento."
-                        />
-                    ) : (
-                        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-                            {producoes.map(
-                                (producao) => (
-                                    <ProducaoCard
-                                        key={
-                                            producao.producaoId
-                                        }
-                                        producao={
-                                            producao
-                                        }
-                                        onOpen={() =>
-                                            navigate(
-                                                "/producoes"
-                                            )
-                                        }
-                                    />
-                                )
+                            counter={producoes.length}
+                            action={
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        navigate("/producoes")
+                                    }
+                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 transition hover:text-blue-700"
+                                >
+                                    Ver produções
+                                    <ArrowRight size={14} />
+                                </button>
+                            }
+                        >
+                            {producoes.length === 0 ? (
+                                <EmptyState
+                                    icon={ClipboardList}
+                                    title="Nenhuma produção ativa"
+                                    description="Não existem ordens em execução neste momento."
+                                />
+                            ) : (
+                                <div className="space-y-3">
+                                    {producoes.map(
+                                        (producao) => (
+                                            <ProducaoRow
+                                                key={
+                                                    producao.producaoId
+                                                }
+                                                producao={
+                                                    producao
+                                                }
+                                                onOpen={() =>
+                                                    navigate(
+                                                        "/producoes"
+                                                    )
+                                                }
+                                            />
+                                        )
+                                    )}
+                                </div>
                             )}
-                        </div>
-                    )}
-                </section>
+                        </SectionPanel>
+                    </section>
 
-                <section>
-                    <SectionHeader
-                        title="Níveis das impressoras"
-                        description="Tinta e make-up dos equipamentos associados às produções ativas"
-                    />
-
-                    {equipamentos.length === 0 ? (
-                        <EmptyState
+                    <section className="min-w-0">
+                        <SectionPanel
+                            title="Impressoras"
+                            description="Conexão e níveis de insumos"
                             icon={Factory}
-                            title="Nenhum equipamento relacionado"
-                            description="Nenhuma impressora está associada às produções ativas."
-                        />
-                    ) : (
-                        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-                            {equipamentos.map(
-                                (equipamento) => (
-                                    <EquipamentoCard
-                                        key={
-                                            equipamento.equipamentoId
-                                        }
-                                        equipamento={
-                                            equipamento
-                                        }
-                                    />
-                                )
+                            counter={equipamentos.length}
+                        >
+                            {equipamentos.length === 0 ? (
+                                <EmptyState
+                                    icon={Factory}
+                                    title="Nenhuma impressora"
+                                    description="Não há equipamentos associados às produções ativas."
+                                />
+                            ) : (
+                                <div className="space-y-3">
+                                    {equipamentos.map(
+                                        (equipamento) => (
+                                            <EquipamentoCard
+                                                key={
+                                                    equipamento.equipamentoId
+                                                }
+                                                equipamento={
+                                                    equipamento
+                                                }
+                                            />
+                                        )
+                                    )}
+                                </div>
                             )}
-                        </div>
-                    )}
-                </section>
-
-                <footer className="mt-8 text-right text-xs text-slate-400">
-                    Última atualização:{" "}
-                    {formatarDataHora(
-                        resumo?.atualizadoEm
-                    )}
-                </footer>
+                        </SectionPanel>
+                    </section>
+                </div>
 
                 <button
                     type="button"
                     onClick={() =>
-                        navigate(
-                            "/registrar-parada"
-                        )
+                        navigate("/registrar-parada")
                     }
-                    className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl transition hover:bg-blue-700"
+                    className="fixed bottom-5 right-5 z-20 flex h-12 items-center gap-2 rounded-2xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
                     title="Registrar ocorrência"
-                    aria-label="Registrar ocorrência"
                 >
-                    <Plus size={27} />
+                    <Plus size={18} />
                 </button>
             </main>
         </div>
     );
 }
 
-function DashboardAlert({ alerta }) {
-    const config = {
-        danger: {
-            container:
-                "border-red-200 bg-red-50",
-            icon: "text-red-600",
-            title: "text-red-800",
-            text: "text-red-700",
-        },
-
-        warning: {
-            container:
-                "border-amber-200 bg-amber-50",
-            icon: "text-amber-600",
-            title: "text-amber-800",
-            text: "text-amber-700",
-        },
-    };
-
-    const style =
-        config[alerta.tipo] ||
-        config.warning;
-
+function DashboardHeader({
+                             refreshing,
+                             tempoRealConectado,
+                             atualizadoEm,
+                             onRefresh,
+                         }) {
     return (
-        <article
-            className={`rounded-2xl border p-4 ${style.container}`}
-        >
-            <div className="flex items-start gap-3">
-                <AlertTriangle
-                    size={21}
-                    className={`mt-0.5 shrink-0 ${style.icon}`}
-                />
+        <header className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <h1 className="text-[26px] font-bold tracking-[-0.025em] text-slate-950 md:text-[30px]">
+                    Dashboard de Produção
+                </h1>
 
-                <div>
-                    <h2
-                        className={`font-semibold ${style.title}`}
-                    >
-                        {alerta.titulo}
-                    </h2>
-
-                    <p
-                        className={`mt-1 text-sm ${style.text}`}
-                    >
-                        {alerta.descricao}
-                    </p>
-                </div>
+                <p className="mt-1 text-[13px] text-slate-500">
+                    Indicadores de operação, produção e
+                    disponibilidade das impressoras.
+                </p>
             </div>
-        </article>
+        </header>
     );
 }
 
-function ProducaoCard({
-                          producao,
-                          onOpen,
-                      }) {
-    const status =
-        producaoStatusMap[producao.status] || {
-            label:
-                producao.status ||
-                "Não informado",
-            className:
-                "border-slate-200 bg-slate-100 text-slate-700",
-            progressClass: "bg-slate-500",
-        };
+function DashboardSummary({ resumo }) {
+    const percentual = limitarPercentual(
+        resumo?.percentualGeralProcessado
+    );
 
-    const percentual =
-        limitarPercentual(
-            producao.percentualProcessado
-        );
+    const cards = [
+        {
+            title: "Produções ativas",
+            value:
+                resumo?.quantidadeProducoesAtivas ?? 0,
+            description:
+                "Ordens em operação ou avaliação",
+            icon: ClipboardList,
+            iconClass:
+                "bg-blue-50 text-blue-600",
+        },
+        {
+            title: "Itens processados",
+            value:
+                resumo?.quantidadeItensProcessados ?? 0,
+            description:
+                `de ${resumo?.quantidadeTotalItens ?? 0} itens importados`,
+            icon: Activity,
+            iconClass:
+                "bg-emerald-50 text-emerald-600",
+        },
+        {
+            title: "Impressoras conectadas",
+            value:
+                `${resumo?.quantidadeEquipamentosConectados ?? 0}/${resumo?.quantidadeEquipamentosRelacionados ?? 0}`,
+            description:
+                "Equipamentos relacionados às ordens",
+            icon: Wifi,
+            iconClass:
+                "bg-violet-50 text-violet-600",
+        },
+        {
+            title: "Itens concluídos",
+            value:
+                resumo?.quantidadeItensConcluidos ?? 0,
+            description:
+                "Itens aprovados e finalizados",
+            icon: PackageCheck,
+            iconClass:
+                "bg-slate-100 text-slate-700",
+        },
+    ];
 
     return (
-        <article className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                        Ordem de produção
-                    </p>
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+            <div className="grid divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4">
+                {cards.map((card, index) => {
+                    const Icon = card.icon;
 
-                    <h3 className="mt-1 text-lg font-bold text-slate-950">
-                        {producao.codigoOrdem}
-                    </h3>
+                    return (
+                        <article
+                            key={card.title}
+                            className={`
+                                flex min-w-0 items-center gap-3.5
+                                px-4 py-4 lg:px-5
+                                ${
+                                index === 2
+                                    ? "sm:border-t sm:border-slate-100 xl:border-t-0"
+                                    : ""
+                            }
+                            `}
+                        >
+                            <div
+                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.iconClass}`}
+                            >
+                                <Icon size={19} />
+                            </div>
 
-                    <p className="mt-1 text-sm text-slate-500">
-                        {producao.linhaNome}
-                        {" • "}
-                        {producao.equipamentoNome}
-                    </p>
-                </div>
+                            <div className="min-w-0">
+                                <p className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                                    {card.title}
+                                </p>
 
-                <span
-                    className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-semibold ${status.className}`}
-                >
-                    {status.label}
-                </span>
+                                <p className="mt-0.5 text-xl font-bold tracking-tight text-slate-950">
+                                    {card.value}
+                                </p>
+
+                                <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                                    {card.description}
+                                </p>
+                            </div>
+                        </article>
+                    );
+                })}
             </div>
 
-            <div className="mt-7">
-                <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600">
-                        Itens processados
-                    </span>
+            <div className="border-t border-slate-100 bg-slate-50/60 px-4 py-3.5 lg:px-5">
+                <div className="mb-2 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                        <Radio
+                            size={14}
+                            className="text-blue-600"
+                        />
 
-                    <span className="text-sm font-bold text-slate-900">
-                        {formatarPercentual(
-                            percentual
-                        )}
-                        %
+                        <span className="text-xs font-semibold text-slate-700">
+                            Progresso geral das produções
+                        </span>
+                    </div>
+
+                    <span className="text-sm font-bold text-slate-950">
+                        {formatarPercentual(percentual)}%
                     </span>
                 </div>
 
                 <ProgressBar
                     percentage={percentual}
-                    className={
-                        status.progressClass
-                    }
-                    heightClass="h-2.5"
+                    className="bg-blue-600"
+                    heightClass="h-2"
                 />
             </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <ProductionMetric
-                    label="Total"
-                    value={producao.quantidadeTotal}
-                />
-
-                <ProductionMetric
-                    label="Processados"
-                    value={
-                        producao
-                            .quantidadeProcessada
-                    }
-                />
-
-                <ProductionMetric
-                    label="Restantes"
-                    value={
-                        producao
-                            .quantidadeRestante
-                    }
-                />
-
-                <ProductionMetric
-                    label="Concluídos"
-                    value={
-                        producao
-                            .quantidadeConcluida
-                    }
-                />
-            </div>
-
-            <button
-                type="button"
-                onClick={onOpen}
-                className="mt-5 text-sm font-semibold text-blue-600 transition hover:text-blue-700 hover:underline"
-            >
-                Abrir produções
-            </button>
-        </article>
+        </section>
     );
 }
 
-function ProductionMetric({
-                              label,
-                              value,
-                          }) {
+function SectionPanel({
+                          title,
+                          description,
+                          icon: Icon,
+                          counter,
+                          action,
+                          children,
+                      }) {
     return (
-        <div className="rounded-xl bg-slate-50 px-3 py-3">
-            <p className="text-xs text-slate-500">
-                {label}
-            </p>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+            <header className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-4 lg:px-5">
+                <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                        <Icon size={17} />
+                    </div>
 
-            <p className="mt-1 font-bold text-slate-900">
-                {value ?? 0}
-            </p>
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                            <h2 className="truncate text-sm font-bold text-slate-900">
+                                {title}
+                            </h2>
+
+                            {counter !== undefined && (
+                                <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-slate-100 px-1.5 text-[10px] font-bold text-slate-600">
+                                    {counter}
+                                </span>
+                            )}
+                        </div>
+
+                        <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                            {description}
+                        </p>
+                    </div>
+                </div>
+
+                {action}
+            </header>
+
+            <div className="p-3 lg:p-4">
+                {children}
+            </div>
         </div>
     );
 }
 
-function EquipamentoCard({
-                             equipamento,
-                         }) {
-    const conectado =
-        equipamento.statusConexao ===
-        "CONECTADO";
+function ProducaoRow({ producao, onOpen }) {
+    const status =
+        producaoStatusMap[producao.status] || {
+            label:
+                formatarEnum(producao.status) ||
+                "Não informado",
+            badge:
+                "border-slate-200 bg-slate-100 text-slate-700",
+            progress: "bg-slate-500",
+            dot: "bg-slate-500",
+        };
+
+    const percentual = limitarPercentual(
+        producao.percentualProcessado
+    );
 
     return (
-        <article className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
-            <header className="flex items-start justify-between gap-4">
-                <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                        {equipamento.equipamentoCodigo}
-                    </p>
+        <article className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-sm font-bold text-slate-900">
+                            {producao.codigoOrdem}
+                        </h3>
 
-                    <h3 className="mt-1 text-lg font-bold text-slate-950">
-                        {equipamento.equipamentoNome}
-                    </h3>
+                        <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-semibold ${status.badge}`}
+                        >
+                            <span
+                                className={`h-1.5 w-1.5 rounded-full ${status.dot}`}
+                            />
+
+                            {status.label}
+                        </span>
+                    </div>
+
+                    <p className="mt-1 truncate text-xs text-slate-500">
+                        {producao.linhaNome || "Sem linha"}
+                        <span className="px-1.5 text-slate-300">
+                            /
+                        </span>
+                        {producao.equipamentoNome ||
+                            "Sem equipamento"}
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={onOpen}
+                    className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-blue-600 opacity-100 transition hover:text-blue-700 lg:opacity-0 lg:group-hover:opacity-100"
+                >
+                    Detalhes
+                    <ArrowRight size={13} />
+                </button>
+            </div>
+
+            <div className="mt-4">
+                <div className="mb-2 flex items-end justify-between gap-4">
+                    <div className="flex flex-wrap gap-x-5 gap-y-1">
+                        <MetricInline
+                            label="Processados"
+                            value={
+                                producao.quantidadeProcessada
+                            }
+                        />
+
+                        <MetricInline
+                            label="Restantes"
+                            value={
+                                producao.quantidadeRestante
+                            }
+                        />
+
+                        <MetricInline
+                            label="Concluídos"
+                            value={
+                                producao.quantidadeConcluida
+                            }
+                        />
+                    </div>
+
+                    <span className="shrink-0 text-lg font-bold tracking-tight text-slate-950">
+                        {formatarPercentual(percentual)}
+                        <span className="ml-0.5 text-xs font-semibold text-slate-400">
+                            %
+                        </span>
+                    </span>
+                </div>
+
+                <ProgressBar
+                    percentage={percentual}
+                    className={status.progress}
+                    heightClass="h-2"
+                />
+
+                <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
+                    <span>Progresso processado</span>
+
+                    <span>
+                        Total:{" "}
+                        {producao.quantidadeTotal ?? 0}
+                    </span>
+                </div>
+            </div>
+        </article>
+    );
+}
+
+function MetricInline({ label, value }) {
+    return (
+        <div>
+            <span className="text-[10px] text-slate-400">
+                {label}
+            </span>
+
+            <span className="ml-1.5 text-xs font-bold text-slate-700">
+                {value ?? 0}
+            </span>
+        </div>
+    );
+}
+
+function EquipamentoCard({ equipamento }) {
+    const conectado =
+        equipamento.statusConexao === "CONECTADO";
+
+    return (
+        <article className="rounded-xl border border-slate-200 bg-white p-4">
+            <header className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                    <div
+                        className={`
+                            flex h-9 w-9 shrink-0
+                            items-center justify-center rounded-xl
+                            ${
+                            conectado
+                                ? "bg-emerald-50 text-emerald-600"
+                                : "bg-red-50 text-red-600"
+                        }
+                        `}
+                    >
+                        {conectado ? (
+                            <Wifi size={17} />
+                        ) : (
+                            <WifiOff size={17} />
+                        )}
+                    </div>
+
+                    <div className="min-w-0">
+                        <h3 className="truncate text-sm font-bold text-slate-900">
+                            {equipamento.equipamentoNome}
+                        </h3>
+
+                        <p className="mt-0.5 truncate text-[11px] text-slate-400">
+                            {equipamento.equipamentoCodigo ||
+                                "Código não informado"}
+                        </p>
+                    </div>
                 </div>
 
                 <span
                     className={`
-                        inline-flex items-center gap-2
-                        rounded-full border px-3 py-1
-                        text-xs font-semibold
+                        inline-flex shrink-0 items-center gap-1.5
+                        rounded-full border px-2 py-1
+                        text-[10px] font-semibold
                         ${
                         conectado
                             ? "border-emerald-200 bg-emerald-50 text-emerald-700"
@@ -838,11 +804,16 @@ function EquipamentoCard({
                     }
                     `}
                 >
-                    {conectado ? (
-                        <Wifi size={14} />
-                    ) : (
-                        <WifiOff size={14} />
-                    )}
+                    <span
+                        className={`
+                            h-1.5 w-1.5 rounded-full
+                            ${
+                            conectado
+                                ? "bg-emerald-500"
+                                : "bg-red-500"
+                        }
+                        `}
+                    />
 
                     {conectado
                         ? "Conectado"
@@ -850,9 +821,8 @@ function EquipamentoCard({
                 </span>
             </header>
 
-            {equipamento
-                .consultaLiquidosDisponivel ? (
-                <div className="mt-7 space-y-6">
+            {equipamento.consultaLiquidosDisponivel ? (
+                <div className="mt-4 space-y-4 border-t border-slate-100 pt-4">
                     <LiquidLevel
                         label="Tinta"
                         level={equipamento.tinta}
@@ -868,23 +838,21 @@ function EquipamentoCard({
                     />
                 </div>
             ) : (
-                <div className="mt-7 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5">
-                    <div className="flex items-start gap-3">
-                        <WifiOff
-                            size={20}
-                            className="mt-0.5 shrink-0 text-slate-400"
-                        />
+                <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3">
+                    <WifiOff
+                        size={16}
+                        className="mt-0.5 shrink-0 text-slate-400"
+                    />
 
-                        <div>
-                            <p className="text-sm font-semibold text-slate-700">
-                                Níveis indisponíveis
-                            </p>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-700">
+                            Níveis indisponíveis
+                        </p>
 
-                            <p className="mt-1 text-sm text-slate-500">
-                                {equipamento.mensagem ||
-                                    "Não foi possível consultar a impressora."}
-                            </p>
-                        </div>
+                        <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
+                            {equipamento.mensagem ||
+                                "Não foi possível consultar os níveis da impressora."}
+                        </p>
                     </div>
                 </div>
             )}
@@ -900,53 +868,51 @@ function LiquidLevel({
                      }) {
     if (!level?.sensorConectado) {
         return (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                <div className="flex items-center gap-3 text-amber-700">
-                    <AlertTriangle size={19} />
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <AlertTriangle
+                    size={15}
+                    className="mt-0.5 shrink-0 text-amber-600"
+                />
 
-                    <div>
-                        <p className="text-sm font-semibold">
-                            {label}
-                        </p>
+                <div>
+                    <p className="text-xs font-semibold text-amber-800">
+                        Sensor de {label.toLowerCase()}
+                    </p>
 
-                        <p className="text-xs">
-                            {level?.descricao ||
-                                "Sensor desconectado"}
-                        </p>
-                    </div>
+                    <p className="mt-0.5 text-[11px] text-amber-700">
+                        {level?.descricao ||
+                            "Sensor desconectado"}
+                    </p>
                 </div>
             </div>
         );
     }
 
-    const percentual =
-        limitarPercentual(
-            level.percentualEstimado
-        );
+    const percentual = limitarPercentual(
+        level.percentualEstimado
+    );
 
     let color = defaultColor;
 
     if (level.percentualMaximo <= 24) {
         color = "bg-red-500";
-    } else if (
-        level.percentualMaximo <= 49
-    ) {
+    } else if (level.percentualMaximo <= 49) {
         color = "bg-amber-500";
     }
 
     return (
         <div>
-            <div className="mb-2 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
                     <Icon
-                        size={17}
-                        className="text-slate-500"
+                        size={14}
+                        className="text-slate-400"
                     />
 
                     {label}
                 </div>
 
-                <span className="text-sm font-bold text-slate-900">
+                <span className="truncate text-xs font-bold text-slate-800">
                     {level.descricao}
                 </span>
             </div>
@@ -954,17 +920,88 @@ function LiquidLevel({
             <ProgressBar
                 percentage={percentual}
                 className={color}
-                heightClass="h-3"
+                heightClass="h-2"
             />
 
-            <p className="mt-2 text-xs text-slate-400">
-                Valor aproximado para representação visual:{" "}
-                {formatarPercentual(
-                    percentual
-                )}
-                %
-            </p>
+            <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
+                <span>Nível estimado</span>
+
+                <span>
+                    {formatarPercentual(percentual)}%
+                </span>
+            </div>
         </div>
+    );
+}
+
+function DashboardAlert({ alerta }) {
+    const config = {
+        danger: {
+            container:
+                "border-red-200 bg-red-50",
+            iconContainer:
+                "bg-red-100 text-red-600",
+            title: "text-red-800",
+            text: "text-red-700",
+        },
+
+        warning: {
+            container:
+                "border-amber-200 bg-amber-50",
+            iconContainer:
+                "bg-amber-100 text-amber-600",
+            title: "text-amber-800",
+            text: "text-amber-700",
+        },
+    };
+
+    const style =
+        config[alerta.tipo] || config.warning;
+
+    return (
+        <article
+            className={`flex items-start gap-3 rounded-xl border p-3.5 ${style.container}`}
+        >
+            <div
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${style.iconContainer}`}
+            >
+                <AlertTriangle size={16} />
+            </div>
+
+            <div className="min-w-0">
+                <h3
+                    className={`text-xs font-bold ${style.title}`}
+                >
+                    {alerta.titulo}
+                </h3>
+
+                <p
+                    className={`mt-1 text-[11px] leading-4 ${style.text}`}
+                >
+                    {alerta.descricao}
+                </p>
+            </div>
+        </article>
+    );
+}
+
+function ErrorMessage({ mensagem }) {
+    return (
+        <section className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
+                <AlertTriangle size={16} />
+            </div>
+
+            <div>
+                <p className="text-xs font-bold text-red-800">
+                    Falha na atualização
+                </p>
+
+                <p className="mt-1 text-xs text-red-700">
+                    {mensagem}
+                </p>
+            </div>
+        </section>
     );
 }
 
@@ -978,32 +1015,15 @@ function ProgressBar({
 
     return (
         <div
-            className={`w-full overflow-hidden rounded-full bg-slate-200 ${heightClass}`}
+            className={`w-full overflow-hidden rounded-full bg-slate-200/80 ${heightClass}`}
         >
             <div
-                className={`h-full rounded-full transition-all duration-500 ${className}`}
+                className={`h-full rounded-full transition-[width] duration-500 ease-out ${className}`}
                 style={{
                     width: `${percentual}%`,
                 }}
             />
         </div>
-    );
-}
-
-function SectionHeader({
-                           title,
-                           description,
-                       }) {
-    return (
-        <header className="mb-4">
-            <h2 className="text-xl font-bold text-slate-950">
-                {title}
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-                {description}
-            </p>
-        </header>
     );
 }
 
@@ -1013,17 +1033,16 @@ function EmptyState({
                         description,
                     }) {
     return (
-        <div className="rounded-[24px] border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-            <Icon
-                size={32}
-                className="mx-auto text-slate-300"
-            />
+        <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-8 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm">
+                <Icon size={19} />
+            </div>
 
-            <h3 className="mt-4 font-semibold text-slate-800">
+            <h3 className="mt-3 text-sm font-semibold text-slate-800">
                 {title}
             </h3>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 max-w-sm text-xs text-slate-500">
                 {description}
             </p>
         </div>
@@ -1044,14 +1063,13 @@ function limitarPercentual(valor) {
 }
 
 function formatarPercentual(valor) {
-    return limitarPercentual(valor)
-        .toLocaleString(
-            "pt-BR",
-            {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 1,
-            }
-        );
+    return limitarPercentual(valor).toLocaleString(
+        "pt-BR",
+        {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 1,
+        }
+    );
 }
 
 function formatarDataHora(valor) {
@@ -1065,13 +1083,26 @@ function formatarDataHora(valor) {
         return "—";
     }
 
-    return data.toLocaleString(
-        "pt-BR",
-        {
-            dateStyle: "short",
-            timeStyle: "medium",
-        }
-    );
+    return data.toLocaleString("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "medium",
+    });
+}
+
+function formatarEnum(valor) {
+    if (!valor) {
+        return "";
+    }
+
+    return valor
+        .toLowerCase()
+        .split("_")
+        .map(
+            (palavra) =>
+                palavra.charAt(0).toUpperCase() +
+                palavra.slice(1)
+        )
+        .join(" ");
 }
 
 export default DashboardPage;

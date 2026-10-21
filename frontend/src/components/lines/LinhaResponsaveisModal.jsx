@@ -1,322 +1,215 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+    Trash2,
     UserPlus,
     Users,
-    Trash2,
     X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
+import { Button, IconButton } from "../common/Button.jsx";
 import { linhaUsuarioService } from "../../services/linhaUsuarioService.js";
 import { usuarioService } from "../../services/usuarioService.js";
 
-function LinhaResponsaveisModal({
-                                    isOpen,
-                                    linha,
-                                    onClose,
-                                }) {
+function LinhaResponsaveisModal({ isOpen, linha, onClose }) {
     const [usuarios, setUsuarios] = useState([]);
     const [vinculos, setVinculos] = useState([]);
     const [usuarioId, setUsuarioId] = useState("");
     const [loading, setLoading] = useState(false);
     const [salvando, setSalvando] = useState(false);
     const [removendoId, setRemovendoId] = useState(null);
-
     const linhaId = linha?.id;
+    const processando =
+        salvando || removendoId !== null;
 
     const carregarDados = useCallback(async () => {
-        if (!linhaId) {
-            return;
-        }
-
+        if (!linhaId) return;
         try {
             setLoading(true);
-
-            const [usuariosData, responsaveisData] =
-                await Promise.all([
-                    usuarioService.listar(),
-                    linhaUsuarioService.listarPorLinha(
-                        linhaId
-                    ),
-                ]);
-
-            setUsuarios(usuariosData);
-            setVinculos(responsaveisData);
+            const [usuariosData, responsaveisData] = await Promise.all([
+                usuarioService.listar(),
+                linhaUsuarioService.listarPorLinha(linhaId),
+            ]);
+            setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
+            setVinculos(Array.isArray(responsaveisData) ? responsaveisData : []);
         } catch (error) {
-            toast.error(
-                error.response?.data?.detail
-                || "Não foi possível carregar os responsáveis."
-            );
+            mostrarErro(error, "Não foi possível carregar os responsáveis.");
         } finally {
             setLoading(false);
         }
     }, [linhaId]);
 
     useEffect(() => {
-        if (isOpen && linhaId) {
-            carregarDados();
-        }
-    }, [isOpen, linhaId, carregarDados]);
+        if (isOpen) carregarDados();
+    }, [isOpen, carregarDados]);
 
-    const usuariosDisponiveis = useMemo(() => {
-        const idsVinculados = new Set(
-            vinculos.map((vinculo) => vinculo.usuarioId)
-        );
+    useEffect(() => {
+        if (!isOpen) return undefined;
+
+        function fechar(event) {
+            if (event.key === "Escape" && !salvando && removendoId === null) {
+                onClose();
+            }
+        }
+
+        document.addEventListener("keydown", fechar);
+        return () => document.removeEventListener("keydown", fechar);
+    }, [isOpen, salvando, removendoId, onClose]);
+
+    const disponiveis = useMemo(() => {
+        const vinculados = new Set(vinculos.map((item) => item.usuarioId));
 
         return usuarios
-            .filter((usuario) => {
-                const perfil = obterPerfil(usuario);
-
-                return (
+            .filter(
+                (usuario) =>
                     usuario.status === "ATIVO" &&
-                    ["OPERADOR", "SUPERVISOR"].includes(perfil) &&
-                    !idsVinculados.has(usuario.id)
-                );
-            })
-            .sort((a, b) =>
-                a.nome.localeCompare(b.nome, "pt-BR")
-            );
+                    ["OPERADOR", "SUPERVISOR"].includes(obterPerfil(usuario)) &&
+                    !vinculados.has(usuario.id)
+            )
+            .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     }, [usuarios, vinculos]);
 
-    async function adicionarResponsavel() {
-        if (!usuarioId) {
-            toast.error("Selecione um usuário.");
-            return;
-        }
+    if (!isOpen || !linha) return null;
 
-        const usuario = usuarios.find(
-            (item) =>
-                item.id === Number(usuarioId)
-        );
-
-        if (!usuario) {
-            toast.error("Usuário não encontrado.");
-            return;
-        }
-
-        const papelNaLinha = obterPerfil(usuario);
+    async function adicionar() {
+        const usuario = usuarios.find((item) => item.id === Number(usuarioId));
+        if (!usuario) return toast.error("Selecione um usuário.");
 
         try {
             setSalvando(true);
-
-            const novoVinculo =
-                await linhaUsuarioService.vincular(
-                    linha.id,
-                    usuario.id,
-                    papelNaLinha
-                );
-
+            const novo = await linhaUsuarioService.vincular(linha.id, usuario.id, obterPerfil(usuario));
             setVinculos((anteriores) =>
-                [...anteriores, novoVinculo].sort(
-                    (a, b) =>
-                        a.usuarioNome.localeCompare(
-                            b.usuarioNome,
-                            "pt-BR"
-                        )
-                )
+                [...anteriores, novo].sort((a, b) => a.usuarioNome.localeCompare(b.usuarioNome, "pt-BR"))
             );
-
             setUsuarioId("");
-
-            toast.success(
-                "Responsável vinculado com sucesso!"
-            );
+            toast.success("Responsável vinculado com sucesso!");
         } catch (error) {
-            mostrarErro(
-                error,
-                "Erro ao vincular responsável."
-            );
+            mostrarErro(error, "Erro ao vincular responsável.");
         } finally {
             setSalvando(false);
         }
     }
 
-    async function removerResponsavel(vinculo) {
+    async function remover(vinculo) {
         try {
             setRemovendoId(vinculo.id);
-
-            await linhaUsuarioService.remover(
-                linha.id,
-                vinculo.id
-            );
-
-            setVinculos((anteriores) =>
-                anteriores.filter(
-                    (item) =>
-                        item.id !== vinculo.id
-                )
-            );
-
-            toast.success(
-                "Responsável removido com sucesso!"
-            );
+            await linhaUsuarioService.remover(linha.id, vinculo.id);
+            setVinculos((anteriores) => anteriores.filter((item) => item.id !== vinculo.id));
+            toast.success("Responsável removido com sucesso!");
         } catch (error) {
-            mostrarErro(
-                error,
-                "Erro ao remover responsável."
-            );
+            mostrarErro(error, "Erro ao remover responsável.");
         } finally {
             setRemovendoId(null);
         }
     }
 
-    if (!isOpen || !linha) {
-        return null;
-    }
-
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/40 p-4">
-            <div className="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
-                <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <Users
-                                size={20}
-                                className="text-blue-600"
-                            />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
 
-                            <h2 className="text-lg font-bold text-slate-900">
-                                Responsáveis pela Linha
-                            </h2>
+                {/* HEADER DO MODAL */}
+                <header className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                    <div className="flex gap-3.5">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <Users size={19} />
                         </div>
-
-                        <p className="mt-1 text-sm text-slate-500">
-                            {linha.nome}
-                        </p>
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-900">Responsáveis pela linha</h2>
+                            <p className="mt-1 text-xs text-slate-500">{linha.nome}</p>
+                        </div>
                     </div>
-
-                    <button
-                        type="button"
+                    <IconButton
+                        icon={X}
                         onClick={onClose}
-                        className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                        title="Fechar"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
+                        disabled={processando}
+                        title="Fechar modal"
+                    />
+                </header>
 
-                <div className="space-y-6 p-6">
+                {/* CORPO DO FORMULÁRIO */}
+                <div className="space-y-5 px-6 py-5">
+
+                    {/* SEÇÃO: FORMULÁRIO DE ADIÇÃO */}
                     <section>
-                        <h3 className="text-sm font-semibold text-slate-900">
-                            Adicionar responsável
-                        </h3>
+                        <h3 className="text-xs font-semibold text-slate-800">Adicionar responsável</h3>
+                        <p className="mt-1 text-[10px] text-slate-500">Somente operadores e supervisores ativos.</p>
 
-                        <p className="mt-1 text-xs text-slate-500">
-                            Somente operadores e supervisores
-                            ativos são exibidos.
-                        </p>
-
-                        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                        <div className="mt-3 flex gap-2">
                             <select
                                 value={usuarioId}
-                                onChange={(event) =>
-                                    setUsuarioId(
-                                        event.target.value
-                                    )
-                                }
-                                disabled={
-                                    loading ||
-                                    salvando ||
-                                    usuariosDisponiveis.length === 0
-                                }
-                                className="h-11 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                                disabled={loading || salvando || !disponiveis.length}
+                                className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 text-[11px] outline-none focus:border-blue-500 disabled:opacity-50"
+                                onChange={(event) => setUsuarioId(event.target.value)}
                             >
                                 <option value="">
-                                    {usuariosDisponiveis.length === 0
-                                        ? "Nenhum usuário disponível"
-                                        : "Selecione um usuário"}
+                                    {disponiveis.length ? "Selecione um usuário" : "Nenhum usuário disponível"}
                                 </option>
-
-                                {usuariosDisponiveis.map(
-                                    (usuario) => (
-                                        <option
-                                            key={usuario.id}
-                                            value={usuario.id}
-                                        >
-                                            {usuario.nome} —{" "}
-                                            {formatarPerfil(
-                                                obterPerfil(usuario)
-                                            )}
-                                        </option>
-                                    )
-                                )}
+                                {disponiveis.map((usuario) => (
+                                    <option key={usuario.id} value={usuario.id}>
+                                        {usuario.nome} — {formatarPerfil(obterPerfil(usuario))}
+                                    </option>
+                                ))}
                             </select>
 
-                            <button
-                                type="button"
-                                onClick={adicionarResponsavel}
+                            <Button
+                                size="small"
+                                icon={UserPlus}
+                                onClick={adicionar}
+                                loading={salvando}
+                                loadingText="Adicionando..."
                                 disabled={
                                     !usuarioId ||
-                                    salvando ||
                                     loading
                                 }
-                                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                <UserPlus size={17} />
-
-                                {salvando
-                                    ? "Adicionando..."
-                                    : "Adicionar"}
-                            </button>
+                                Adicionar
+                            </Button>
                         </div>
                     </section>
 
+                    {/* SEÇÃO: LISTAGEM DE RESPONSÁVEIS */}
                     <section>
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-900">
-                                Responsáveis vinculados
-                            </h3>
-
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                            <h3 className="text-xs font-semibold text-slate-800">Responsáveis vinculados</h3>
+                            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                                 {vinculos.length}
-                            </span>
+                              </span>
                         </div>
 
-                        <div className="mt-3 max-h-[340px] space-y-2 overflow-y-auto pr-1">
+                        <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
                             {loading ? (
-                                <EstadoVazio texto="Carregando responsáveis..." />
-                            ) : vinculos.length === 0 ? (
-                                <EstadoVazio texto="Nenhum responsável vinculado." />
+                                <Estado texto="Carregando responsáveis..." />
+                            ) : !vinculos.length ? (
+                                <Estado texto="Nenhum responsável vinculado." />
                             ) : (
                                 vinculos.map((vinculo) => (
                                     <div
                                         key={vinculo.id}
-                                        className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                                        className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
                                     >
                                         <div className="min-w-0">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <p className="truncate text-sm font-semibold text-slate-900">
+                                            <div className="flex items-center gap-2">
+                                                <p className="truncate text-xs font-semibold text-slate-900">
                                                     {vinculo.usuarioNome}
                                                 </p>
-
-                                                <PapelBadge
-                                                    papel={
-                                                        vinculo.papelNaLinha
-                                                    }
-                                                />
+                                                <PapelBadge papel={vinculo.papelNaLinha} />
                                             </div>
-
-                                            <p className="mt-1 truncate text-xs text-slate-500">
+                                            <p className="mt-0.5 truncate text-[10px] text-slate-500">
                                                 {vinculo.usuarioEmail}
                                             </p>
                                         </div>
 
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                removerResponsavel(
-                                                    vinculo
-                                                )
-                                            }
+                                        <IconButton
+                                            icon={Trash2}
+                                            size="small"
+                                            variant="dangerOutline"
+                                            title={`Remover ${vinculo.usuarioNome}`}
+                                            onClick={() => remover(vinculo)}
+                                            loading={removendoId === vinculo.id}
                                             disabled={
-                                                removendoId ===
-                                                vinculo.id
+                                                removendoId !== null &&
+                                                removendoId !== vinculo.id
                                             }
-                                            className="shrink-0 rounded-xl border border-red-200 p-2 text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                            title="Remover responsável"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        />
                                     </div>
                                 ))
                             )}
@@ -324,74 +217,57 @@ function LinhaResponsaveisModal({
                     </section>
                 </div>
 
-                <div className="flex justify-end border-t border-slate-200 bg-slate-50 px-6 py-4">
-                    <button
-                        type="button"
+                {/* FOOTER DO MODAL */}
+                <footer className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/70 px-6 py-4">
+                    <Button
+                        variant="secondary"
+                        size="small"
                         onClick={onClose}
-                        className="h-10 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                        disabled={processando}
                     >
                         Fechar
-                    </button>
-                </div>
+                    </Button>
+                </footer>
+
             </div>
         </div>
     );
 }
 
+{/* COMPONENTES AUXILIARES COESOS */}
 function PapelBadge({ papel }) {
     const supervisor = papel === "SUPERVISOR";
-
     return (
         <span
-            className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
-                supervisor
-                    ? "bg-violet-100 text-violet-700"
-                    : "bg-blue-100 text-blue-700"
+            className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase ${
+                supervisor ? "bg-violet-100 text-violet-700" : "bg-blue-100 text-blue-700"
             }`}
         >
-            {formatarPerfil(papel)}
-        </span>
+      formatarPerfil(papel)
+    </span>
     );
 }
 
-function EstadoVazio({ texto }) {
+function Estado({ texto }) {
     return (
-        <div className="rounded-2xl border border-dashed border-slate-300 px-5 py-8 text-center text-sm text-slate-500">
+        <div className="rounded-xl border border-dashed border-slate-300 px-4 py-7 text-center text-[11px] text-slate-500">
             {texto}
         </div>
     );
 }
 
+{/* FUNÇÕES AUXILIARES DE SUPORTE */}
 function obterPerfil(usuario) {
-    const perfil =
-        usuario?.perfil?.nome ??
-        usuario?.perfil ??
-        "";
-
-    return String(perfil).toUpperCase();
+    return String(usuario?.perfil?.nome ?? usuario?.perfil ?? "").toUpperCase();
 }
 
 function formatarPerfil(perfil) {
-    const labels = {
-        OPERADOR: "Operador",
-        SUPERVISOR: "Supervisor",
-    };
-
-    return labels[perfil] || perfil;
+    return { OPERADOR: "Operador", SUPERVISOR: "Supervisor" }[perfil] || perfil;
 }
 
 function mostrarErro(error, fallback) {
     console.error(fallback, error);
-    console.error(
-        "Resposta:",
-        error.response?.data
-    );
-
-    toast.error(
-        error.response?.data?.detail ||
-        error.response?.data?.message ||
-        fallback
-    );
+    toast.error(error.response?.data?.detail || error.response?.data?.message || fallback);
 }
 
 export default LinhaResponsaveisModal;

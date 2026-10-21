@@ -82,73 +82,13 @@ public class FilaImpressaoService {
         return toResponseDTO(salva);
     }
 
-    @Transactional(readOnly = true)
-    public List<FilaImpressaoResponseDTO> listar() {
-        return filaRepository.findAll().stream()
-                .map(this::toResponseDTO)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<FilaImpressaoResponseDTO> listarPorEquipamento(
-            Long equipamentoId
-    ) {
-        return filaRepository
-                .findByEquipamentoIdOrderByOrdemFilaAsc(equipamentoId)
-                .stream()
-                .map(this::toResponseDTO)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<FilaImpressaoResponseDTO> listarPendentes(
-            Long equipamentoId
-    ) {
-        return filaRepository
-                .findByEquipamentoIdAndStatusOrderByOrdemFilaAsc(
-                        equipamentoId,
-                        StatusFilaImpressao.PENDENTE
-                )
-                .stream()
-                .map(this::toResponseDTO)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public FilaImpressaoResponseDTO buscarPorId(Long id) {
-        return toResponseDTO(buscarFila(id));
-    }
-
-    @Transactional
-    public FilaImpressaoResponseDTO cancelar(Long id) {
-        FilaImpressao fila = buscarFila(id);
-
-        if (fila.getStatus() != StatusFilaImpressao.PENDENTE
-                && fila.getStatus() != StatusFilaImpressao.ERRO) {
-            throw new BusinessException(
-                    "Somente impressões pendentes ou com erro podem ser canceladas."
-            );
-        }
-
-        fila.setStatus(StatusFilaImpressao.CANCELADO);
-
-        return toResponseDTO(filaRepository.save(fila));
-    }
-
     private LayoutImpressao buscarLayout(Long id) {
         return layoutRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Layout de impressão não encontrado com ID: " + id
                 ));
     }
-
-    private FilaImpressao buscarFila(Long id) {
-        return filaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Registro da fila de impressão não encontrado com ID: " + id
-                ));
-    }
-
+    
     private Long calcularProximaOrdem(Long equipamentoId) {
         return filaRepository
                 .findFirstByEquipamentoIdOrderByOrdemFilaDesc(

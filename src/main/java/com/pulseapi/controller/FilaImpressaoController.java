@@ -1,136 +1,44 @@
 package com.pulseapi.controller;
 
-import com.pulseapi.dto.fila.*;
-import com.pulseapi.service.FilaImpressaoProcessadorService;
+import com.pulseapi.dto.fila.FilaImpressaoRequestDTO;
+import com.pulseapi.dto.fila.FilaImpressaoResponseDTO;
 import com.pulseapi.service.FilaImpressaoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-import com.pulseapi.service.FilaImpressaoProcessadorService;
-import java.util.List;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/fila-impressao")
 public class FilaImpressaoController {
 
     private final FilaImpressaoService filaImpressaoService;
-    private final FilaImpressaoProcessadorService processadorService;
 
     public FilaImpressaoController(
-            FilaImpressaoService filaImpressaoService,
-            FilaImpressaoProcessadorService processadorService
+            FilaImpressaoService filaImpressaoService
     ) {
-        this.filaImpressaoService = filaImpressaoService;
-        this.processadorService = processadorService;
+        this.filaImpressaoService =
+                filaImpressaoService;
     }
 
+    @PostMapping
     @PreAuthorize(
             "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
     )
-    @PostMapping
-    public ResponseEntity<FilaImpressaoResponseDTO> adicionar(
-            @RequestBody @Valid FilaImpressaoRequestDTO dto
+    public ResponseEntity<FilaImpressaoResponseDTO>
+    registrar(
+            @RequestBody
+            @Valid
+            FilaImpressaoRequestDTO dto
     ) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(filaImpressaoService.adicionar(dto));
-    }
-
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
-    )
-    @GetMapping
-    public ResponseEntity<List<FilaImpressaoResponseDTO>> listar() {
-        return ResponseEntity.ok(
-                filaImpressaoService.listar()
-        );
-    }
-
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
-    )
-    @GetMapping("/{id}")
-    public ResponseEntity<FilaImpressaoResponseDTO> buscarPorId(
-            @PathVariable Long id
-    ) {
-        return ResponseEntity.ok(
-                filaImpressaoService.buscarPorId(id)
-        );
-    }
-
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
-    )
-    @GetMapping("/equipamento/{equipamentoId}")
-    public ResponseEntity<List<FilaImpressaoResponseDTO>>
-    listarPorEquipamento(
-            @PathVariable Long equipamentoId
-    ) {
-        return ResponseEntity.ok(
-                filaImpressaoService.listarPorEquipamento(equipamentoId)
-        );
-    }
-
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
-    )
-    @GetMapping("/equipamento/{equipamentoId}/pendentes")
-    public ResponseEntity<List<FilaImpressaoResponseDTO>>
-    listarPendentes(
-            @PathVariable Long equipamentoId
-    ) {
-        return ResponseEntity.ok(
-                filaImpressaoService.listarPendentes(equipamentoId)
-        );
-    }
-
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
-    )
-    @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<FilaImpressaoResponseDTO> cancelar(
-            @PathVariable Long id
-    ) {
-        return ResponseEntity.ok(
-                filaImpressaoService.cancelar(id)
-        );
-    }
-
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
-    )
-    @PostMapping("/equipamento/{equipamentoId}/processar-proximo")
-    public ResponseEntity<ProcessamentoFilaResponseDTO> processarProximo(
-            @PathVariable Long equipamentoId
-    ) {
-        return ResponseEntity.ok(
-                processadorService.processarProximo(equipamentoId)
-        );
-    }
-
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
-    )
-    @PostMapping("/equipamento/{equipamentoId}/verificar-consumo")
-    public ResponseEntity<ConfirmacaoImpressaoResponseDTO> verificarConsumo(
-            @PathVariable Long equipamentoId
-    ) {
-        return ResponseEntity.ok(
-                processadorService.verificarConsumo(equipamentoId)
-        );
-    }
-
-    @PostMapping("/equipamento/{equipamentoId}/sincronizar")
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR', 'OPERADOR')"
-    )
-    public ResponseEntity<SincronizacaoFilaResponseDTO> sincronizar(
-            @PathVariable Long equipamentoId
-    ) {
-        return ResponseEntity.ok(
-                processadorService.sincronizar(equipamentoId)
-        );
+                .body(
+                        filaImpressaoService.adicionar(dto)
+                );
     }
 }

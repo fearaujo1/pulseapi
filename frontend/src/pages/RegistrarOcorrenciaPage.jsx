@@ -1,18 +1,13 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Topbar from "../components/layout/Topbar";
-import { equipamentosService } from "../services/equipamentosService";
+import Topbar from "../components/layout/Topbar.jsx";
+import { equipamentosService } from "../services/equipamentosService.js";
 import { ocorrenciaService } from "../services/ocorrenciaService.js";
-import PageHeader from "../components/common/PageHeader";
-import EventoHelpPopover from "../components/events/EventoHelpPopover";
-import RegistrarOcorrenciaForm from "../components/events/RegistrarOcorrenciaForm";
+import PageHeader from "../components/common/PageHeader.jsx";
+import EventoHelpPopover from "../components/events/EventoHelpPopover.jsx";
+import RegistrarOcorrenciaForm from "../components/events/RegistrarOcorrenciaForm.jsx";
 
-const initialForm = {
-    titulo: "",
-    descricao: "",
-    tipo: "FALHA_EQUIPAMENTO",
-    equipamentoId: "",
-};
+const initialForm = { titulo: "", descricao: "", tipo: "FALHA_EQUIPAMENTO", equipamentoId: "" };
 
 function RegistrarOcorrenciaPage() {
     const [formData, setFormData] = useState(initialForm);
@@ -20,105 +15,45 @@ function RegistrarOcorrenciaPage() {
     const [loadingEquipamentos, setLoadingEquipamentos] = useState(true);
     const [submitLoading, setSubmitLoading] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
-    
-    async function carregarEquipamentos() {
-        try {
-            setLoadingEquipamentos(true);
-
-            const data = await equipamentosService.listar();
-            setEquipamentos(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error("Erro ao carregar equipamentos:", error);
-            console.error("Resposta:", error.response?.data);
-            toast.error("Erro ao carregar equipamentos.");
-            setEquipamentos([]);
-        } finally {
-            setLoadingEquipamentos(false);
-        }
-    }
 
     useEffect(() => {
-        carregarEquipamentos();
+        async function carregar() {
+            try {
+                setLoadingEquipamentos(true);
+                const data = await equipamentosService.listar();
+                setEquipamentos(Array.isArray(data) ? data : []);
+            } catch (error) {
+                mostrarErro(error, "Não foi possível carregar os equipamentos.");
+                setEquipamentos([]);
+            } finally { setLoadingEquipamentos(false); }
+        }
+        carregar();
     }, []);
 
-    function handleChange(event) {
-        const { name, value } = event.target;
-
-        setFormData((previous) => ({
-            ...previous,
-            [name]:
-                name === "equipamentoId" && value
-                    ? Number(value)
-                    : value,
-        }));
-    }
+    function handleChange(event) { const { name, value } = event.target; setFormData((anterior) => ({ ...anterior, [name]: value })); }
 
     async function handleSubmit(event) {
         event.preventDefault();
-
-        if (!formData.equipamentoId) {
-            toast.error("Selecione um equipamento.");
-            return;
-        }
-
+        if (!formData.equipamentoId) return toast.error("Selecione um equipamento.");
         try {
             setSubmitLoading(true);
-
-            const payload = {
-                titulo: formData.titulo,
-                descricao: formData.descricao,
-                tipo: formData.tipo,
-                equipamentoId: Number(formData.equipamentoId),
-            };
-
-            await ocorrenciaService.criar(payload);
-
+            await ocorrenciaService.criar({ ...formData, equipamentoId: Number(formData.equipamentoId) });
             toast.success("Ocorrência registrada com sucesso!");
             setFormData(initialForm);
-        } catch (error) {
-            console.error("Erro ao registrar ocorrência:", error);
-            console.error("Resposta:", error.response?.data);
-
-            toast.error(
-                error.response?.data?.detail ||
-                error.response?.data?.message ||
-                "Erro ao registrar ocorrência."
-            );
-        } finally {
-            setSubmitLoading(false);
-        }
+        } catch (error) { mostrarErro(error, "Não foi possível registrar a ocorrência."); }
+        finally { setSubmitLoading(false); }
     }
 
     return (
         <div className="min-h-screen bg-[#f5f7fb]">
             <Topbar />
-
-            <main className="p-4 md:p-6">
-                <PageHeader
-                    title="Registrar Ocorrência"
-                    description="Registre rapidamente uma ocorrência ou parada de produção"
-                >
-                    <EventoHelpPopover
-                        isOpen={showHelp}
-                        onToggle={() =>
-                            setShowHelp((previous) => !previous)
-                        }
-                    />
-                </PageHeader>
-
-                <section className="flex justify-center">
-                    <RegistrarOcorrenciaForm
-                        formData={formData}
-                        onChange={handleChange}
-                        onSubmit={handleSubmit}
-                        equipamentos={equipamentos}
-                        loadingEquipamentos={loadingEquipamentos}
-                        submitLoading={submitLoading}
-                    />
-                </section>
+            <main className="mx-auto w-full max-w-[1800px] px-4 py-5 md:px-6 lg:px-8">
+                <PageHeader title="Registrar ocorrência" description="Registre rapidamente uma falha ou parada operacional"><EventoHelpPopover isOpen={showHelp} onToggle={() => setShowHelp((anterior) => !anterior)} /></PageHeader>
+                <section className="flex justify-center"><RegistrarOcorrenciaForm formData={formData} onChange={handleChange} onSubmit={handleSubmit} equipamentos={equipamentos} loadingEquipamentos={loadingEquipamentos} submitLoading={submitLoading} /></section>
             </main>
         </div>
     );
 }
 
+function mostrarErro(error, fallback) { console.error(fallback, error); toast.error(error.response?.data?.detail || error.response?.data?.message || fallback); }
 export default RegistrarOcorrenciaPage;

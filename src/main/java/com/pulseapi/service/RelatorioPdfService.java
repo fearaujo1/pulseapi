@@ -1783,12 +1783,6 @@ public class RelatorioPdfService {
                 relatorio.semConexao()
         );
 
-        adicionarResumoCelula(
-                resumo,
-                "Parados",
-                relatorio.parados()
-        );
-
         document.add(
                 resumo
         );

@@ -1,415 +1,205 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-    AlertTriangle,
-    CircleAlert,
-    ClipboardList,
-    Plus,
-    Wrench,
-} from "lucide-react";
-import {
-    ACOES,
-    podeExecutar,
-} from "../config/accessControl.js";
-import { useAuth } from "../contexts/AuthContext";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {AlertTriangle, ClipboardList, OctagonX, Plus, Wrench} from "lucide-react";
 import toast from "react-hot-toast";
-import Topbar from "../components/layout/Topbar";
-import { equipamentosService } from "../services/equipamentosService";
+import { ACOES, podeExecutar } from "../config/accessControl.js";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { equipamentosService } from "../services/equipamentosService.js";
 import { ocorrenciaService } from "../services/ocorrenciaService.js";
-
-import EventoFilters from "../components/events/EventoFilters.jsx"
-import EventoFormModal from "../components/events/EventoFormModal";
+import Topbar from "../components/layout/Topbar.jsx";
+import EventoFilters from "../components/events/EventoFilters.jsx";
+import EventoFormModal from "../components/events/EventoFormModal.jsx";
 import EventoTable from "../components/events/EventoTable.jsx";
-import EventoDetailsModal from "../components/events/EventoDetailsModal";
-
-import Pagination from "../components/common/Pagination.jsx"
+import EventoDetailsModal from "../components/events/EventoDetailsModal.jsx";
+import Pagination from "../components/common/Pagination.jsx";
 import SummaryCard from "../components/common/SummaryCard.jsx";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal.jsx";
-import PageHeader from "../components/common/PageHeader";
-import ContentCard from "../components/common/ContentCard";
+import PageHeader from "../components/common/PageHeader.jsx";
+import ContentCard from "../components/common/ContentCard.jsx";
+import usePagination from "../hooks/usePagination.js";
 
 function EventosPage() {
-    const [eventos, setEventos] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { usuario } = useAuth();
+    const perfil = usuario?.perfil;
+    const podeCriar = podeExecutar(perfil, ACOES.EVENTO_CRIAR);
+    const podeEditar = podeExecutar(perfil, ACOES.EVENTO_EDITAR);
+    const podeAlterarStatus = podeExecutar(perfil, ACOES.EVENTO_ALTERAR_STATUS);
+    const podeExcluir = podeExecutar(perfil, ACOES.EVENTO_EXCLUIR);
 
+    const [eventos, setEventos] = useState([]);
+    const [equipamentos, setEquipamentos] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [tipoFilter, setTipoFilter] = useState("");
-
-    const [equipamentos, setEquipamentos] = useState([]);
+    const [statusFilter, setStatusFilter] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEvento, setSelectedEvento] = useState(null);
-    const [submitLoading, setSubmitLoading] = useState(false);
-
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [deleteLoading, setDeleteLoading] = useState(false);
-    const [eventoToDelete, setEventoToDelete] = useState(null);
-
-    // PAGINAÇÃO
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
-
-    // MODAL SOBRE INFO DE OCORRÊNCIAS
     const [selectedEventoDetails, setSelectedEventoDetails] = useState(null);
+    const [submitLoading, setSubmitLoading] = useState(false);
+    const [eventoToDelete, setEventoToDelete] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
-    const [statusFilter, setStatusFilter] = useState("");
-
-    const { usuario } = useAuth();
-
-    const perfil =
-        usuario?.perfil;
-
-    const podeCriar =
-        podeExecutar(
-            perfil,
-            ACOES.EVENTO_CRIAR
-        );
-
-    const podeEditar =
-        podeExecutar(
-            perfil,
-            ACOES.EVENTO_EDITAR
-        );
-
-    const podeAlterarStatus =
-        podeExecutar(
-            perfil,
-            ACOES.EVENTO_ALTERAR_STATUS
-        );
-
-    const podeExcluir =
-        podeExecutar(
-            perfil,
-            ACOES.EVENTO_EXCLUIR
-        );
-
-    const podeGerenciarEventos =
-        podeCriar ||
-        podeEditar ||
-        podeAlterarStatus ||
-        podeExcluir;
-
-    function informarAcessoNegado() {
-        toast.error(
-            "Você não possui permissão para realizar esta operação."
-        );
-    }
-
-    async function carregarEquipamentos() {
-        try {
-            const data = await equipamentosService.listar();
-            setEquipamentos(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error("Erro ao carregar equipamentos:", error);
-            console.error("Resposta:", error.response?.data);
-            toast.error("Erro ao carregar equipamentos.");
-            setEquipamentos([]);
-        }
-    }
-
-    async function carregarEventos() {
+    const carregarEventos = useCallback(async () => {
         try {
             setLoading(true);
-
             const data = await ocorrenciaService.listar();
             setEventos(Array.isArray(data) ? data : []);
         } catch (error) {
-            console.error("Erro ao carregar eventos:", error);
-            console.error("Resposta:", error.response?.data);
-            toast.error("Erro ao carregar eventos.");
+            mostrarErro(error, "Não foi possível carregar as ocorrências.");
             setEventos([]);
         } finally {
             setLoading(false);
         }
-    }
-
-    useEffect(() => {
-        carregarEventos();
-        carregarEquipamentos()
     }, []);
 
-    function handleNovoEvento() {
-        if (!podeCriar) {
-            informarAcessoNegado();
-            return;
+    const carregarEquipamentos = useCallback(async () => {
+        try {
+            const data = await equipamentosService.listar();
+            setEquipamentos(Array.isArray(data) ? data : []);
+        } catch (error) {
+            mostrarErro(error, "Não foi possível carregar os equipamentos.");
+            setEquipamentos([]);
         }
+    }, []);
 
+    useEffect(() => { carregarEventos(); carregarEquipamentos(); }, [carregarEventos, carregarEquipamentos]);
+
+    const eventosFiltrados = useMemo(() => {
+        const termo = search.trim().toLowerCase();
+        return eventos.filter((evento) => {
+            const correspondeBusca = !termo || evento.titulo?.toLowerCase().includes(termo) || evento.descricao?.toLowerCase().includes(termo) || evento.equipamentoNome?.toLowerCase().includes(termo) || evento.equipamentoCodigo?.toLowerCase().includes(termo);
+            return correspondeBusca && (!tipoFilter || evento.tipo === tipoFilter) && (!statusFilter || evento.status === statusFilter);
+        });
+    }, [eventos, search, tipoFilter, statusFilter]);
+
+    const {
+        currentPage,
+        totalPages,
+        paginatedItems: eventosPaginados,
+        setCurrentPage,
+        resetPage,
+    } = usePagination(eventosFiltrados, 8);
+
+    function handleSearchChange(value) {
+        setSearch(value);
+        resetPage();
+    }
+
+    function handleTipoChange(value) {
+        setTipoFilter(value);
+        resetPage();
+    }
+
+    function handleStatusChange(value) {
+        setStatusFilter(value);
+        resetPage();
+    }
+
+    function negar() {
+        toast.error("Você não possui permissão para realizar esta operação.");
+    }
+
+    function abrirNovoEvento() {
+        if (!podeCriar) return negar();
         setSelectedEvento(null);
         setIsModalOpen(true);
     }
 
-    function handleEditEvento(evento) {
-        if (!podeEditar) {
-            informarAcessoNegado();
-            return;
-        }
-
+    function editarEvento(evento) {
+        if (!podeEditar) return negar();
         setSelectedEvento(evento);
         setIsModalOpen(true);
     }
 
-    async function handleCreateEvento(formData) {
-        if (!podeCriar) {
-            informarAcessoNegado();
-            return;
-        }
-
+    async function criarEvento(formData) {
+        if (!podeCriar) return negar();
         try {
             setSubmitLoading(true);
-
-            const payload = {
-                titulo: formData.titulo,
-                descricao: formData.descricao,
-                tipo: formData.tipo,
-                equipamentoId: Number(formData.equipamentoId),
-                status: "ABERTA",
-            };
-
-            await ocorrenciaService.criar(payload);
-
-            setIsModalOpen(false);
+            await ocorrenciaService.criar({ titulo: formData.titulo, descricao: formData.descricao, tipo: formData.tipo, equipamentoId: Number(formData.equipamentoId), status: "ABERTA" });
+            fecharFormulario();
             await carregarEventos();
-
             toast.success("Ocorrência criada com sucesso!");
-        } catch (error) {
-            console.error("Erro ao criar ocorrência:", error);
-            console.error("Resposta:", error.response?.data);
-
-            toast.error(
-                error.response?.data?.detail ||
-                error.response?.data?.message ||
-                "Erro ao criar ocorrência."
-            );
-        } finally {
-            setSubmitLoading(false);
-        }
+        } catch (error) { mostrarErro(error, "Não foi possível criar a ocorrência."); }
+        finally { setSubmitLoading(false); }
     }
 
-    async function handleUpdateEvento(formData) {
-        if (!podeEditar) {
-            informarAcessoNegado();
-            return;
-        }
-
-        if (!selectedEvento) {
-            toast.error("Nenhuma ocorrência foi selecionada.");
-            return;
-        }
-
-        const statusFoiAlterado = formData.status && formData.status !== selectedEvento.status;
-
-        if (statusFoiAlterado && !podeAlterarStatus) {
-            informarAcessoNegado();
-            return;
-        }
-
+    async function atualizarEvento(formData) {
+        if (!podeEditar || !selectedEvento) return negar();
+        const statusFoiAlterado = formData.status !== selectedEvento.status;
+        if (statusFoiAlterado && !podeAlterarStatus) return negar();
         try {
             setSubmitLoading(true);
-
-            const payload = {
-                titulo: formData.titulo,
-                descricao: formData.descricao,
-                tipo: formData.tipo,
-                equipamentoId: Number(formData.equipamentoId),
-            };
-
-            await ocorrenciaService.atualizar(selectedEvento.id, payload);
-
-            if (formData.status && formData.status !== selectedEvento.status) {
-                await ocorrenciaService.atualizarStatus(selectedEvento.id, formData.status);
-            }
-
-            setIsModalOpen(false);
-            setSelectedEvento(null);
-
+            await ocorrenciaService.atualizar(selectedEvento.id, { titulo: formData.titulo, descricao: formData.descricao, tipo: formData.tipo, equipamentoId: Number(formData.equipamentoId) });
+            if (statusFoiAlterado) await ocorrenciaService.atualizarStatus(selectedEvento.id, formData.status);
+            fecharFormulario();
             await carregarEventos();
-
             toast.success("Ocorrência atualizada com sucesso!");
-        } catch (error) {
-            console.error("Erro ao atualizar ocorrência:", error);
-            console.error("Resposta:", error.response?.data);
-
-            toast.error(
-                error.response?.data?.detail ||
-                error.response?.data?.message ||
-                "Erro ao atualizar ocorrência."
-            );
-        } finally {
-            setSubmitLoading(false);
-        }
+        } catch (error) { mostrarErro(error, "Não foi possível atualizar a ocorrência."); }
+        finally { setSubmitLoading(false); }
     }
 
-    function handleDeleteEvento(evento) {
-        if (!podeExcluir) {
-            informarAcessoNegado();
-            return;
-        }
-
-        setEventoToDelete(evento);
-        setIsDeleteModalOpen(true);
-    }
-
-    async function handleConfirmDeleteEvento() {
-        if (!podeExcluir) {
-            informarAcessoNegado();
-            return;
-        }
-
+    async function confirmarExclusao() {
+        if (!podeExcluir) return negar();
         if (!eventoToDelete?.id) return;
-
         try {
             setDeleteLoading(true);
-
             await ocorrenciaService.deletar(eventoToDelete.id);
-
-            setEventos((prev) =>
-                prev.filter((evento) => evento.id !== eventoToDelete.id)
-            );
-
-            setIsDeleteModalOpen(false);
+            setEventos((anteriores) => anteriores.filter((evento) => evento.id !== eventoToDelete.id));
             setEventoToDelete(null);
-
             toast.success("Ocorrência excluída com sucesso!");
-        } catch (error) {
-            console.error("Erro ao excluir ocorrência:", error);
-            console.error("Resposta:", error.response?.data);
-
-            toast.error(
-                error.response?.data?.detail ||
-                error.response?.data?.message ||
-                "Erro ao excluir ocorrência."
-            );
-        } finally {
-            setDeleteLoading(false);
-        }
+        } catch (error) { mostrarErro(error, "Não foi possível excluir a ocorrência."); }
+        finally { setDeleteLoading(false); }
     }
 
-    const eventosFiltrados = useMemo(() => {
-        const searchLower = search.trim().toLowerCase();
+    function fecharFormulario() { if (submitLoading) return; setIsModalOpen(false); setSelectedEvento(null); }
 
-        return eventos.filter((evento) => {
-            const matchSearch =
-                !searchLower ||
-                evento.titulo?.toLowerCase().includes(searchLower) ||
-                evento.descricao?.toLowerCase().includes(searchLower) ||
-                evento.equipamentoNome?.toLowerCase().includes(searchLower) ||
-                evento.equipamentoCodigo?.toLowerCase().includes(searchLower);
-
-            const matchTipo = !tipoFilter || evento.tipo === tipoFilter;
-            const matchStatus = !statusFilter || evento.status === statusFilter;
-
-            return matchSearch && matchTipo && matchStatus;
-        });
-    }, [eventos, search, tipoFilter, statusFilter]);
-
-    const totalPages = Math.ceil(
-        eventosFiltrados.length / itemsPerPage
-    );
-
-    const eventosPaginados = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-
-        return eventosFiltrados.slice(startIndex, endIndex);
-    }, [eventosFiltrados, currentPage]);
-
-    // Força o retorno a primeira página quando os filtros mudarem
-    useEffect(() => {
-       setCurrentPage(1);
-    }, [search, tipoFilter, statusFilter]);
-
-    // Proteção para exclusões
-    useEffect(() => {
-        if (totalPages === 0) {
-            setCurrentPage(1);
-            return;
-        }
-
-        if (currentPage > totalPages) {
-            setCurrentPage(totalPages);
-        }
-    }, [currentPage, totalPages]);
-
-    const total = eventos.length;
-    const falhas = eventos.filter((e) => e.tipo === "FALHA_EQUIPAMENTO").length;
-    const paradas = eventos.filter((e) => e.tipo === "PARADA_LINHA").length;
-    const manutencoes = eventos.filter((e) => e.tipo === "MANUTENCAO").length;
+    const indicadoresOcorrencias = useMemo(() => {
+        const total = eventos.length;
+        const falhas = contar(eventos, "tipo", "FALHA_EQUIPAMENTO");
+        const paradas = contar(eventos, "tipo", "PARADA_LINHA");
+        const manutencoes = contar(eventos, "tipo", "MANUTENCAO");
+        // import {AlertTriangle, CheckCircle2, CircleAlert, ClipboardList, Cpu, Plus, Wrench} from "lucide-react";
+        return [
+            { label: "Total de Ocorrências", value: total, detail: "registradas", icon: ClipboardList, color: "bg-blue-50 text-blue-600" },
+            { label: "Falhas", value: falhas, detail: "em equipmaentos", icon: AlertTriangle, color: "bg-amber-50 text-amber-600" },
+            { label: "Paradas de Linha", value: paradas, detail: "críticas", icon: OctagonX, color: "bg-rose-50 text-rose-600" },
+            { label: "Manutenções", value: manutencoes, detail: "em andamento", icon: Wrench, color: "bg-violet-50 text-violet-600" },
+        ]
+    }, [eventos]);
 
     return (
         <div className="min-h-screen bg-[#f5f7fb]">
             <Topbar />
-
-            <main className="p-4 md:p-6">
-                <PageHeader
-                    title="Eventos e Ocorrências"
-                    description="Registro e acompanhamento de ocorrências, falhas e paradas de produção"
-                >
-                    {podeCriar && (
-                        <button
-                            type="button"
-                            onClick={handleNovoEvento}
-                            className="flex h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                        >
-                            <Plus size={15} />
-                            Nova Ocorrência
-                        </button>
-                    )}
+            <main className="mx-auto w-full max-w-450 px-4 py-5 md:px-6 lg:px-8">
+                <PageHeader title="Eventos e ocorrências" description="Acompanhe falhas, paradas e intervenções operacionais">
+                    {podeCriar && <button type="button" onClick={abrirNovoEvento} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"><Plus size={15} />Nova ocorrência</button>}
                 </PageHeader>
 
-                <section className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-                    <SummaryCard
-                        title="Total de Eventos"
-                        value={total}
-                        subtitle="Ocorrências registradas"
-                        icon={<ClipboardList size={28} className="text-blue-600" />}
-                        className="border-blue-200 bg-blue-50"
-                    />
+                <SummaryCard
+                    items={indicadoresOcorrencias}
+                />
 
-                    <SummaryCard
-                        title="Falhas de Equipamento"
-                        value={falhas}
-                        subtitle="Falhas registradas"
-                        icon={<AlertTriangle size={28} className="text-red-600" />}
-                        className="border-red-200 bg-red-50"
-                    />
-
-                    <SummaryCard
-                        title="Paradas de Linha"
-                        value={paradas}
-                        subtitle="Paradas operacionais"
-                        icon={<CircleAlert size={28} className="text-amber-600" />}
-                        className="border-amber-200 bg-amber-50"
-                    />
-
-                    <SummaryCard
-                        title="Manutenções"
-                        value={manutencoes}
-                        subtitle="Eventos de manutenção"
-                        icon={<Wrench size={28} className="text-slate-600" />}
-                        className="border-slate-200 bg-white"
-                    />
-                </section>
-
-                <ContentCard title={`Lista de Eventos (${eventosFiltrados.length})`}>
-                    <div className="mb-6">
+                <ContentCard title="Histórico de ocorrências" subtitle={`${eventosFiltrados.length} registro(s) encontrado(s)`}>
+                    <div className="mb-5">
                         <EventoFilters
                             search={search}
-                            onSearchChange={setSearch}
+                            onSearchChange={handleSearchChange}
                             tipoFilter={tipoFilter}
-                            onTipoChange={setTipoFilter}
+                            onTipoChange={handleTipoChange}
                             statusFilter={statusFilter}
-                            onStatusChange={setStatusFilter}
+                            onStatusChange={handleStatusChange}
                         />
                     </div>
-
                     <EventoTable
                         eventos={eventosPaginados}
                         loading={loading}
-                        onView={setSelectedEventoDetails}
-                        onEdit={handleEditEvento}
-                        onDelete={handleDeleteEvento}
-                        canManage={podeEditar || podeExcluir}
+                        onView={setSelectedEvento}
+                        onEdit={editarEvento}
+                        onDelete={setEventoToDelete}
+                        canEdit={podeEditar}
+                        canDelete={podeExcluir}
                     />
 
-                    {!loading && (
+                    {!loading && totalPages > 1 && (
                         <Pagination
                             currentPage={currentPage}
                             totalPages={totalPages}
@@ -418,60 +208,14 @@ function EventosPage() {
                     )}
                 </ContentCard>
             </main>
-            {isModalOpen && (selectedEvento ? podeEditar : podeExcluir) && (
-                <EventoFormModal
-                    key={selectedEvento?.id ?? "novo-evento"}
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setSelectedEvento(null);
-                    }}
-                    onSubmit={
-                        selectedEvento
-                            ? handleUpdateEvento
-                            : handleCreateEvento
-                    }
-                    loading={submitLoading}
-                    mode={selectedEvento ? "edit" : "create"}
-                    initialData={selectedEvento}
-                    equipamentos={equipamentos}
-                />
-            )}
 
-            {podeExcluir && (
-                <ConfirmDeleteModal
-                    isOpen={isDeleteModalOpen}
-                    onClose={() => {
-                        setIsDeleteModalOpen(false);
-                        setEventoToDelete(null);
-                    }}
-                    onConfirm={handleConfirmDeleteEvento}
-                    loading={deleteLoading}
-                    title="Excluir Ocorrência"
-                    description="Confirme a exclusão desta ocorrência."
-                    warningMessage="A ocorrência será removida do histórico de eventos."
-                    itemLabel="Ocorrência selecionada"
-                    itemName={eventoToDelete?.titulo}
-                    details={[
-                        {
-                            label: "Equipamento",
-                            value: eventoToDelete?.equipamentoNome,
-                        },
-                        {
-                            label: "Tipo",
-                            value: eventoToDelete?.tipo,
-                        },
-                    ]}
-                    confirmText="Excluir Ocorrência"
-                />
-            )}
-
-            <EventoDetailsModal
-                evento={selectedEventoDetails}
-                onClose={() => setSelectedEventoDetails(null)}
-            />
+            {(selectedEvento ? podeEditar : podeCriar) && <EventoFormModal key={selectedEvento?.id ?? "novo-evento"} isOpen={isModalOpen} onClose={fecharFormulario} onSubmit={selectedEvento ? atualizarEvento : criarEvento} loading={submitLoading} mode={selectedEvento ? "edit" : "create"} initialData={selectedEvento} equipamentos={equipamentos} canChangeStatus={podeAlterarStatus} />}
+            {podeExcluir && <ConfirmDeleteModal isOpen={Boolean(eventoToDelete)} onClose={() => !deleteLoading && setEventoToDelete(null)} onConfirm={confirmarExclusao} loading={deleteLoading} title="Excluir ocorrência" description="Confirme a exclusão deste registro." warningMessage="A ocorrência será removida definitivamente do histórico." itemLabel="Ocorrência selecionada" itemName={eventoToDelete?.titulo} details={[{ label: "Equipamento", value: eventoToDelete?.equipamentoNome }, { label: "Tipo", value: eventoToDelete?.tipo }]} confirmText="Excluir ocorrência" />}
+            <EventoDetailsModal evento={selectedEventoDetails} onClose={() => setSelectedEventoDetails(null)} />
         </div>
-
     );
 }
+
+function contar(lista, campo, valor) { return lista.filter((item) => item[campo] === valor).length; }
+function mostrarErro(error, fallback) { console.error(fallback, error); toast.error(error.response?.data?.detail || error.response?.data?.message || fallback); }
 export default EventosPage;

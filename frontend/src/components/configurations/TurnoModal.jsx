@@ -1,157 +1,143 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Clock3, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { Button, IconButton } from "../common/Button.jsx";
+import FormField from "../common/FormField.jsx";
+import Toggle from "../common/Toggle.jsx";
+import { inputClass } from "../common/formStyles.js";
 
-import FormField from "../common/FormField";
-import Toggle from "../common/Toggle";
-import { inputClass } from "../common/formStyles";
-
-function formatarHora(hora) {
-    if (!hora) return "";
-
-    return String(hora).substring(0, 5);
-}
-
-function TurnoModal({
-                        turno,
-                        onClose,
-                        onSave,
-                    }) {
-    const [nome, setNome] = useState(turno?.nome || "");
-    const [horaInicio, setHoraInicio] = useState(
-        formatarHora(turno?.horaInicio)
-    );
-    const [horaFim, setHoraFim] = useState(
-        formatarHora(turno?.horaFim)
-    );
-    const [ativo, setAtivo] = useState(turno?.ativo ?? true);
+function TurnoModal({ turno, onClose, onSave }) {
+    const [form, setForm] = useState({
+        nome: turno?.nome || "",
+        horaInicio: formatarHora(turno?.horaInicio),
+        horaFim: formatarHora(turno?.horaFim),
+        ativo: turno?.ativo ?? true,
+    });
     const [saving, setSaving] = useState(false);
+
+    function change(field, value) {
+        setForm((previous) => ({ ...previous, [field]: value }));
+    }
 
     async function handleSubmit(event) {
         event.preventDefault();
-
-        if (!nome.trim() || !horaInicio || !horaFim) {
+        if (!form.nome.trim() || !form.horaInicio || !form.horaFim) {
             toast.error("Preencha os dados do turno.");
             return;
         }
 
         try {
             setSaving(true);
-
-            await onSave({
-                nome: nome.trim(),
-                horaInicio,
-                horaFim,
-                ativo,
-            });
+            await onSave({ ...form, nome: form.nome.trim() });
         } finally {
             setSaving(false);
         }
     }
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
-            <form
-                onSubmit={handleSubmit}
-                className="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl"
-            >
-                <div className="flex items-start justify-between">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-950">
-                            {turno ? "Editar Turno" : "Novo Turno"}
-                        </h2>
+        <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/40 p-4"
+            onMouseDown={(event) => event.target === event.currentTarget && !saving && onClose()}
+        >
+            <form onSubmit={handleSubmit} className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
 
-                        <p className="mt-1 text-sm text-slate-500">
-                            Configure o período de funcionamento
-                        </p>
+                {/* HEADER DO MODAL */}
+                <header className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                    <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <Clock3 size={19} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-950">
+                                {turno ? "Editar turno" : "Novo turno"}
+                            </h2>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                                Configure o período de acesso dos operadores
+                            </p>
+                        </div>
                     </div>
-
-                    <button
-                        type="button"
+                    <IconButton
+                        icon={X}
                         onClick={onClose}
                         disabled={saving}
-                        className="rounded-xl p-2 transition hover:bg-slate-100"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
+                        title="Fechar modal"
+                    />
+                </header>
 
-                <div className="mt-6 space-y-5">
+                {/* CORPO DO FORMULÁRIO */}
+                <div className="space-y-4 px-6 py-5">
                     <FormField label="Nome" required>
                         <input
-                            value={nome}
-                            onChange={(event) =>
-                                setNome(event.target.value)
-                            }
+                            value={form.nome}
                             placeholder="Ex.: Turno A"
                             className={inputClass}
+                            onChange={(event) => change("nome", event.target.value)}
                         />
                     </FormField>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <FormField label="Início" required>
                             <input
                                 type="time"
-                                value={horaInicio}
-                                onChange={(event) =>
-                                    setHoraInicio(event.target.value)
-                                }
+                                value={form.horaInicio}
                                 className={inputClass}
+                                onChange={(event) => change("horaInicio", event.target.value)}
                             />
                         </FormField>
 
                         <FormField label="Fim" required>
                             <input
                                 type="time"
-                                value={horaFim}
-                                onChange={(event) =>
-                                    setHoraFim(event.target.value)
-                                }
+                                value={form.horaFim}
                                 className={inputClass}
+                                onChange={(event) => change("horaFim", event.target.value)}
                             />
                         </FormField>
                     </div>
 
-                    <div className="flex items-center justify-between rounded-xl border border-slate-200 p-4">
+                    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
                         <div>
-                            <p className="font-semibold text-slate-800">
-                                Turno ativo
-                            </p>
-
-                            <p className="text-xs text-slate-500">
-                                Turnos inativos não liberam acesso.
-                            </p>
+                            <p className="text-sm font-semibold text-slate-800">Turno ativo</p>
+                            <p className="mt-0.5 text-xs text-slate-500">Turnos inativos não liberam acesso.</p>
                         </div>
-
                         <Toggle
-                            checked={ativo}
-                            onChange={setAtivo}
-                            label="Ativar ou inativar turno"
+                            checked={form.ativo}
+                            label="Ativar turno"
+                            onChange={(checked) => change("ativo", checked)}
                         />
                     </div>
                 </div>
 
-                <div className="mt-7 flex justify-end gap-3">
-                    <button
-                        type="button"
+                {/* FOOTER DO MODAL */}
+                <footer className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/70 px-6 py-4">
+                    <Button
+                        variant="secondary"
                         onClick={onClose}
                         disabled={saving}
-                        className="h-11 rounded-xl border border-slate-200 px-5 font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60"
                     >
                         Cancelar
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                         type="submit"
-                        disabled={saving}
-                        className="h-11 rounded-xl bg-blue-600 px-5 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                        loading={saving}
+                        loadingText="Salvando..."
+                        className="min-w-32"
                     >
-                        {saving ? "Salvando..." : "Salvar Turno"}
-                    </button>
-                </div>
+                        {turno
+                            ? "Salvar alterações"
+                            : "Criar turno"}
+                    </Button>
+                </footer>
+
             </form>
         </div>
     );
+}
+
+{/* FUNÇÕES AUXILIARES */}
+function formatarHora(hora) {
+    return hora ? String(hora).substring(0, 5) : "";
 }
 
 export default TurnoModal;

@@ -13,7 +13,7 @@ function InitialRoute() {
                 setConfigurado(data.configurado);
             } catch (error) {
                 console.error("Erro ao verificar setup:", error);
-                setConfigurado(true);
+                setConfigurado(true);   
             } finally {
                 setLoading(false);
             }

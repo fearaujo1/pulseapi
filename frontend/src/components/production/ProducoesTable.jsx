@@ -1,177 +1,210 @@
 import {
-    Eye,
+    ArrowRight,
+    ClipboardList,
     Factory,
 } from "lucide-react";
 
+import StatusBadge from "../common/StatusBadge.jsx";
+
 import {
-    obterStatusProducao,
-} from "./producaoStatusMap.js";
+    producaoStatusMap,
+} from "../../config/statusMaps.js";
+
+import {
+    DataTable,
+    TableActionButton,
+    TableActions,
+    TablePrimaryText,
+    TableSecondaryText,
+    TableText,
+} from "../common/table/index.js";
 
 function ProducoesTable({
                             producoes = [],
                             loading = false,
                             onSelect,
                         }) {
-    if (loading) {
-        return (
-            <EmptyState message="Carregando produções..." />
-        );
-    }
+    const columns = [
+        {
+            key: "ordem",
+            header: "Ordem",
+            width: "14rem",
+            render: (producao) => (
+                <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <ClipboardList size={15} />
+                    </div>
 
-    if (producoes.length === 0) {
-        return (
-            <EmptyState message="Nenhuma produção encontrada." />
-        );
-    }
+                    <TablePrimaryText
+                        title={producao.codigoOrdem}
+                    >
+                        {producao.codigoOrdem || "Sem código"}
+                    </TablePrimaryText>
+                </div>
+            ),
+        },
+        {
+            key: "linha",
+            header: "Linha",
+            width: "13rem",
+            render: (producao) => (
+                <div className="flex min-w-0 items-center gap-2">
+                    <Factory
+                        size={14}
+                        className="shrink-0 text-slate-400"
+                    />
+
+                    <TableText
+                        className="font-medium"
+                        title={producao.linhaNome}
+                    >
+                        {producao.linhaNome ||
+                            `Linha #${producao.linhaId}`}
+                    </TableText>
+                </div>
+            ),
+        },
+        {
+            key: "equipamento",
+            header: "Equipamento",
+            width: "16rem",
+            render: (producao) => (
+                <div className="min-w-0">
+                    <TablePrimaryText
+                        title={
+                            producao.equipamentoPrincipalNome
+                        }
+                    >
+                        {producao.equipamentoPrincipalNome ||
+                            "Não informado"}
+                    </TablePrimaryText>
+
+                    {producao.equipamentoRetrabalhoNome && (
+                        <TableSecondaryText
+                            title={
+                                producao
+                                    .equipamentoRetrabalhoNome
+                            }
+                        >
+                            Retrabalho:{" "}
+                            {
+                                producao
+                                    .equipamentoRetrabalhoNome
+                            }
+                        </TableSecondaryText>
+                    )}
+                </div>
+            ),
+        },
+        {
+            key: "quantidade",
+            header: "Itens",
+            align: "right",
+            width: "6rem",
+            render: (producao) => (
+                <span className="text-sm font-bold tabular-nums text-slate-900">
+                    {producao.quantidadeTotal ?? "—"}
+                </span>
+            ),
+        },
+        {
+            key: "status",
+            header: "Status",
+            width: "11rem",
+            render: (producao) => (
+                <StatusBadge
+                    status={producao.status}
+                    statusMap={producaoStatusMap}
+                    showDot
+                />
+            ),
+        },
+        {
+            key: "cadastro",
+            header: "Cadastro",
+            width: "9rem",
+            render: (producao) => (
+                <div className="whitespace-nowrap">
+                    <TablePrimaryText>
+                        {formatarData(producao.criadoEm)}
+                    </TablePrimaryText>
+
+                    <TableSecondaryText>
+                        {formatarHora(producao.criadoEm)}
+                    </TableSecondaryText>
+                </div>
+            ),
+        },
+        {
+            key: "acoes",
+            header: "Ações",
+            align: "right",
+            width: "5rem",
+            render: (producao) => (
+                <TableActions>
+                    <TableActionButton
+                        title="Abrir produção"
+                        aria-label={`Abrir produção ${
+                            producao.codigoOrdem || producao.id
+                        }`}
+                        variant="primary"
+                        onClick={() => onSelect?.(producao)}
+                    >
+                        <ArrowRight size={14} />
+                    </TableActionButton>
+                </TableActions>
+            ),
+        },
+    ];
 
     return (
-        <div className="w-full overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div className="w-full overflow-x-auto">
-                <table className="w-full min-w-[70rem]">
-                    <thead className="border-b border-slate-200 bg-slate-50">
-                    <tr className="text-left">
-                        <Header>Ordem</Header>
-                        <Header>Linha</Header>
-                        <Header>Equipamento</Header>
-                        <Header>Quantidade</Header>
-                        <Header>Status</Header>
-                        <Header>Criada em</Header>
-                        <Header>Ações</Header>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    {producoes.map((producao) => {
-                        const status =
-                            obterStatusProducao(
-                                producao.status
-                            );
-
-                        return (
-                            <tr
-                                key={producao.id}
-                                className="border-b border-slate-100 transition last:border-b-0 hover:bg-slate-50"
-                            >
-                                <td className="px-4 py-4">
-                                    <p className="text-sm font-semibold text-slate-900">
-                                        {producao.codigoOrdem}
-                                    </p>
-                                </td>
-
-                                <td className="px-4 py-4">
-                                    <div className="flex items-center gap-2 text-sm text-slate-700">
-                                        <Factory
-                                            size={16}
-                                            className="shrink-0 text-slate-400"
-                                        />
-
-                                        <span>
-                                                {producao.linhaNome ||
-                                                    `Linha #${producao.linhaId}`}
-                                            </span>
-                                    </div>
-                                </td>
-
-                                <td className="px-4 py-4">
-                                    <p className="text-sm font-medium text-slate-700">
-                                        {producao.equipamentoPrincipalNome ||
-                                            "Não informado"}
-                                    </p>
-
-                                    {producao.equipamentoRetrabalhoNome && (
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            Retrabalho:{" "}
-                                            {
-                                                producao.equipamentoRetrabalhoNome
-                                            }
-                                        </p>
-                                    )}
-                                </td>
-
-                                <td className="px-4 py-4">
-                                    <p className="text-lg font-semibold text-slate-800">
-                                        {producao.quantidadeTotal ??
-                                            "—"}
-                                    </p>
-
-                                    <p className="mt-1 text-xs text-slate-500">
-                                        itens
-                                    </p>
-                                </td>
-
-                                <td className="px-4 py-4">
-                                        <span
-                                            className={`
-                                                inline-flex whitespace-nowrap
-                                                rounded-full px-3 py-1
-                                                text-xs font-semibold
-                                                ring-1 ring-inset
-                                                ${status.className}
-                                            `}
-                                        >
-                                            {status.label}
-                                        </span>
-                                </td>
-
-                                <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
-                                    {formatarData(
-                                        producao.criadoEm
-                                    )}
-                                </td>
-
-                                <td className="px-4 py-4">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            onSelect?.(
-                                                producao
-                                            )
-                                        }
-                                        className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
-                                        title="Visualizar produção"
-                                    >
-                                        <Eye size={15} />
-                                        Visualizar
-                                    </button>
-                                </td>
-                            </tr>
-                        );
-                    })}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <DataTable
+            columns={columns}
+            data={producoes}
+            loading={loading}
+            skeletonRows={5}
+            minWidth="62rem"
+            rowKey={(producao) => producao.id}
+            emptyIcon={ClipboardList}
+            emptyTitle="Nenhuma produção encontrada"
+            emptyDescription="Altere os filtros ou cadastre uma nova ordem de produção."
+        />
     );
 }
 
-function Header({ children }) {
-    return (
-        <th className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-slate-600">
-            {children}
-        </th>
-    );
-}
+function formatarData(valor) {
+    const data = criarDataValida(valor);
 
-function EmptyState({ message }) {
-    return (
-        <div className="w-full rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-500 shadow-sm">
-            {message}
-        </div>
-    );
-}
-
-function formatarData(data) {
     if (!data) {
         return "—";
     }
 
-    return new Date(data).toLocaleString(
-        "pt-BR",
-        {
-            dateStyle: "short",
-            timeStyle: "short",
-        }
-    );
+    return data.toLocaleDateString("pt-BR");
+}
+
+function formatarHora(valor) {
+    const data = criarDataValida(valor);
+
+    if (!data) {
+        return "";
+    }
+
+    return data.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+function criarDataValida(valor) {
+    if (!valor) {
+        return null;
+    }
+
+    const data = new Date(valor);
+
+    return Number.isNaN(data.getTime())
+        ? null
+        : data;
 }
 
 export default ProducoesTable;

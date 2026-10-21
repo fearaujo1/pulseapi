@@ -8,7 +8,6 @@ public record RelatorioEquipamentoResponseDTO(
         Long inativos,
         Long emManutencao,
         Long semConexao,
-        Long parados,
         List<RelatorioEquipamentoItemDTO> itens
 ) {
 }

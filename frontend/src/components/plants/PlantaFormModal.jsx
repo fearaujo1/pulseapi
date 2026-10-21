@@ -1,157 +1,170 @@
-import { X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+    Building2,
+    ChevronDown,
+    MapPin,
+    X,
+} from "lucide-react";
 
-function PlantaFormModal({
-                             isOpen,
-                             onClose,
-                             onSubmit,
-                             initialData = null,
-                             loading = false,
-                         }) {
+import {
+    Button,
+    IconButton,
+} from "../common/Button.jsx";
+
+function PlantaFormModal({ isOpen, onClose, onSubmit, initialData = null, loading = false }) {
     const [formData, setFormData] = useState(() =>
-        criarFormInicial(initialData)
-    );
-
-    if (!isOpen) {
-        return null;
-    }
-
+        criarFormInicial(initialData));
     const isEditMode = Boolean(initialData?.id);
+
+    useEffect(() => {
+        if (isOpen) setFormData(criarFormInicial(initialData));
+    }, [isOpen, initialData]);
+
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        function fechar(event) {
+            if (event.key === "Escape" && !loading)
+                onClose();
+        }
+        document.addEventListener("keydown", fechar);
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.removeEventListener("keydown", fechar);
+            document.body.style.overflow = "";
+        };
+    }, [isOpen, loading, onClose]);
+
+    if (!isOpen) return null;
 
     function handleChange(event) {
         const { name, value } = event.target;
-
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
+        setFormData((anterior) => ({
+            ...anterior, [name]: name ===
+            "estado" ? value.toUpperCase() : value
         }));
     }
 
-    function handleSubmit(event) {
-        event.preventDefault();
-        onSubmit(formData);
-    }
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-            <div className="w-full max-w-2xl rounded-3xl bg-white shadow-2xl">
-                <div className="flex items-start justify-between px-7 pt-7">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900">
-                            {isEditMode
-                                ? "Editar Planta"
-                                : "Nova Planta"}
-                        </h2>
-
-                        <p className="mt-1 text-sm text-slate-500">
-                            Cadastre um centro de produção
-                            da empresa.
-                        </p>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-
-                <form
-                    onSubmit={handleSubmit}
-                    className="px-7 pb-7 pt-6"
-                >
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <Campo
-                            label="Nome da planta"
-                            name="nome"
-                            value={formData.nome}
-                            onChange={handleChange}
-                            placeholder="Ex: Centro de Produção Londrina"
-                            required
-                        />
-
-                        <Campo
-                            label="Código"
-                            name="codigo"
-                            value={formData.codigo}
-                            onChange={handleChange}
-                            placeholder="Ex: PL01"
-                            required
-                        />
-
-                        <div className="md:col-span-2">
-                            <Campo
-                                label="Endereço"
-                                name="endereco"
-                                value={formData.endereco}
-                                onChange={handleChange}
-                                placeholder="Ex: Avenida Industrial, 1000"
-                            />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget && !loading) onClose(); }}>
+            <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/20">
+                <header className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                    <div className="flex gap-3.5">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <Building2 size={19} />
                         </div>
-
-                        <Campo
-                            label="Cidade"
-                            name="cidade"
-                            value={formData.cidade}
-                            onChange={handleChange}
-                            placeholder="Ex: Londrina"
-                        />
-
-                        <Campo
-                            label="Estado"
-                            name="estado"
-                            value={formData.estado}
-                            onChange={handleChange}
-                            placeholder="Ex: PR"
-                            maxLength={2}
-                        />
-
                         <div>
-                            <label className="mb-2 block text-sm font-semibold text-slate-900">
-                                Status *
-                            </label>
-
-                            <select
-                                name="status"
-                                value={formData.status}
-                                onChange={handleChange}
-                                required
-                                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-blue-500"
-                            >
-                                <option value="ATIVA">
-                                    Ativa
-                                </option>
-
-                                <option value="INATIVA">
-                                    Inativa
-                                </option>
-                            </select>
+                            <h2 className="text-lg font-bold text-slate-900">
+                                {isEditMode ? "Editar planta" : "Nova planta"}
+                            </h2>
+                            <p className="mt-1 text-xs text-slate-500">
+                                Cadastre um centro de produção da empresa.
+                            </p>
                         </div>
                     </div>
+                    <IconButton
+                        icon={X}
+                        onClick={onClose}
+                        disabled={loading}
+                        title="Fechar modal"
+                    />
+                </header>
 
-                    <div className="mt-7 flex justify-end gap-3">
-                        <button
-                            type="button"
+                <form onSubmit={(event) => { event.preventDefault(); onSubmit(formData); }}>
+                    <div className="space-y-5 px-6 py-5">
+                        <section className="rounded-xl border border-slate-200 p-4">
+                            <div className="mb-4 flex items-center gap-2.5">
+                                <Building2 size={16} className="text-slate-500" />
+                                <h3 className="text-sm font-semibold text-slate-900">
+                                    Identificação
+                                </h3>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <Campo
+                                    label="Nome da planta"
+                                    name="nome"
+                                    value={formData.nome}
+                                    onChange={handleChange}
+                                    placeholder="Centro de Produção Londrina"
+                                    required
+                                />
+                                <Campo
+                                    label="Código"
+                                    name="codigo"
+                                    value={formData.codigo}
+                                    onChange={handleChange}
+                                    placeholder="PL01"
+                                    required
+                                />
+                            </div>
+                        </section>
+
+                        <section className="rounded-xl border border-slate-200 p-4">
+                            <div className="mb-4 flex items-center gap-2.5">
+                                <MapPin
+                                    size={16}
+                                    className="text-slate-500"
+                                />
+                                <h3
+                                    className="text-sm font-semibold
+                                    text-slate-900"
+                                >
+                                    Localização e status
+                                </h3>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="md:col-span-2">
+                                    <Campo
+                                        label="Endereço"
+                                        name="endereco"
+                                        value={formData.endereco}
+                                        onChange={handleChange}
+                                        placeholder="Avenida Industrial, 1000"
+                                    />
+                                </div>
+                                <Campo
+                                    label="Cidade"
+                                    name="cidade"
+                                    value={formData.cidade}
+                                    onChange={handleChange}
+                                    placeholder="Londrina"
+                                />
+                                <Campo
+                                    label="Estado"
+                                    name="estado"
+                                    value={formData.estado}
+                                    onChange={handleChange}
+                                    placeholder="PR"
+                                    maxLength={2}
+                                />
+                                <SelectStatus
+                                    value={formData.status}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </section>
+                    </div>
+
+                    <footer className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/70 px-6 py-4">
+                        <Button
+                            variant="secondary"
                             onClick={onClose}
-                            className="h-10 rounded-xl border border-slate-200 px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            disabled={loading}
                         >
                             Cancelar
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
                             type="submit"
-                            disabled={loading}
-                            className="h-10 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                            loading={loading}
+                            loadingText="Salvando..."
+                            className="min-w-32"
                         >
-                            {loading
-                                ? "Salvando..."
-                                : isEditMode
-                                    ? "Salvar alterações"
-                                    : "Criar planta"}
-                        </button>
-                    </div>
+                            {isEditMode
+                                ? "Salvar alterações"
+                                : "Criar planta"}
+                        </Button>
+                    </footer>
                 </form>
             </div>
         </div>
@@ -161,32 +174,75 @@ function PlantaFormModal({
 function Campo({
                    label,
                    required = false,
-                   ...inputProps
-               }) {
+                   ...props
+}) {
     return (
-        <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-900">
+        <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-700">
                 {label}
-                {required ? " *" : ""}
-            </label>
-
+                {required &&
+                    <span
+                        className="ml-1 text-red-500">*
+                    </span>
+                }
+            </span>
             <input
-                {...inputProps}
+                {...props}
                 required={required}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-blue-500"
+                className="h-10 w-full rounded-lg border border-slate-200
+                    bg-slate-50 px-3 text-xs text-slate-800 outline-none
+                    transition placeholder:text-[10.5px] placeholder:text-slate-400
+                    focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10"
             />
-        </div>
-    );
-}
+        </label>
+    ); }
 
-function criarFormInicial(initialData) {
+function SelectStatus({
+                          value, onChange
+}) {
+    return (
+        <label className="block">
+            <span
+                className="mb-1.5 block text-xs font-semibold text-slate-700"
+            >
+                Status
+                <span
+                    className="text-red-500">*
+                </span>
+            </span>
+            <div className="relative">
+                <select
+                    name="status"
+                    value={value}
+                    onChange={onChange}
+                    className="h-10 w-full appearance-none rounded-lg
+                        border border-slate-200 bg-slate-50 px-3
+                        pr-9 text-xs outline-none focus:border-blue-500"
+                >
+                    <option value="ATIVA">
+                        Ativa
+                    </option>
+                    <option value="INATIVA">
+                        Inativa
+                    </option>
+                </select>
+                <ChevronDown
+                    size={15}
+                    className="pointer-events-none absolute right-3
+                    top-1/2 -translate-y-1/2 text-slate-400"
+                />
+            </div>
+        </label>
+    ); }
+
+function criarFormInicial(data) {
     return {
-        nome: initialData?.nome || "",
-        codigo: initialData?.codigo || "",
-        endereco: initialData?.endereco || "",
-        cidade: initialData?.cidade || "",
-        estado: initialData?.estado || "",
-        status: initialData?.status || "ATIVA",
+        nome: data?.nome || "",
+        codigo: data?.codigo || "",
+        endereco: data?.endereco || "",
+        cidade: data?.cidade || "",
+        estado: data?.estado || "",
+        status: data?.status || "ATIVA"
     };
 }
 
