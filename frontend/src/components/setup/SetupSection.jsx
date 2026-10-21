@@ -7,27 +7,32 @@ function SetupSection({
                       }) {
     return (
         <section>
-            <div className="mb-5 flex items-center gap-3">
+            <header className="mb-5 flex items-start gap-3">
                 <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClassName}`}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconClassName}`}
                 >
-                    {Icon && <Icon size={20} />}
+                    {Icon && (
+                        <Icon
+                            size={18}
+                            strokeWidth={1.8}
+                        />
+                    )}
                 </div>
 
-                <div>
-                    <h2 className="text-[18px] font-bold text-slate-900">
+                <div className="min-w-0">
+                    <h2 className="text-[15px] font-semibold text-slate-900">
                         {title}
                     </h2>
 
-                    <p className="text-[13px] text-slate-500">
-                        {description}
-                    </p>
+                    {description && (
+                        <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                            {description}
+                        </p>
+                    )}
                 </div>
-            </div>
+            </header>
 
-            <div className="space-y-5">
-                {children}
-            </div>
+            {children}
         </section>
     );
 }

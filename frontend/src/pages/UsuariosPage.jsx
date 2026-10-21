@@ -1,115 +1,158 @@
-import { useEffect ,useMemo, useState } from "react";
-import {
-    Users,
-    UserCheck,
-    UserX,
-    Shield,
-    Plus,
-} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, Shield, UserCheck, Users, UserX } from "lucide-react";
 import toast from "react-hot-toast";
 import Topbar from "../components/layout/Topbar";
-import { usuarioService } from "../services/usuarioService";
-import { configuracaoService} from "../services/configuracaoService.js";
+import PageHeader from "../components/common/PageHeader";
+import ContentCard from "../components/common/ContentCard";
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal.jsx";
+import Pagination from "../components/common/Pagination.jsx";
 import UserFormModal from "../components/users/UserFormModal";
 import UserFilters from "../components/users/UserFilters";
 import UserTable from "../components/users/UserTable";
 import RedefinirSenhaUsuarioModal from "../components/users/RedefinirSenhaUsuarioModal.jsx";
-import SummaryCard from "../components/common/SummaryCard.jsx";
-import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal.jsx";
-import Pagination from "../components/common/Pagination.jsx";
-import PageHeader from "../components/common/PageHeader";
-import ContentCard from "../components/common/ContentCard";
+import usePagination from "../hooks/usePagination.js";
 
-function perfilToPerfilId(perfil) {
-    const map = {
-        ADMIN: 1,
-        GESTOR: 2,
-        SUPERVISOR: 3,
-        OPERADOR: 4,
-    };
+import { usuarioService } from "../services/usuarioService";
+import { configuracaoService } from "../services/configuracaoService.js";
 
-    return map[perfil] || 4;
-}
-
+const PERFIL_ID = {
+    ADMIN: 1,
+    GESTOR: 2,
+    SUPERVISOR: 3,
+    OPERADOR: 4,
+};
 
 function UsuariosPage() {
-    const [activeTab, setActiveTab] = useState("usuarios");
     const [search, setSearch] = useState("");
     const [perfilFilter, setPerfilFilter] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
-
     const [usuarios, setUsuarios] = useState([]);
+    const [turnos, setTurnos] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // Modal para criar um novo usuário
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
-
-    //Modal para atualizar um usuário
     const [selectedUsuario, setSelectedUsuario] = useState(null);
-
-    //Modal para deletar um usuário
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [usuarioToDelete, setUsuarioToDelete] = useState(null);
+    const [usuarioParaRedefinirSenha, setUsuarioParaRedefinirSenha] =
+        useState(null);
+    const [redefinindoSenha, setRedefinindoSenha] = useState(false);
 
-    // PAGINAÇÃO
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
-
-    // Tratamento de turnos
-    const [turnos, setTurnos] = useState([]);
-
-
-    const [usuarioParaRedefinirSenha, setUsuarioParaRedefinirSenha,] = useState(null);
-    const [redefinindoSenha, setRedefinindoSenha,] = useState(false);
-
-    async function carregarUsuarios() {
+    const carregarUsuarios = useCallback(async (showLoading = true) => {
         try {
-            setLoading(true);
+            if (showLoading) {
+                setLoading(true);
+            }
 
             const data = await usuarioService.listar();
 
             if (!Array.isArray(data)) {
-                throw new Error("Resposta inválida da API de usuários.")
+                throw new Error("Resposta inválida da API de usuários.");
             }
 
             setUsuarios(data);
         } catch (error) {
-            console.error("Erro ao carregar usuários: ", error);
-            console.error("Resposta: ", error.response?.data);
-            toast.error("Erro ao carregar usuários: ", error);
+            console.error("Erro ao carregar usuários:", error);
             setUsuarios([]);
+            toast.error(
+                error.response?.data?.detail || "Erro ao carregar usuários."
+            );
         } finally {
-            setLoading(false);
+            if (showLoading) {
+                setLoading(false);
+            }
         }
+    }, []);
+
+    const carregarTurnos = useCallback(async () => {
+        try {
+            const data = await configuracaoService.listarTurnos();
+            setTurnos(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Erro ao carregar turnos:", error);
+            setTurnos([]);
+            toast.error("Erro ao carregar turnos.");
+        }
+    }, []);
+
+    useEffect(() => {
+        carregarUsuarios(true);
+        carregarTurnos();
+    }, [carregarUsuarios, carregarTurnos]);
+
+    const usuariosFiltrados = useMemo(() => {
+        const termo = search.trim().toLowerCase();
+
+        return usuarios.filter((usuario) => {
+            const correspondeBusca =
+                !termo ||
+                usuario.nome?.toLowerCase().includes(termo) ||
+                usuario.email?.toLowerCase().includes(termo);
+            const correspondePerfil =
+                !perfilFilter ||
+                PERFIL_ID[usuario.perfil] === Number(perfilFilter);
+            const correspondeStatus =
+                !statusFilter || usuario.status === statusFilter;
+
+            return correspondeBusca && correspondePerfil && correspondeStatus;
+        });
+    }, [usuarios, search, perfilFilter, statusFilter]);
+
+    const {
+        currentPage,
+        totalPages,
+        paginatedItems: usuariosPaginados,
+        setCurrentPage,
+        resetPage,
+    } = usePagination(usuariosFiltrados, 8);
+
+    function handleSearchChange(value) {
+        setSearch(value);
+        resetPage();
     }
+
+    function handlePerfilChange(value) {
+        setPerfilFilter(value);
+        resetPage();
+    }
+
+    function handleStatusChange(value) {
+        setStatusFilter(value);
+        resetPage();
+    }
+
+    const total = usuarios.length;
+    const ativos = usuarios.filter((usuario) => usuario.status === "ATIVO").length;
+    const inativos = usuarios.filter(
+        (usuario) => usuario.status === "INATIVO"
+    ).length;
+    const perfis = new Set(usuarios.map((usuario) => usuario.perfil)).size;
+
+    function abrirNovoUsuario() {
+        setSelectedUsuario(null);
+        setIsUserModalOpen(true);
+    }
+
+    function fecharFormulario() {
+        if (submitLoading) {
+            return;
+        }
+
+        setIsUserModalOpen(false);
+        setSelectedUsuario(null);
+    }
+
     async function handleCreateUsuario(formData) {
         try {
             setSubmitLoading(true);
-
-            const payload = {
-                nome: formData.nome,
-                email: formData.email,
-                senha: formData.senha,
-                telefone: formData.telefone || null,
-                perfilId: Number(formData.perfilId || 4),
-                turnoIds: Number(formData.perfilId) === 4 ? formData.turnoIds || [] : [],
-            };
-
-            console.log("FORM DATA:", formData);
-            console.log("PAYLOAD CREATE:", payload);
-
-            await usuarioService.criar(payload);
-
+            await usuarioService.criar(montarPayload(formData, true));
             setIsUserModalOpen(false);
-            await carregarUsuarios();
-
+            setSelectedUsuario(null);
+            await carregarUsuarios(false);
             toast.success("Usuário criado com sucesso!");
         } catch (error) {
             console.error("Erro ao criar usuário:", error);
-            console.error("Resposta:", error.response?.data);
-
             toast.error(
                 error.response?.data?.detail ||
                 error.response?.data?.message ||
@@ -119,30 +162,20 @@ function UsuariosPage() {
             setSubmitLoading(false);
         }
     }
+
     async function handleUpdateUsuario(formData) {
         try {
             setSubmitLoading(true);
-
-            const payload = {
-                nome: formData.nome,
-                email: formData.email,
-                telefone: formData.telefone || null,
-                perfilId: Number(formData.perfilId || selectedUsuario?.perfilId || 4),
-                turnoIds: Number(formData.perfilId) === 4 ? formData.turnoIds || [] : [],
-            };
-
-            await usuarioService.atualizar(selectedUsuario.id, payload);
-
+            await usuarioService.atualizar(
+                selectedUsuario.id,
+                montarPayload(formData, false)
+            );
             setIsUserModalOpen(false);
             setSelectedUsuario(null);
-
-            await carregarUsuarios();
-
+            await carregarUsuarios(false);
             toast.success("Usuário atualizado com sucesso!");
         } catch (error) {
             console.error("Erro ao atualizar usuário:", error);
-            console.error("Resposta:", error.response?.data);
-
             toast.error(
                 error.response?.data?.detail ||
                 error.response?.data?.message ||
@@ -152,64 +185,48 @@ function UsuariosPage() {
             setSubmitLoading(false);
         }
     }
-    function handleEditUsuario(usuario) {
-        setSelectedUsuario(usuario);
-        setIsUserModalOpen(true);
-    }
+
     async function handleToggleStatusUsuario(usuario) {
         const novoStatus = usuario.status === "ATIVO" ? "INATIVO" : "ATIVO";
 
         try {
             await usuarioService.atualizarStatus(usuario.id, novoStatus);
-
-            setUsuarios((prev) =>
-                prev.map((item) =>
+            setUsuarios((anteriores) =>
+                anteriores.map((item) =>
                     item.id === usuario.id
                         ? { ...item, status: novoStatus }
                         : item
                 )
             );
-
             toast.success(
                 novoStatus === "ATIVO"
                     ? "Usuário ativado com sucesso!"
                     : "Usuário inativado com sucesso!"
             );
         } catch (error) {
-            console.error("Erro ao atualizar status do usuário:", error);
-            console.error("Resposta:", error.response?.data);
-
             toast.error(
                 error.response?.data?.detail ||
                 error.response?.data?.message ||
-                "Erro ao atualizar status do usuário."
+                "Erro ao atualizar o status do usuário."
             );
         }
     }
-    function handleDeleteUsuario(usuario) {
-        setUsuarioToDelete(usuario);
-        setIsDeleteModalOpen(true);
-    }
+
     async function handleConfirmDeleteUsuario() {
-        if (!usuarioToDelete?.id) return;
+        if (!usuarioToDelete?.id) {
+            return;
+        }
 
         try {
             setDeleteLoading(true);
-
             await usuarioService.deletar(usuarioToDelete.id);
-
-            setUsuarios((prev) =>
-                prev.filter((usuario) => usuario.id !== usuarioToDelete.id)
+            setUsuarios((anteriores) =>
+                anteriores.filter((usuario) => usuario.id !== usuarioToDelete.id)
             );
-
             setIsDeleteModalOpen(false);
             setUsuarioToDelete(null);
-
             toast.success("Usuário excluído com sucesso!");
         } catch (error) {
-            console.error("Erro ao excluir usuário:", error);
-            console.error("Resposta:", error.response?.data);
-
             toast.error(
                 error.response?.data?.detail ||
                 error.response?.data?.message ||
@@ -220,81 +237,6 @@ function UsuariosPage() {
         }
     }
 
-    useEffect(() => {
-        carregarUsuarios();
-        carregarTurnos();
-    }, []);
-
-    const usuariosFiltrados = useMemo(() => {
-        const searchLower = search.trim().toLowerCase();
-
-        return usuarios.filter((usuario) => {
-            const matchSearch =
-                !searchLower ||
-                usuario.nome.toLowerCase().includes(searchLower) ||
-                usuario.email.toLowerCase().includes(searchLower);
-
-            const matchPerfil = !perfilFilter || perfilToPerfilId(usuario.perfil) === Number(perfilFilter);
-            const matchStatus = !statusFilter || usuario.status === statusFilter;
-
-            return matchSearch && matchPerfil && matchStatus;
-        });
-    }, [usuarios, search, perfilFilter, statusFilter]);
-
-    const totalPages = Math.ceil(
-        usuariosFiltrados.length / itemsPerPage
-    );
-
-    const usuariosPaginados = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-
-        return usuariosFiltrados.slice(startIndex, endIndex);
-    }, [usuariosFiltrados, currentPage]);
-
-    // Força o retorno a primeira página quando os filtros mudarem
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [search, perfilFilter, statusFilter]);
-
-    // Proteção para exclusões
-    useEffect(() => {
-        if (totalPages === 0) {
-            setCurrentPage(1);
-            return;
-        }
-
-        if (currentPage > totalPages) {
-            setCurrentPage(totalPages);
-        }
-    }, [currentPage, totalPages]);
-
-    const total = usuarios.length;
-    const ativos = usuarios.filter((u) => u.status === "ATIVO").length;
-    const inativos = usuarios.filter((u) => u.status === "INATIVO").length;
-    const perfis = new Set(usuarios.map((u) => u.perfil)).size;
-
-
-    async function carregarTurnos() {
-        try {
-            const data = await configuracaoService.listarTurnos();
-
-            setTurnos(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error("Erro ao carregar turnos: ", error);
-
-            toast.error(
-                "Erro ao carregar turnos."
-            );
-
-            setTurnos([]);
-        }
-    }
-
-    function handleResetPassword(usuario) {
-        setUsuarioParaRedefinirSenha(usuario);
-    }
-
     async function handleConfirmResetPassword(payload) {
         if (!usuarioParaRedefinirSenha?.id) {
             return;
@@ -302,23 +244,13 @@ function UsuariosPage() {
 
         try {
             setRedefinindoSenha(true);
-
             await usuarioService.redefinirSenha(
                 usuarioParaRedefinirSenha.id,
                 payload
             );
-
             setUsuarioParaRedefinirSenha(null);
-
-            toast.success(
-                "Senha redefinida com sucesso."
-            );
+            toast.success("Senha redefinida com sucesso.");
         } catch (error) {
-            console.error(
-                "Erro ao redefinir senha:",
-                error
-            );
-
             toast.error(
                 error.response?.data?.detail ||
                 error.response?.data?.message ||
@@ -333,139 +265,75 @@ function UsuariosPage() {
         <div className="min-h-screen bg-[#f5f7fb]">
             <Topbar />
 
-            <main className="p-4 md:p-6">
+            <main className="mx-auto w-full max-w-[1800px] px-4 py-5 md:px-6 lg:px-8">
                 <PageHeader
-                    title="Usuários e Permissões"
-                    description="Gerencie usuários, perfis e controle de acesso"
+                    title="Usuários e permissões"
+                    description="Gerencie contas, perfis de acesso e turnos operacionais"
                 >
-                    <button
-                        type="button"
-                        className="flex h-12 items-center gap-3 rounded-2xl border border-blue-200 bg-white px-6 font-semibold text-blue-600 transition hover:bg-blue-50"
-                    >
-                        <Shield size={20} />
-                        Novo Perfil
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setSelectedUsuario(null);
-                            setIsUserModalOpen(true);
-                        }}
-                        className="flex h-12 items-center gap-3 rounded-2xl bg-blue-600 px-6 font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                    >
-                        <Plus size={20} />
-                        Novo Usuário
-                    </button>
-                </PageHeader>
-
-                <section className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-                    <SummaryCard
-                        title="Total de Usuários"
-                        value={total}
-                        subtitle="Cadastrados no sistema"
-                        icon={<Users size={34} className="text-blue-600" />}
-                        className="border-blue-200 bg-blue-50"
-                    />
-
-                    <SummaryCard
-                        title="Usuários Ativos"
-                        value={ativos}
-                        subtitle={`${total > 0 ? Math.round((ativos / total) * 100) : 0}% do total`}
-                        icon={<UserCheck size={34} className="text-green-600" />}
-                        className="border-green-200 bg-green-50"
-                    />
-
-                    <SummaryCard
-                        title="Usuários Inativos"
-                        value={inativos}
-                        subtitle="Sem acesso ao sistema"
-                        icon={<UserX size={34} className="text-slate-600" />}
-                        className="border-slate-200 bg-white"
-                    />
-
-                    <SummaryCard
-                        title="Perfis de Acesso"
-                        value={perfis}
-                        subtitle="Níveis de permissão"
-                        icon={<Shield size={34} className="text-slate-700" />}
-                        className="border-slate-200 bg-white"
-                    />
-                </section>
-
-                <section className="mb-8">
-                    <div className="h-14 rounded-full bg-slate-200/70 p-1 flex items-center">
+                    <div className="pt-2">
                         <button
-                            onClick={() => setActiveTab("usuarios")}
-                            className={`w-1/2 h-full rounded-full flex items-center justify-center gap-2 font-semibold ${
-                                activeTab === "usuarios" ? "bg-white shadow-sm" : "text-slate-600"
-                            }`}
+                            type="button"
+                            onClick={abrirNovoUsuario}
+                            className="inline-flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700"
                         >
-                            <Users size={18} />
-                            Usuários
-                        </button>
-
-                        <button
-                            onClick={() => setActiveTab("perfis")}
-                            className={`w-1/2 h-full rounded-full flex items-center justify-center gap-2 font-semibold ${
-                                activeTab === "perfis" ? "bg-white shadow-sm" : "text-slate-600"
-                            }`}
-                        >
-                            <Shield size={18} />
-                            Perfis e Permissões
+                            <Plus size={15} />
+                            Novo usuário
                         </button>
                     </div>
-                </section>
+                </PageHeader>
 
-                {activeTab === "usuarios" && (
-                    <ContentCard title="Lista de Usuários">
-                        <div className="mb-6">
-                            <UserFilters
-                                search={search}
-                                onSearchChange={setSearch}
-                                perfilFilter={perfilFilter}
-                                onPerfilChange={setPerfilFilter}
-                                statusFilter={statusFilter}
-                                onStatusChange={setStatusFilter}
-                            />
-                        </div>
+                <UserIndicators
+                    total={total}
+                    ativos={ativos}
+                    inativos={inativos}
+                    perfis={perfis}
+                />
 
-                        <UserTable
-                            usuarios={usuariosPaginados}
-                            loading={loading}
-                            onEdit={handleEditUsuario}
-                            onResetPassword={handleResetPassword}
-                            onToggleStatus={handleToggleStatusUsuario}
-                            onDelete={handleDeleteUsuario}
+                <ContentCard
+                    title="Usuários cadastrados"
+                    subtitle={`${usuariosFiltrados.length} registro(s) encontrado(s)`}
+                >
+                    <div className="mb-5">
+                        <UserFilters
+                            search={search}
+                            onSearchChange={handleSearchChange}
+                            perfilFilter={perfilFilter}
+                            onPerfilChange={handlePerfilChange}
+                            statusFilter={statusFilter}
+                            onStatusChange={handleStatusChange}
                         />
+                    </div>
 
-
-                        {!loading && (
-                            <Pagination
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={setCurrentPage}
-                            />
-                        )}
-                    </ContentCard>
-                )}
-
-                {activeTab === "perfis" && (
-                    <ContentCard
-                        title="Perfis e Permissões"
-                        subtitle="Próxima etapa: montar cards de perfis e matriz de permissões."
+                    <UserTable
+                        usuarios={usuariosPaginados}
+                        loading={loading}
+                        onEdit={(usuario) => {
+                            setSelectedUsuario(usuario);
+                            setIsUserModalOpen(true);
+                        }}
+                        onResetPassword={setUsuarioParaRedefinirSenha}
+                        onToggleStatus={handleToggleStatusUsuario}
+                        onDelete={(usuario) => {
+                            setUsuarioToDelete(usuario);
+                            setIsDeleteModalOpen(true);
+                        }}
                     />
-                )}
+
+                    {!loading && totalPages > 1 && (
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
+                    )}
+                </ContentCard>
             </main>
 
             {isUserModalOpen && (
                 <UserFormModal
                     key={selectedUsuario?.id ?? "novo-usuario"}
                     isOpen={isUserModalOpen}
-                    onClose={() => {
-                        setIsUserModalOpen(false);
-                        setSelectedUsuario(null);
-                    }}
+                    onClose={fecharFormulario}
                     onSubmit={
                         selectedUsuario
                             ? handleUpdateUsuario
@@ -481,8 +349,10 @@ function UsuariosPage() {
             <ConfirmDeleteModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => {
-                    setIsDeleteModalOpen(false);
-                    setUsuarioToDelete(null);
+                    if (!deleteLoading) {
+                        setIsDeleteModalOpen(false);
+                        setUsuarioToDelete(null);
+                    }
                 }}
                 onConfirm={handleConfirmDeleteUsuario}
                 loading={deleteLoading}
@@ -492,16 +362,10 @@ function UsuariosPage() {
                 itemLabel="Usuário selecionado"
                 itemName={usuarioToDelete?.nome}
                 details={[
-                    {
-                        label: "E-mail",
-                        value: usuarioToDelete?.email,
-                    },
-                    {
-                        label: "Perfil",
-                        value: usuarioToDelete?.perfil,
-                    },
+                    { label: "E-mail", value: usuarioToDelete?.email },
+                    { label: "Perfil", value: usuarioToDelete?.perfil },
                 ]}
-                confirmText="Excluir Usuário"
+                confirmText="Excluir usuário"
             />
 
             <RedefinirSenhaUsuarioModal
@@ -517,6 +381,51 @@ function UsuariosPage() {
             />
         </div>
     );
+}
+
+function UserIndicators({ total, ativos, inativos, perfis }) {
+    const indicadores = [
+        { label: "Usuários", value: total, detail: "cadastrados", icon: Users, color: "bg-blue-50 text-blue-600" },
+        { label: "Ativos", value: ativos, detail: "com acesso", icon: UserCheck, color: "bg-emerald-50 text-emerald-600" },
+        { label: "Inativos", value: inativos, detail: "sem acesso", icon: UserX, color: "bg-slate-100 text-slate-600" },
+        { label: "Perfis", value: perfis, detail: "em uso", icon: Shield, color: "bg-violet-50 text-violet-600" },
+    ];
+
+    return (
+        <section className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+            {indicadores.map(({ label, value, detail, icon: Icon, color }) => (
+                <article key={label} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${color}`}>
+                        <Icon size={17} />
+                    </div>
+                    <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+                        <div className="mt-0.5 flex items-baseline gap-1.5">
+                            <strong className="text-lg text-slate-900">{value}</strong>
+                            <span className="text-[11px] text-slate-500">{detail}</span>
+                        </div>
+                    </div>
+                </article>
+            ))}
+        </section>
+    );
+}
+
+function montarPayload(formData, incluirSenha) {
+    const perfilId = Number(formData.perfilId || 4);
+    const payload = {
+        nome: formData.nome.trim(),
+        email: formData.email.trim(),
+        telefone: formData.telefone?.trim() || null,
+        perfilId,
+        turnoIds: perfilId === 4 ? formData.turnoIds || [] : [],
+    };
+
+    if (incluirSenha) {
+        payload.senha = formData.senha;
+    }
+
+    return payload;
 }
 
 export default UsuariosPage;

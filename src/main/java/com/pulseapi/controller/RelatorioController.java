@@ -20,8 +20,8 @@ import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/relatorios")
+@PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
 public class RelatorioController {
-
     private final RelatorioService relatorioService;
     private final RelatorioPdfService relatorioPdfService;
 
@@ -38,9 +38,6 @@ public class RelatorioController {
     // IMPRESSÕES
     // ==============
 
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
-    )
     @GetMapping("/impressoes")
     public ResponseEntity<RelatorioImpressaoResponseDTO>
     gerarRelatorioImpressoes(
@@ -79,9 +76,6 @@ public class RelatorioController {
     // OCORRÊNCIAS
     // ================
 
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
-    )
     @GetMapping("/ocorrencias")
     public ResponseEntity<RelatorioOcorrenciaResponseDTO>
     gerarRelatorioOcorrencias(
@@ -120,9 +114,7 @@ public class RelatorioController {
     // EQUIPAMENTOS
     // =================
 
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
-    )
+
     @GetMapping("/equipamentos")
     public ResponseEntity<RelatorioEquipamentoResponseDTO>
     gerarRelatorioEquipamentos() {
@@ -136,9 +128,6 @@ public class RelatorioController {
     // RELATÓRIO GERAL
     // =========================
 
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
-    )
     @GetMapping("/geral")
     public ResponseEntity<RelatorioGeralResponseDTO>
     gerarRelatorioGeral(
@@ -175,9 +164,7 @@ public class RelatorioController {
     // PDF de impressões
     // =====================
 
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
-    )
+
     @GetMapping(
             value = "/impressoes/pdf",
             produces = MediaType.APPLICATION_PDF_VALUE
@@ -226,9 +213,6 @@ public class RelatorioController {
     // PDF de ocorrências
     // =====================
 
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
-    )
     @GetMapping(
             value = "/ocorrencias/pdf",
             produces = MediaType.APPLICATION_PDF_VALUE
@@ -276,9 +260,7 @@ public class RelatorioController {
     // =======================
     // PDF de equipamentos
     // =======================
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
-    )
+
     @GetMapping(
             value = "/equipamentos/pdf",
             produces = MediaType.APPLICATION_PDF_VALUE
@@ -300,9 +282,6 @@ public class RelatorioController {
                 .body(pdf);
     }
 
-    @PreAuthorize(
-            "hasAnyRole('ADMIN', 'GESTOR', 'SUPERVISOR')"
-    )
     @GetMapping(
             value = "/geral/pdf",
             produces = MediaType.APPLICATION_PDF_VALUE

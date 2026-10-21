@@ -1,4 +1,5 @@
 import {
+    CircleAlert,
     Eye,
     Factory,
     Pencil,
@@ -6,147 +7,170 @@ import {
 } from "lucide-react";
 
 import StatusBadge from "../common/StatusBadge.jsx";
-import TableSkeleton from "../common/TableSkeleton.jsx";
+
 import {
     eventoStatusMap,
     eventoTipoMap,
-} from "./eventoMaps";
+} from "../../config/statusMaps.js";
+
+import {
+    DataTable,
+    TableActionButton,
+    TableActions,
+    TablePrimaryText,
+    TableSecondaryText,
+} from "../common/table/index.js";
 
 function EventoTable({
-    eventos = [],
-    loading = false,
-    onView,
-    onEdit,
-    onDelete,
-    canManage = false,
-}) {
-    if (loading) {
-        return (
-            <TableSkeleton
-                rows={5}
-                columns={6}
-                minWidth="1000px"
-            />
-        );
-    }
+                         eventos = [],
+                         loading = false,
+                         onView,
+                         onEdit,
+                         onDelete,
+                         canEdit = false,
+                         canDelete = false,
+                     }) {
+    const columns = [
+        {
+            key: "titulo",
+            header: "Título",
+            width: "18rem",
+            render: (evento) => (
+                <div className="min-w-0">
+                    <TablePrimaryText
+                        title={
+                            evento.titulo ||
+                            "Sem título"
+                        }
+                    >
+                        {evento.titulo ||
+                            "Sem título"}
+                    </TablePrimaryText>
+
+                    <TableSecondaryText>
+                        Registro #{evento.id}
+                    </TableSecondaryText>
+                </div>
+            ),
+        },
+        {
+            key: "tipo",
+            header: "Tipo",
+            width: "12rem",
+            render: (evento) => (
+                <StatusBadge
+                    status={evento.tipo}
+                    statusMap={
+                        eventoTipoMap
+                    }
+                />
+            ),
+        },
+        {
+            key: "equipamento",
+            header: "Equipamento",
+            width: "16rem",
+            render: (evento) => (
+                <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                        <Factory size={14} />
+                    </div>
+
+                    <div className="min-w-0">
+                        <TablePrimaryText
+                            title={
+                                evento
+                                    .equipamentoNome ||
+                                "Sem equipamento"
+                            }
+                        >
+                            {evento
+                                    .equipamentoNome ||
+                                "Sem equipamento"}
+                        </TablePrimaryText>
+
+                        <TableSecondaryText>
+                            {evento
+                                    .equipamentoCodigo ||
+                                "Sem código"}
+                        </TableSecondaryText>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: "status",
+            header: "Status",
+            width: "10rem",
+            render: (evento) => (
+                <StatusBadge
+                    status={evento.status}
+                    statusMap={
+                        eventoStatusMap
+                    }
+                    showDot
+                />
+            ),
+        },
+        {
+            key: "actions",
+            header: "Ações",
+            type: "actions",
+            align: "right",
+            width: "7rem",
+            render: (evento) => (
+                <TableActions>
+                    <TableActionButton
+                        variant="primary"
+                        title={`Visualizar ocorrência ${evento.titulo}`}
+                        onClick={() =>
+                            onView?.(evento)
+                        }
+                    >
+                        <Eye size={14} />
+                    </TableActionButton>
+
+                    {canEdit && (
+                        <TableActionButton
+                            title={`Editar ocorrência ${evento.titulo}`}
+                            onClick={() =>
+                                onEdit?.(evento)
+                            }
+                        >
+                            <Pencil size={14} />
+                        </TableActionButton>
+                    )}
+
+                    {canDelete && (
+                        <TableActionButton
+                            variant="danger"
+                            title={`Excluir ocorrência ${evento.titulo}`}
+                            onClick={() =>
+                                onDelete?.(
+                                    evento
+                                )
+                            }
+                        >
+                            <Trash2 size={14} />
+                        </TableActionButton>
+                    )}
+                </TableActions>
+            ),
+        },
+    ];
 
     return (
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[1000px]">
-                    <thead className="border-b border-slate-200 bg-slate-50">
-                        <tr className="text-left">
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">
-                                Título
-                            </th>
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">
-                                Tipo
-                            </th>
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">
-                                Equipamento
-                            </th>
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">
-                                Status
-                            </th>
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-600">
-                                Ações
-                            </th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {eventos.length === 0 ? (
-                            <tr>
-                                <td
-                                    colSpan={6}
-                                    className="px-6 py-10 text-center text-slate-500"
-                                >
-                                    Nenhum evento encontrado.
-                                </td>
-                            </tr>
-                        ) : (
-                            eventos.map((evento) => (
-                                <tr
-                                    key={evento.id}
-                                    className="border-b border-slate-100 transition last:border-b-0 hover:bg-slate-50"
-                                >
-                                    <td className="px-6 py-5 text-[13.5px] text-slate-600">
-                                        {evento.titulo || "-"}
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <StatusBadge
-                                            status={evento.tipo}
-                                            statusMap={eventoTipoMap}
-                                        />
-                                    </td>
-                                    <td className="px-6 py-5 text-slate-600 text-[13.5px]">
-                                        <div className="flex items-center gap-2">
-                                            <Factory
-                                                size={15}
-                                                className="shrink-0"
-                                            />
-
-                                            <span>
-                                                {evento.equipamentoNome} - {evento.equipamentoCodigo
-                                                                                    ? `(${evento.equipamentoCodigo})`
-                                                                                    : ""}
-                                            </span>
-                                        </div>
-                                    </td>
-
-                                    <td className="px-6 py-5">
-                                        <StatusBadge
-                                            status={evento.status}
-                                            statusMap={eventoStatusMap}
-                                        />
-                                    </td>
-
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => onView(evento)}
-                                                className="rounded-xl border border-blue-200 p-2 text-blue-600 transition hover:bg-blue-50"
-                                                title="Visualizar detalhes"
-                                                aria-label={`Visualizar ${evento.titulo}`}
-                                            >
-                                                <Eye size={16} />
-                                            </button>
-
-                                            {canManage && (
-                                                <>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onEdit(evento)}
-                                                        className="rounded-xl border border-slate-200 p-2 transition hover:bg-slate-100"
-                                                        title="Editar"
-                                                        aria-label={`Editar ${evento.titulo}`}
-                                                    >
-                                                        <Pencil size={16} />
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onDelete(evento)}
-                                                        className="rounded-xl border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
-                                                        title="Excluir"
-                                                        aria-label={`Excluir ${evento.titulo}`}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <DataTable
+            columns={columns}
+            data={eventos}
+            loading={loading}
+            skeletonRows={5}
+            minWidth="53rem"
+            emptyTitle="Nenhuma ocorrência encontrada"
+            emptyDescription="Altere os filtros ou registre uma nova ocorrência."
+            emptyIcon={CircleAlert}
+        />
     );
 }
 
 export default EventoTable;
-

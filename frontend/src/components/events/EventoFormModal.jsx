@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
-
+import FormField from "../common/FormField.jsx";
+import { inputClass } from "../common/formStyles.js";
+import { Button, IconButton } from "../common/Button.jsx";
 
 const DESCRICAO_MAX_LENGTH = 255;
 
@@ -12,112 +14,129 @@ function EventoFormModal({
                              mode = "create",
                              initialData = null,
                              equipamentos = [],
+                             canChangeStatus = false,
                          }) {
-    const [formData, setFormData] = useState(() =>
-        criarFormInicial(initialData)
-    );
-
+    const [formData, setFormData] = useState(() => criarFormInicial(initialData));
     const isEditMode = mode === "edit";
+
+    // Reinicializa o formulário ao abrir ou mudar os dados iniciais
+    useEffect(() => {
+        if (isOpen) setFormData(criarFormInicial(initialData));
+    }, [isOpen, initialData]);
 
     if (!isOpen) return null;
 
-    function handleChange(e) {
-        const { name, value } = e.target;
-
-        if (name === "descricao" && value.length > DESCRICAO_MAX_LENGTH) {
-            return;
-        }
-
-        setFormData((prev) => ({
-            ...prev,
-            [name]: name === "equipamentoId" ? Number(value) : value,
-        }));
+    function handleChange(event) {
+        const { name, value } = event.target;
+        if (name === "descricao" && value.length > DESCRICAO_MAX_LENGTH) return;
+        setFormData((previous) => ({ ...previous, [name]: value }));
     }
 
-    function handleSubmit(e) {
-        e.preventDefault();
+    function handleSubmit(event) {
+        event.preventDefault();
         onSubmit(formData);
     }
 
+    const restantes = DESCRICAO_MAX_LENGTH - formData.descricao.length;
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-            <div className="w-full max-w-3xl rounded-[28px] bg-white shadow-2xl">
-                <div className="flex items-start justify-between px-8 pt-8">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"
+            onMouseDown={(event) => {
+                if (event.target === event.currentTarget && !loading) onClose();
+            }}
+        >
+            <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+
+                {/* HEADER */}
+                <header className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
                     <div>
-                        <h2 className="text-[20px] font-bold text-slate-900">
-                            {isEditMode ? "Editar Ocorrência" : "Nova Ocorrência"}
+                        <h2 className="text-lg font-bold text-slate-900">
+                            {isEditMode ? "Editar ocorrência" : "Nova ocorrência"}
                         </h2>
-                        <p className="mt-2 text-[13px] text-slate-500">
+                        <p className="mt-1 text-xs text-slate-500">
                             {isEditMode
-                                ? "Atualize os dados da ocorrência registrada"
-                                : "Registre uma ocorrência ou parada de produção"}
+                                ? "Atualize os dados e o andamento do registro."
+                                : "Registre uma falha, parada ou manutenção."}
                         </p>
                     </div>
 
-                    <button
-                        type="button"
+                    <IconButton
+                        icon={X}
                         onClick={onClose}
                         disabled={loading}
-                        className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-70"
-                    >
-                        <X size={22} />
-                    </button>
-                </div>
+                        title="Fechar modal"
+                    />
+                </header>
 
-                <form onSubmit={handleSubmit} className="px-8 pb-8 pt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Field label="Título *">
+                {/* FORMULÁRIO */}
+                <form onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 p-6">
+
+                        {/* Input: Título */}
+                        <FormField label="Título" required>
                             <input
                                 name="titulo"
                                 value={formData.titulo}
                                 onChange={handleChange}
-                                placeholder="Ex: Falha na impressora"
+                                placeholder="Ex.: Falha na impressora"
                                 required
-                                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-blue-500 text-[13px]"
+                                disabled={loading}
+                                className={inputClass}
                             />
-                        </Field>
+                        </FormField>
 
-                        <Field label="Tipo *">
+                        {/* Input: Tipo */}
+                        <FormField label="Tipo" required>
                             <select
                                 name="tipo"
                                 value={formData.tipo}
                                 onChange={handleChange}
                                 required
-                                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-blue-500 text-[13px]"
+                                disabled={loading}
+                                className={inputClass}
                             >
                                 <option value="FALHA_EQUIPAMENTO">Falha de equipamento</option>
                                 <option value="PARADA_LINHA">Parada de linha</option>
                                 <option value="MANUTENCAO">Manutenção</option>
                                 <option value="OUTRO">Outro</option>
                             </select>
-                        </Field>
+                        </FormField>
 
-                        <Field label="Equipamento *">
+                        {/* Input: Equipamento */}
+                        <FormField label="Equipamento" required>
                             <select
                                 name="equipamentoId"
                                 value={formData.equipamentoId}
                                 onChange={handleChange}
                                 required
-                                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-blue-500 text-[13px]"
+                                disabled={loading}
+                                className={inputClass}
                             >
                                 <option value="">Selecione um equipamento</option>
-
                                 {equipamentos.map((equipamento) => (
                                     <option key={equipamento.id} value={equipamento.id}>
                                         {equipamento.codigo} - {equipamento.nome}
                                     </option>
                                 ))}
                             </select>
-                        </Field>
+                        </FormField>
 
+                        {/* Input: Status (Apenas no Modo Edição) */}
                         {isEditMode && (
-                            <Field label="Status *">
+                            <FormField label="Status" required>
                                 <select
                                     name="status"
                                     value={formData.status}
                                     onChange={handleChange}
                                     required
-                                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-blue-500 text-[13px]"
+                                    disabled={loading || !canChangeStatus}
+                                    className={inputClass}
+                                    title={
+                                        !canChangeStatus
+                                            ? "Você não possui permissão para alterar o status."
+                                            : undefined
+                                    }
                                 >
                                     <option value="ABERTA">Aberta</option>
                                     <option value="EM_ANALISE">Em análise</option>
@@ -125,97 +144,74 @@ function EventoFormModal({
                                     <option value="RESOLVIDA">Resolvida</option>
                                     <option value="CANCELADA">Cancelada</option>
                                 </select>
-                            </Field>
+                            </FormField>
                         )}
 
-                        <Field label="Descrição">
-                            <div>
-                                <textarea
-                                    name="descricao"
-                                    value={formData.descricao}
-                                    onChange={handleChange}
-                                    maxLength={DESCRICAO_MAX_LENGTH}
-                                    placeholder="Descreva o que aconteceu..."
-                                    className="min-h-[110px] w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-blue-500 text-[13px]"
-                                />
-
-                                <div className="mt-1 flex justify-end">
-                                    <span
-                                        className={`text-[12px] ${
-                                        DESCRICAO_MAX_LENGTH - formData.descricao.length <= 20
-                                            ? "text-red-500"
-                                            : "text-slate-400"
-                                        }`}
-                                    >
-                                        {DESCRICAO_MAX_LENGTH - formData.descricao.length} caracteres restantes
-                                    </span>
-                                </div>
-                            </div>
-                        </Field>
+                        {/* Input: Descrição */}
+                        <FormField label="Descrição" className="md:col-span-2">
+                            <textarea
+                              name="descricao"
+                              value={formData.descricao}
+                              onChange={handleChange}
+                              maxLength={DESCRICAO_MAX_LENGTH}
+                              placeholder="Descreva o que aconteceu..."
+                              disabled={loading}
+                              className="min-h-24 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
+                            />
+                            <p
+                                className={`mt-1 text-right text-[10px] ${
+                                    restantes <= 20 ? "text-red-500" : "text-slate-400"
+                                }`}
+                            >
+                                {restantes} caracteres restantes
+                            </p>
+                        </FormField>
                     </div>
 
-                    <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                        <div className="flex gap-3">
-                            <AlertTriangle className="mt-0.5 text-blue-600" size={20} />
-
-                            <div>
-                                <p className="text-[14.5px] font-semibold text-blue-700">
-                                    Gestão de ocorrências
-                                </p>
-                                <p className="mt-1 text-[12.5px] text-blue-700/90">
-                                    Essas informações serão exibidas no histórico de eventos do sistema.
-                                </p>
-                            </div>
+                    {/* ALERTA DE REGISTRO */}
+                    <div className="mt-5 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                        <AlertTriangle size={17} className="mt-0.5 shrink-0 text-amber-600" />
+                        <div>
+                            <p className="text-xs font-semibold text-amber-800">Registro operational</p>
+                            <p className="mt-0.5 text-[11px] leading-5 text-amber-700">
+                                A ocorrência ficará disponível no histórico e nos relatórios do sistema.
+                            </p>
                         </div>
                     </div>
 
-                    <div className="mt-8 flex justify-end gap-3">
-                        <button
-                            type="button"
+                    <footer className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/70 px-6 py-4">
+                        <Button
+                            variant="secondary"
                             onClick={onClose}
                             disabled={loading}
-                            className="h-10 rounded-xl border border-slate-200 bg-white px-6 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-70 text-[13.5px]"
                         >
                             Cancelar
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
                             type="submit"
-                            disabled={loading}
-                            className="h-10 rounded-xl bg-blue-600 px-6 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 text-[13.5px]"
+                            loading={loading}
+                            loadingText="Salvando..."
+                            className="min-w-36"
                         >
-                            {loading
-                                ? "Salvando..."
-                                : isEditMode
-                                    ? "Salvar Alterações"
-                                    : "Criar Ocorrência"}
-                        </button>
-                    </div>
+                            {isEditMode
+                                ? "Salvar alterações"
+                                : "Criar ocorrência"}
+                        </Button>
+                    </footer>
                 </form>
             </div>
         </div>
     );
 }
 
-function Field({ label, children }) {
-    return (
-        <div>
-            <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
-                {label}
-            </label>
-            {children}
-        </div>
-    );
-}
-
+// Função auxiliar de estado inicial
 function criarFormInicial(initialData) {
     return {
         titulo: initialData?.titulo || "",
         descricao: initialData?.descricao || "",
         tipo: initialData?.tipo || "FALHA_EQUIPAMENTO",
-        equipamentoId: initialData?.equipamentoId
-            ? String(initialData.equipamentoId)
-            : "",
+        equipamentoId: initialData?.equipamentoId ? String(initialData.equipamentoId) : "",
         status: initialData?.status || "ABERTA",
     };
 }

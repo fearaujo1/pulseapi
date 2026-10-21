@@ -270,21 +270,12 @@ public class RelatorioService {
                 )
                 .count();
 
-        long parados = equipamentos.stream()
-                .filter(e ->
-                        e.getStatus() == StatusEquipamento.PARADO
-                                && e.getStatusConexao()
-                                != StatusConexaoEquipamento.SEM_CONEXAO
-                )
-                .count();
-
         return new RelatorioEquipamentoResponseDTO(
                 (long) equipamentos.size(),
                 ativos,
                 inativos,
                 emManutencao,
                 semConexao,
-                parados,
                 itens
         );
     }
@@ -308,8 +299,8 @@ public class RelatorioService {
     }
 
     // =============================
-// RELATÓRIO DE PRODUÇÕES
-// =============================
+    // RELATÓRIO DE PRODUÇÕES
+    // =============================
 
     public RelatorioProducaoResponseDTO gerarRelatorioProducoes(
             LocalDate dataInicial,

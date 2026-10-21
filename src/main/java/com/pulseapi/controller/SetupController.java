@@ -20,7 +20,8 @@ public class SetupController {
 
     @GetMapping("/status")
     public ResponseEntity<SetupStatusResponseDTO> verificarStatus() {
-        return ResponseEntity.ok(setupService.verificarStatus());
+        SetupStatusResponseDTO response =  setupService.verificarStatus();
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/inicial")

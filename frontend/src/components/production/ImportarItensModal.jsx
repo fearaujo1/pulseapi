@@ -9,6 +9,11 @@ import {
 } from "lucide-react";
 
 import {
+    DataTable,
+    TableText,
+} from "../common/table/index.js";
+
+import {
     useEffect,
     useMemo,
     useState,
@@ -294,10 +299,63 @@ function ImportarItensModal({
     const bloqueado =
         loading || loadingLayout;
 
+
+    const colunasPrevia = useMemo(() => {
+        if (!resultado?.cabecalhos) {
+            return [];
+        }
+
+        return [
+            {
+                key: "numero",
+                header: "#",
+                width: "4rem",
+                render: (_, indice) => (
+                    <span className="font-semibold tabular-nums text-slate-400">
+                    {indice + 1}
+                </span>
+                ),
+            },
+            ...resultado.cabecalhos.map(
+                (cabecalho, indiceColuna) => ({
+                    key: `coluna-${indiceColuna}`,
+                    header: cabecalho,
+                    width: "12rem",
+                    render: (linha) => (
+                        <TableText
+                            title={
+                                linha[indiceColuna]
+                            }
+                            className="max-w-xs"
+                        >
+                            {linha[
+                                indiceColuna
+                                ] || "—"}
+                        </TableText>
+                    ),
+                })
+            ),
+        ];
+    }, [resultado?.cabecalhos]);
+
+    const linhasPrevia = useMemo(() => {
+        return resultado?.linhas?.slice(0, 5) || [];
+    }, [resultado?.linhas]);
+
+    const larguraMinimaPrevia = useMemo(() => {
+        const quantidadeColunas =
+            resultado?.cabecalhos?.length || 0;
+
+        return `${Math.max(
+            36,
+            quantidadeColunas * 12 + 4
+        )}rem`;
+    }, [resultado?.cabecalhos]);
+
     return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 p-4">
-            <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
-                <header className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-sm">
+            <div className="flex max-h-[96vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                <header className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
                     <div>
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
@@ -307,7 +365,7 @@ function ImportarItensModal({
                             </div>
 
                             <div>
-                                <h2 className="text-lg font-bold text-slate-900">
+                                <h2 className="text-base font-bold text-slate-900">
                                     Importar itens por CSV
                                 </h2>
 
@@ -340,11 +398,11 @@ function ImportarItensModal({
                     onSubmit={handleSubmit}
                     className="flex min-h-0 flex-1 flex-col"
                 >
-                    <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-6">
-                        <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-[#f4f6f9] p-4 lg:p-5">
+                        <section className="rounded-2xl border border-slate-200 bg-white p-4">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                 <div>
-                                    <p className="text-sm font-semibold text-slate-900">
+                                    <p className="text-xs font-semibold text-slate-900">
                                         Layout de impressão
                                     </p>
 
@@ -373,7 +431,7 @@ function ImportarItensModal({
                                         camposEsperados
                                             .length === 0
                                     }
-                                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <Download size={16} />
                                     Baixar modelo
@@ -424,7 +482,7 @@ function ImportarItensModal({
                         </section>
 
                         <section>
-                            <p className="mb-2 text-sm font-semibold text-slate-800">
+                            <p className="mb-2 text-xs font-semibold text-slate-800">
                                 Arquivo CSV
                             </p>
 
@@ -449,11 +507,11 @@ function ImportarItensModal({
                                     }
                                     `}
                                 >
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
                                         <Upload size={22} />
                                     </div>
 
-                                    <p className="mt-4 text-sm font-semibold text-slate-800">
+                                    <p className="mt-4 text-xs font-semibold text-slate-800">
                                         Selecionar arquivo CSV
                                     </p>
 
@@ -488,7 +546,7 @@ function ImportarItensModal({
                                             </div>
 
                                             <div className="min-w-0">
-                                                <p className="truncate text-sm font-semibold text-slate-800">
+                                                <p className="truncate text-xs font-semibold text-slate-800">
                                                     {arquivo.name}
                                                 </p>
 
@@ -538,102 +596,44 @@ function ImportarItensModal({
                         </section>
 
                         {resultado && (
-                            <section className="overflow-hidden rounded-2xl border border-slate-200">
-                                <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <section>
+                                <div className="flex flex-col gap-2 rounded-t-xl border border-b-0 border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
-                                        <h3 className="text-sm font-semibold text-slate-900">
+                                        <h3 className="text-xs font-semibold text-slate-900">
                                             Prévia dos dados
                                         </h3>
 
                                         <p className="mt-1 text-xs text-slate-500">
-                                            Exibindo até os cinco
-                                            primeiros registros.
+                                            Exibindo até os cinco primeiros registros.
                                         </p>
                                     </div>
 
                                     <span className="text-xs font-medium text-slate-500">
                                         Separador identificado:{" "}
-                                        <strong className="font-mono text-slate-700">
-                                            {
-                                                resultado
-                                                    .delimitador
-                                            }
+                                                                <strong className="font-mono text-slate-700">
+                                            {formatarDelimitador(
+                                                resultado.delimitador
+                                            )}
                                         </strong>
                                     </span>
                                 </div>
 
-                                <div className="overflow-x-auto">
-                                    <table className="w-full min-w-max">
-                                        <thead className="bg-white">
-                                        <tr className="border-b border-slate-200">
-                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                                #
-                                            </th>
-
-                                            {resultado.cabecalhos.map(
-                                                (
-                                                    cabecalho
-                                                ) => (
-                                                    <th
-                                                        key={
-                                                            cabecalho
-                                                        }
-                                                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500"
-                                                    >
-                                                        {
-                                                            cabecalho
-                                                        }
-                                                    </th>
-                                                )
-                                            )}
-                                        </tr>
-                                        </thead>
-
-                                        <tbody>
-                                        {resultado.linhas
-                                            .slice(0, 5)
-                                            .map(
-                                                (
-                                                    linha,
-                                                    indice
-                                                ) => (
-                                                    <tr
-                                                        key={
-                                                            indice
-                                                        }
-                                                        className="border-b border-slate-100 last:border-b-0"
-                                                    >
-                                                        <td className="px-4 py-3 text-xs font-semibold text-slate-400">
-                                                            {
-                                                                indice +
-                                                                1
-                                                            }
-                                                        </td>
-
-                                                        {linha.map(
-                                                            (
-                                                                valor,
-                                                                indiceColuna
-                                                            ) => (
-                                                                <td
-                                                                    key={
-                                                                        indiceColuna
-                                                                    }
-                                                                    className="max-w-xs truncate px-4 py-3 text-sm text-slate-700"
-                                                                    title={
-                                                                        valor
-                                                                    }
-                                                                >
-                                                                    {valor ||
-                                                                        "—"}
-                                                                </td>
-                                                            )
-                                                        )}
-                                                    </tr>
-                                                )
-                                            )}
-                                        </tbody>
-                                    </table>
+                                <div className="[&>div]:rounded-t-none">
+                                    <DataTable
+                                        columns={colunasPrevia}
+                                        data={linhasPrevia}
+                                        minWidth={
+                                            larguraMinimaPrevia
+                                        }
+                                        rowKey={(_, indice) =>
+                                            `previa-${indice}`
+                                        }
+                                        emptyIcon={
+                                            FileSpreadsheet
+                                        }
+                                        emptyTitle="Nenhum registro válido"
+                                        emptyDescription="O arquivo não possui linhas disponíveis para pré-visualização."
+                                    />
                                 </div>
                             </section>
                         )}
@@ -644,7 +644,7 @@ function ImportarItensModal({
                             type="button"
                             onClick={onClose}
                             disabled={bloqueado}
-                            className="h-11 rounded-xl border border-slate-200 px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
+                            className="h-10 rounded-xl border border-slate-200 px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
                         >
                             Cancelar
                         </button>
@@ -656,7 +656,7 @@ function ImportarItensModal({
                                 !arquivo ||
                                 !resultado
                             }
-                            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {loading ? (
                                 <Loader2
@@ -1081,3 +1081,24 @@ function formatarTamanho(bytes) {
 }
 
 export default ImportarItensModal;
+
+
+function formatarDelimitador(
+    delimitador
+) {
+    if (!delimitador) {
+        return "Não identificado";
+    }
+
+    const nomes = {
+        ",": "Vírgula (,)",
+        ";": "Ponto e vírgula (;)",
+        "\t": "Tabulação",
+        "|": "Barra vertical (|)",
+    };
+
+    return (
+        nomes[delimitador] ||
+        delimitador
+    );
+}

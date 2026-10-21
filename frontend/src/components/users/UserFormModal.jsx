@@ -1,14 +1,8 @@
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import {
-    Check,
-    ChevronDown,
-    Clock3,
-    Lock,
-    Mail,
-    User,
-    X,
-} from "lucide-react";
+    Button,
+    IconButton,
+} from "../common/Button.jsx";
 
 function UserFormModal({
                            isOpen,
@@ -23,524 +17,321 @@ function UserFormModal({
         criarFormInicial(initialData)
     );
 
-    const isEditMode =
-        mode === "edit";
+    const isEditMode = mode === "edit";
+    const isOperador = Number(formData.perfilId) === 4;
 
-    const isOperador =
-        Number(formData.perfilId) === 4;
+    useEffect(() => {
+        if (isOpen) {
+            setFormData(criarFormInicial(initialData));
+        }
+    }, [isOpen, initialData]);
 
+    useEffect(() => {
+        if (!isOpen) {
+            return undefined;
+        }
+
+        function fecharComEscape(event) {
+            if (event.key === "Escape" && !loading) {
+                onClose();
+            }
+        }
+
+        document.addEventListener("keydown", fecharComEscape);
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.removeEventListener("keydown", fecharComEscape);
+            document.body.style.overflow = "";
+        };
+    }, [isOpen, loading, onClose]);
 
     if (!isOpen) {
         return null;
     }
 
-
-    // =====================================================
-    // CAMPOS
-    // =====================================================
-
-    function handleChange(e) {
-        const {
-            name,
-            value,
-        } = e.target;
+    function handleChange(event) {
+        const { name, value } = event.target;
 
         if (name === "perfilId") {
+            const novoPerfil = Number(value);
 
-            const novoPerfil =
-                Number(value);
-
-            setFormData((prev) => ({
-                ...prev,
-
-                perfilId:
-                novoPerfil,
-
-                /*
-                 * Se deixar de ser OPERADOR,
-                 * removemos os turnos associados.
-                 */
-                turnoIds:
-                    novoPerfil === 4
-                        ? prev.turnoIds
-                        : [],
+            setFormData((anterior) => ({
+                ...anterior,
+                perfilId: value,
+                turnoIds: novoPerfil === 4 ? anterior.turnoIds : [],
             }));
-
             return;
         }
 
-        setFormData((prev) => ({
-            ...prev,
+        setFormData((anterior) => ({
+            ...anterior,
             [name]: value,
         }));
     }
 
-
-    // =====================================================
-    // TURNOS
-    // =====================================================
-
     function toggleTurno(turnoId) {
-
-        setFormData((prev) => {
-
-            const selecionado =
-                prev.turnoIds.includes(
-                    turnoId
-                );
-
-            return {
-                ...prev,
-
-                turnoIds:
-                    selecionado
-
-                        ? prev.turnoIds.filter(
-                            (id) =>
-                                id !== turnoId
-                        )
-
-                        : [
-                            ...prev.turnoIds,
-                            turnoId,
-                        ],
-            };
-        });
+        setFormData((anterior) => ({
+            ...anterior,
+            turnoIds: anterior.turnoIds.includes(turnoId)
+                ? anterior.turnoIds.filter((id) => id !== turnoId)
+                : [...anterior.turnoIds, turnoId],
+        }));
     }
 
-
-    // =====================================================
-    // SUBMIT
-    // =====================================================
-
-    function handleSubmit(e) {
-        e.preventDefault();
-
+    function handleSubmit(event) {
+        event.preventDefault();
         onSubmit(formData);
     }
 
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-
-            <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[28px] bg-white shadow-2xl">
-
-                {/* CABEÇALHO */}
-
-                <div className="flex items-start justify-between px-8 pt-8">
-
-                    <div>
-                        <h2 className="text-[20px] font-bold text-slate-900">
-                            {isEditMode
-                                ? "Editar Usuário"
-                                : "Novo Usuário"}
-                        </h2>
-
-                        <p className="mt-2 text-[13px] text-slate-500">
-                            {isEditMode
-                                ? "Atualize as informações e os turnos do usuário"
-                                : "Cadastre um usuário e defina seu perfil de acesso"}
-                        </p>
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm"
+            onMouseDown={(event) => {
+                if (event.target === event.currentTarget && !loading) {
+                    onClose();
+                }
+            }}
+        >
+            <div className="flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/20">
+                <header className="flex shrink-0 items-start justify-between border-b border-slate-100 px-6 py-5 md:px-7">
+                    <div className="flex items-start gap-3.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <User size={20} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-900">
+                                {isEditMode ? "Editar usuário" : "Novo usuário"}
+                            </h2>
+                            <p className="mt-1 text-xs text-slate-500">
+                                {isEditMode
+                                    ? "Atualize os dados, o perfil e os turnos permitidos."
+                                    : "Cadastre o usuário e defina seu nível de acesso."}
+                            </p>
+                        </div>
                     </div>
 
-                    <button
-                        type="button"
+                    <IconButton
+                        icon={X}
                         onClick={onClose}
                         disabled={loading}
-                        className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
-                    >
-                        <X size={22} />
-                    </button>
+                        title="Fechar modal"
+                    />
+                </header>
 
-                </div>
+                <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+                    <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5 md:px-7">
+                        <section className="rounded-xl border border-slate-200 p-4 md:p-5">
+                            <SectionTitle
+                                icon={ShieldCheck}
+                                title="Dados e acesso"
+                                description="Informações de identificação e perfil do usuário."
+                            />
 
-
-                <form
-                    onSubmit={handleSubmit}
-                    className="px-8 pb-8 pt-6"
-                >
-
-                    {/* DADOS */}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                        {/* NOME */}
-
-                        <div>
-                            <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
-                                Nome completo *
-                            </label>
-
-                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 focus-within:border-blue-500">
-
-                                <User
-                                    size={17}
-                                    className="text-slate-400"
-                                />
-
-                                <input
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <Field
+                                    icon={User}
+                                    label="Nome completo"
                                     name="nome"
-                                    value={
-                                        formData.nome
-                                    }
-                                    onChange={
-                                        handleChange
-                                    }
-                                    placeholder="Ex: João Silva"
-                                    className="w-full bg-transparent outline-none text-[13px]"
+                                    value={formData.nome}
+                                    onChange={handleChange}
+                                    placeholder="João Silva"
                                     required
                                 />
 
-                            </div>
-                        </div>
-
-
-                        {/* EMAIL */}
-
-                        <div>
-                            <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
-                                E-mail *
-                            </label>
-
-                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 focus-within:border-blue-500">
-
-                                <Mail
-                                    size={17}
-                                    className="text-slate-400"
-                                />
-
-                                <input
+                                <Field
+                                    icon={Mail}
                                     type="email"
+                                    label="E-mail"
                                     name="email"
-                                    value={
-                                        formData.email
-                                    }
-                                    onChange={
-                                        handleChange
-                                    }
+                                    value={formData.email}
+                                    onChange={handleChange}
                                     placeholder="usuario@empresa.com"
-                                    className="w-full bg-transparent outline-none text-[13px]"
                                     required
                                 />
 
-                            </div>
-                        </div>
-
-
-                        {/* TELEFONE */}
-
-                        <div>
-                            <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
-                                Telefone
-                            </label>
-
-                            <div className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 flex items-center gap-3 focus-within:border-blue-500">
-
-                                <input
+                                <Field
+                                    icon={Phone}
+                                    label="Telefone"
                                     name="telefone"
-                                    value={
-                                        formData.telefone
-                                    }
-                                    onChange={
-                                        handleChange
-                                    }
-                                    placeholder="Ex: (43) 99999-9999"
-                                    className="w-full bg-transparent outline-none text-[13px]"
+                                    value={formData.telefone}
+                                    onChange={handleChange}
+                                    placeholder="(43) 99999-9999"
                                 />
 
-                            </div>
-                        </div>
-
-
-                        {/* SENHA */}
-
-                        {!isEditMode && (
-                            <div>
-                                <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
-                                    Senha *
-                                </label>
-
-                                <div className="flex h-10 w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 focus-within:border-blue-500">
-                                    <Lock
-                                        size={17}
-                                        className="text-slate-400"
-                                    />
-
-                                    <input
+                                {!isEditMode && (
+                                    <Field
+                                        icon={Lock}
                                         type="password"
+                                        label="Senha"
                                         name="senha"
                                         value={formData.senha}
                                         onChange={handleChange}
-                                        placeholder="Defina a senha do usuário"
+                                        placeholder="Defina uma senha segura"
                                         autoComplete="new-password"
-                                        className="w-full bg-transparent text-[13px] outline-none"
                                         required
                                     />
-                                </div>
-                            </div>
-                        )}
+                                )}
 
-
-                        {/* PERFIL */}
-
-                        <div>
-
-                            <label className="mb-2 block text-[13.5px] font-semibold text-slate-900">
-                                Perfil *
-                            </label>
-
-                            <div className="relative">
-
-                                <select
+                                <SelectField
+                                    label="Perfil de acesso"
                                     name="perfilId"
-                                    value={
-                                        formData.perfilId
-                                    }
-                                    onChange={
-                                        handleChange
-                                    }
-                                    className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-blue-500 text-[13px]"
+                                    value={formData.perfilId}
+                                    onChange={handleChange}
                                     required
                                 >
-                                    <option value="4">
-                                        Operador
-                                    </option>
+                                    <option value="4">Operador</option>
+                                    <option value="3">Supervisor</option>
+                                    <option value="2">Gestor</option>
+                                    <option value="1">Administrador</option>
+                                </SelectField>
+                            </div>
+                        </section>
 
-                                    <option value="3">
-                                        Supervisor
-                                    </option>
-
-                                    <option value="2">
-                                        Gestor
-                                    </option>
-
-                                    <option value="1">
-                                        Administrador
-                                    </option>
-                                </select>
-
-                                <ChevronDown
-                                    size={17}
-                                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        {isOperador && (
+                            <section className="rounded-xl border border-slate-200 p-4 md:p-5">
+                                <SectionTitle
+                                    icon={Clock3}
+                                    title="Turnos do operador"
+                                    description="Selecione os períodos em que o usuário poderá acessar o sistema."
                                 />
 
-                            </div>
-                        </div>
-
-                    </div>
-
-
-                    {/* ====================================== */}
-                    {/* TURNOS DO OPERADOR                     */}
-                    {/* ====================================== */}
-
-                    {isOperador && (
-                        <div className="mt-7">
-
-                            <div className="flex items-start gap-3 mb-4">
-
-                                <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                                    <Clock3 size={19} />
-                                </div>
-
-                                <div>
-                                    <p className="text-[14.5px] font-bold text-slate-900">
-                                        Turnos do Operador
-                                    </p>
-
-                                    <p className="mt-1 text-[12.5px] text-slate-500">
-                                        Selecione um ou mais turnos permitidos para este usuário.
-                                    </p>
-                                </div>
-
-                            </div>
-
-
-                            {turnos.length === 0 ? (
-
-                                <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50 p-5">
-
-                                    <p className="text-[13px] font-semibold text-amber-700">
-                                        Nenhum turno configurado.
-                                    </p>
-
-                                    <p className="mt-1 text-[12px] text-amber-600">
-                                        Cadastre os turnos em Configurações antes de associá-los ao operador.
-                                    </p>
-
-                                </div>
-
-                            ) : (
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-                                    {turnos.map(
-                                        (turno) => {
-
+                                {turnos.length === 0 ? (
+                                    <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 px-4 py-3">
+                                        <p className="text-xs font-semibold text-amber-700">
+                                            Nenhum turno configurado
+                                        </p>
+                                        <p className="mt-1 text-[11px] text-amber-600">
+                                            Cadastre os turnos em Configurações antes de associá-los.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                        {turnos.map((turno) => {
                                             const selecionado =
-                                                formData.turnoIds.includes(
-                                                    turno.id
-                                                );
+                                                formData.turnoIds.includes(turno.id);
 
                                             return (
                                                 <button
-                                                    key={
-                                                        turno.id
-                                                    }
+                                                    key={turno.id}
                                                     type="button"
-                                                    disabled={
-                                                        !turno.ativo
-                                                    }
-                                                    onClick={() =>
-                                                        toggleTurno(
-                                                            turno.id
-                                                        )
-                                                    }
-                                                    className={`
-                                                        text-left
-                                                        rounded-2xl
-                                                        border
-                                                        p-4
-                                                        transition
-
-                                                        ${
+                                                    disabled={!turno.ativo}
+                                                    onClick={() => toggleTurno(turno.id)}
+                                                    className={`flex items-center justify-between rounded-lg border px-3 py-2.5 text-left transition disabled:cursor-not-allowed disabled:opacity-45 ${
                                                         selecionado
                                                             ? "border-blue-500 bg-blue-50"
-                                                            : "border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50"
-                                                    }
-
-                                                        ${
-                                                        !turno.ativo
-                                                            ? "opacity-50 cursor-not-allowed"
-                                                            : ""
-                                                    }
-                                                    `}
+                                                            : "border-slate-200 hover:border-blue-300 hover:bg-slate-50"
+                                                    }`}
                                                 >
-
-                                                    <div className="flex items-start justify-between gap-3">
-
-                                                        <div>
-
-                                                            <div className="flex items-center gap-2">
-
-                                                                <p className="text-[13.5px] font-bold text-slate-900">
-                                                                    {
-                                                                        turno.nome
-                                                                    }
-                                                                </p>
-
-                                                                {!turno.ativo && (
-                                                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                                                                        Inativo
-                                                                    </span>
-                                                                )}
-
-                                                            </div>
-
-                                                            <p className="mt-1 text-[12px] text-slate-500">
-                                                                {formatarHora(
-                                                                    turno.horaInicio
-                                                                )}
-                                                                {" → "}
-                                                                {formatarHora(
-                                                                    turno.horaFim
-                                                                )}
-                                                            </p>
-
-                                                        </div>
-
-
-                                                        <div
-                                                            className={`
-                                                                h-5
-                                                                w-5
-                                                                shrink-0
-                                                                rounded-md
-                                                                border
-                                                                flex
-                                                                items-center
-                                                                justify-center
-
-                                                                ${
-                                                                selecionado
-                                                                    ? "border-blue-600 bg-blue-600 text-white"
-                                                                    : "border-slate-300"
-                                                            }
-                                                            `}
-                                                        >
-                                                            {selecionado && (
-                                                                <Check
-                                                                    size={13}
-                                                                />
-                                                            )}
-                                                        </div>
-
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-slate-800">
+                                                            {turno.nome}
+                                                        </p>
+                                                        <p className="mt-0.5 text-[10px] text-slate-500">
+                                                            {formatarHora(turno.horaInicio)} → {formatarHora(turno.horaFim)}
+                                                            {!turno.ativo && " • Inativo"}
+                                                        </p>
                                                     </div>
 
+                                                    <span
+                                                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                                                            selecionado
+                                                                ? "border-blue-600 bg-blue-600 text-white"
+                                                                : "border-slate-300"
+                                                        }`}
+                                                    >
+                                                        {selecionado && <Check size={13} />}
+                                                    </span>
                                                 </button>
                                             );
-                                        }
-                                    )}
-
-                                </div>
-                            )}
-
-
-                            {formData.turnoIds.length > 0 && (
-                                <p className="mt-3 text-xs text-blue-600 font-medium">
-                                    {formData.turnoIds.length} turno(s) selecionado(s)
-                                </p>
-                            )}
-
-                        </div>
-                    )}
-
-                    {/* BOTÕES */}
-
-                    <div className="mt-8 flex justify-end gap-3">
-
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            disabled={loading}
-                            className="h-10 rounded-xl border border-slate-200 bg-white px-6 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-70 text-[13.5px]"
-                        >
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="h-10 rounded-xl bg-blue-600 px-6 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 text-[13.5px]"
-                        >
-                            {loading
-                                ? "Salvando..."
-                                : isEditMode
-                                    ? "Salvar Alterações"
-                                    : "Criar Usuário"}
-                        </button>
-
+                                        })}
+                                    </div>
+                                )}
+                            </section>
+                        )}
                     </div>
 
+                    <footer className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/70 px-6 py-4 md:px-7">
+                        <Button
+                            variant="secondary"
+                            onClick={onClose}
+                            disabled={loading}
+                        >
+                            Cancelar
+                        </Button>
+
+                        <Button
+                            type="submit"
+                            loading={loading}
+                            loadingText="Salvando..."
+                            className="min-w-36"
+                        >
+                            {isEditMode
+                                ? "Salvar alterações"
+                                : "Criar usuário"}
+                        </Button>
+                    </footer>
                 </form>
-
             </div>
-
         </div>
     );
 }
 
+function SectionTitle({ icon: Icon, title, description }) {
+    return (
+        <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                <Icon size={16} />
+            </div>
+            <div>
+                <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+                <p className="mt-0.5 text-[11px] text-slate-500">{description}</p>
+            </div>
+        </div>
+    );
+}
+
+function Field({ icon: Icon, label, required = false, type = "text", ...props }) {
+    return (
+        <label className="block min-w-0">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                {label}{required && <span className="ml-1 text-red-500">*</span>}
+            </span>
+            <div className="flex h-10 items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3 transition focus-within:border-blue-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/10">
+                <Icon size={15} className="shrink-0 text-slate-400" />
+                <input
+                    {...props}
+                    type={type}
+                    required={required}
+                    className="min-w-0 flex-1 bg-transparent text-xs text-slate-800 outline-none placeholder:text-slate-400"
+                />
+            </div>
+        </label>
+    );
+}
+
+function SelectField({ label, required, children, ...props }) {
+    return (
+        <label className="block min-w-0">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                {label}{required && <span className="ml-1 text-red-500">*</span>}
+            </span>
+            <div className="relative">
+                <select
+                    {...props}
+                    required={required}
+                    className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 pr-9 text-xs text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10"
+                >
+                    {children}
+                </select>
+                <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            </div>
+        </label>
+    );
+}
 
 function formatarHora(hora) {
-    if (!hora) {
-        return "--:--";
-    }
-
-    return String(hora)
-        .substring(
-            0,
-            5
-        );
+    return hora ? String(hora).substring(0, 5) : "--:--";
 }
 
 function criarFormInicial(initialData) {
@@ -549,9 +340,7 @@ function criarFormInicial(initialData) {
         email: initialData?.email || "",
         telefone: initialData?.telefone || "",
         senha: "",
-        perfilId: initialData?.perfilId
-            ? String(initialData.perfilId)
-            : "4",
+        perfilId: initialData?.perfilId ? String(initialData.perfilId) : "4",
         turnoIds: Array.isArray(initialData?.turnos)
             ? initialData.turnos.map((turno) => turno.id)
             : [],

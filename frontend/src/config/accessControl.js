@@ -47,7 +47,7 @@ export const ACESSOS = Object.freeze({
     EVENTOS: GESTAO,
     FILA_IMPRESSAO: GESTAO,
     LAYOUTS_IMPRESSAO: GESTAO,
-    RELATORIOS: GESTAO,
+    RELATORIOS: ADMIN_E_GESTOR,
     HISTORICO: GESTAO,
 
     USUARIOS: SOMENTE_ADMIN,
@@ -132,7 +132,7 @@ export function possuiAcesso(
 }
 
 /*
- * Alias semântico para verificações de ações.
+ * Alias semantico para verificacoes de acoes.
  *
  * Exemplo:
  *

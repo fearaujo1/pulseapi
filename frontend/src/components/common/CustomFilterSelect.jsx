@@ -1,18 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Funnel } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 
 function CustomFilterSelect({
                                 value,
                                 onChange,
                                 options = [],
                                 placeholder = "Selecionar",
+                                className = "",
+                                disabled = false,
                             }) {
     const [open, setOpen] = useState(false);
     const containerRef = useRef(null);
 
     useEffect(() => {
         function handleClickOutside(event) {
-            if (containerRef.current && !containerRef.current.contains(event.target)) {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(event.target)
+            ) {
                 setOpen(false);
             }
         }
@@ -25,31 +30,34 @@ function CustomFilterSelect({
         options.find((option) => option.value === value)?.label || placeholder;
 
     return (
-        <div ref={containerRef} className="relative min-w-[220px]">
+        <div
+            ref={containerRef}
+            className={`relative w-full sm:w-40 ${className}`}
+        >
             <button
                 type="button"
-                onClick={() => setOpen((prev) => !prev)}
-                className={`w-full h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 flex items-center justify-between transition-all duration-200 hover:border-slate-300 ${
-                    open ? "border-blue-500 bg-white" : ""
+                onClick={() => setOpen((anterior) => !anterior)}
+                disabled={disabled}
+                aria-expanded={open}
+                className={`flex h-9 w-full items-center justify-between gap-2 rounded-lg border bg-white px-3 text-left text-[11px] font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    open
+                        ? "border-blue-500 ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300"
                 }`}
             >
-                <div className="flex items-center gap-3">
-                    <Funnel size={18} className="text-slate-400" />
-                    <span className="text-[13.5px] text-slate-800">{selectedLabel}</span>
-                </div>
-
+                <span className="truncate text-slate-700">{selectedLabel}</span>
                 <ChevronDown
-                    size={18}
-                    className={`text-slate-400 transition-transform duration-200 ${
+                    size={14}
+                    className={`shrink-0 text-slate-400 transition-transform ${
                         open ? "rotate-180" : ""
                     }`}
                 />
             </button>
 
-            {open && (
-                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+            {open && !disabled && (
+                <div className="absolute right-0 top-[calc(100%+6px)] z-40 max-h-64 min-w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/10">
                     {options.map((option) => {
-                        const isSelected = option.value === value;
+                        const selected = option.value === value;
 
                         return (
                             <button
@@ -59,13 +67,14 @@ function CustomFilterSelect({
                                     onChange(option.value);
                                     setOpen(false);
                                 }}
-                                className={`w-full px-4 py-3 text-left text-[13.5px] transition-colors ${
-                                    isSelected
-                                        ? "bg-blue-600 text-white"
-                                        : "text-slate-800 hover:bg-slate-50"
+                                className={`flex w-full items-center justify-between gap-4 rounded-lg px-3 py-1.5 text-left text-[11px] transition ${
+                                    selected
+                                        ? "bg-blue-50 font-semibold text-blue-700"
+                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                                 }`}
                             >
-                                {option.label}
+                                <span className="whitespace-nowrap">{option.label}</span>
+                                {selected && <Check size={13} />}
                             </button>
                         );
                     })}

@@ -1,14 +1,32 @@
 import {
+    ArrowDown,
+    ArrowUp,
     ArrowUpDown,
     Cable,
+    Cpu,
     Pencil,
     Trash2,
 } from "lucide-react";
 
 import StatusBadge from "../common/StatusBadge.jsx";
 
+import {
+    conexaoStatusMap,
+    equipamentoStatusMap,
+} from "../../config/statusMaps.js";
+
+import {
+    DataTable,
+    TableActionButton,
+    TableActions,
+    TablePrimaryText,
+    TableSecondaryText,
+    TableText,
+} from "../common/table/index.js";
+
 function EquipmentTable({
                             equipamentos = [],
+                            loading = false,
                             onEdit,
                             onDelete,
                             onIntegracao,
@@ -24,224 +42,244 @@ function EquipmentTable({
         canEdit ||
         canDelete;
 
-    const quantidadeColunas =
-        possuiAcoes ? 7 : 6;
-
-    function renderSortIcon(field) {
-        if (sortField !== field) {
-            return (
-                <ArrowUpDown
-                    size={14}
-                    className="text-slate-400"
+    const columns = [
+        {
+            key: "equipamento",
+            header: (
+                <SortableHeader
+                    label="Equipamento"
+                    field="nome"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={onSort}
                 />
-            );
-        }
+            ),
+            width: "18rem",
+            render: (equipamento) => (
+                <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <Cpu size={15} />
+                    </div>
 
-        return sortDirection === "asc"
-            ? "↑"
-            : "↓";
+                    <div className="min-w-0">
+                        <TablePrimaryText
+                            title={
+                                equipamento.nome ||
+                                "Sem nome"
+                            }
+                        >
+                            {equipamento.nome ||
+                                "Sem nome"}
+                        </TablePrimaryText>
+
+                        <TableSecondaryText>
+                            {equipamento.codigo ||
+                                "Sem código"}
+                        </TableSecondaryText>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: "tipo",
+            header: "Tipo",
+            width: "9rem",
+            render: (equipamento) => (
+                <TableText
+                    title={equipamento.tipo}
+                >
+                    {equipamento.tipo || "-"}
+                </TableText>
+            ),
+        },
+        {
+            key: "localizacao",
+            header: "Localização",
+            width: "14rem",
+            render: (equipamento) => (
+                <div className="min-w-0">
+                    <TablePrimaryText
+                        title={
+                            equipamento.linhaNome ||
+                            "Sem linha"
+                        }
+                    >
+                        {equipamento.linhaNome ||
+                            "Sem linha"}
+                    </TablePrimaryText>
+
+                    <TableSecondaryText
+                        title={
+                            equipamento.plantaNome ||
+                            "Sem planta"
+                        }
+                    >
+                        {equipamento.plantaNome ||
+                            "Sem planta"}
+                    </TableSecondaryText>
+                </div>
+            ),
+        },
+        {
+            key: "rede",
+            header: "Rede",
+            width: "11rem",
+            render: (equipamento) => (
+                <div className="min-w-0">
+                    <TablePrimaryText>
+                        {equipamento.ip ||
+                            "Sem IP"}
+                    </TablePrimaryText>
+
+                    <TableSecondaryText>
+                        {equipamento.porta
+                            ? `Porta ${equipamento.porta}`
+                            : "Sem porta"}
+                    </TableSecondaryText>
+                </div>
+            ),
+        },
+        {
+            key: "status",
+            header: "Status",
+            width: "9rem",
+            render: (equipamento) => (
+                <StatusBadge
+                    status={equipamento.status}
+                    statusMap={
+                        equipamentoStatusMap
+                    }
+                />
+            ),
+        },
+        {
+            key: "conexao",
+            header: "Conexão",
+            width: "10rem",
+            render: (equipamento) => (
+                <StatusBadge
+                    status={
+                        equipamento.statusConexao ||
+                        "SEM_CONEXAO"
+                    }
+                    statusMap={
+                        conexaoStatusMap
+                    }
+                    showDot
+                />
+            ),
+        },
+    ];
+
+    if (possuiAcoes) {
+        columns.push({
+            key: "actions",
+            header: "Ações",
+            type: "actions",
+            align: "right",
+            width: "8rem",
+            render: (equipamento) => (
+                <TableActions>
+                    {canIntegrate && (
+                        <TableActionButton
+                            variant="primary"
+                            title={`Abrir integração do equipamento ${equipamento.nome}`}
+                            onClick={() =>
+                                onIntegracao?.(
+                                    equipamento
+                                )
+                            }
+                        >
+                            <Cable size={14} />
+                        </TableActionButton>
+                    )}
+
+                    {canEdit && (
+                        <TableActionButton
+                            title={`Editar equipamento ${equipamento.nome}`}
+                            onClick={() =>
+                                onEdit?.(
+                                    equipamento
+                                )
+                            }
+                        >
+                            <Pencil size={14} />
+                        </TableActionButton>
+                    )}
+
+                    {canDelete && (
+                        <TableActionButton
+                            variant="danger"
+                            title={`Excluir equipamento ${equipamento.nome}`}
+                            onClick={() =>
+                                onDelete?.(
+                                    equipamento
+                                )
+                            }
+                        >
+                            <Trash2 size={14} />
+                        </TableActionButton>
+                    )}
+                </TableActions>
+            ),
+        });
     }
 
-    const headerClass =
-        "px-4 py-3 text-sm font-semibold text-slate-600";
+    return (
+        <DataTable
+            columns={columns}
+            data={equipamentos}
+            loading={loading}
+            skeletonRows={5}
+            minWidth="70rem"
+            emptyTitle="Nenhum equipamento encontrado"
+            emptyDescription="Altere os filtros ou cadastre um novo equipamento."
+            emptyIcon={Cpu}
+        />
+    );
+}
+
+function SortableHeader({
+                            label,
+                            field,
+                            sortField,
+                            sortDirection,
+                            onSort,
+                        }) {
+    const active =
+        sortField === field;
+
+    let Icon =
+        ArrowUpDown;
+
+    if (active) {
+        Icon =
+            sortDirection === "asc"
+                ? ArrowUp
+                : ArrowDown;
+    }
 
     return (
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[70rem]">
-                    <thead className="border-b border-slate-200 bg-slate-50">
-                    <tr className="text-left">
-                        <th
-                            onClick={() =>
-                                onSort?.("nome")
-                            }
-                            className={`${headerClass} cursor-pointer select-none`}
-                        >
-                            <div className="flex items-center gap-2">
-                                Equipamento
-                                {renderSortIcon("nome")}
-                            </div>
-                        </th>
+        <button
+            type="button"
+            onClick={() =>
+                onSort?.(field)
+            }
+            className={`
+                inline-flex items-center gap-1.5
+                transition
+                ${
+                active
+                    ? "text-blue-600"
+                    : "text-slate-500 hover:text-slate-700"
+            }
+            `}
+            title={`Ordenar por ${label}`}
+        >
+            {label}
 
-                        <th className={headerClass}>
-                            Tipo
-                        </th>
-
-                        <th className={headerClass}>
-                            Localização
-                        </th>
-
-                        <th className={headerClass}>
-                            Rede
-                        </th>
-
-                        <th className={headerClass}>
-                            Status
-                        </th>
-
-                        <th className={headerClass}>
-                            Conexão
-                        </th>
-
-                        {possuiAcoes && (
-                            <th className={headerClass}>
-                                Ações
-                            </th>
-                        )}
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    {equipamentos.length === 0 ? (
-                        <tr>
-                            <td
-                                colSpan={
-                                    quantidadeColunas
-                                }
-                                className="px-4 py-10 text-center text-slate-500"
-                            >
-                                Nenhum equipamento encontrado.
-                            </td>
-                        </tr>
-                    ) : (
-                        equipamentos.map(
-                            (equipamento) => (
-                                <tr
-                                    key={equipamento.id}
-                                    className="border-b border-slate-100 transition last:border-b-0 hover:bg-slate-50"
-                                >
-                                    <td className="px-4 py-4">
-                                        <p className="text-sm font-semibold text-slate-800">
-                                            {equipamento.nome ||
-                                                "-"}
-                                        </p>
-
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            {equipamento.codigo ||
-                                                "-"}
-                                        </p>
-                                    </td>
-
-                                    <td className="px-4 py-4 text-sm text-slate-600">
-                                        {equipamento.tipo ||
-                                            "-"}
-                                    </td>
-
-                                    <td className="px-4 py-4">
-                                        <p className="text-sm font-medium text-slate-700">
-                                            {equipamento.linhaNome ||
-                                                "Sem linha"}
-                                        </p>
-
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            {equipamento.plantaNome ||
-                                                "Sem planta"}
-                                        </p>
-                                    </td>
-
-                                    <td className="px-4 py-4">
-                                        <p className="text-sm font-medium text-slate-700">
-                                            {equipamento.ip ||
-                                                "Sem IP"}
-                                        </p>
-
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            {equipamento.porta
-                                                ? `Porta ${equipamento.porta}`
-                                                : "Sem porta"}
-                                        </p>
-                                    </td>
-
-                                    <td className="px-4 py-4">
-                                        <StatusBadge
-                                            status={
-                                                equipamento.status
-                                            }
-                                        />
-                                    </td>
-
-                                    <td className="px-4 py-4">
-                                        <StatusBadge
-                                            status={
-                                                equipamento.statusConexao ||
-                                                "SEM_CONEXAO"
-                                            }
-                                        />
-                                    </td>
-
-                                    {possuiAcoes && (
-                                        <td className="px-4 py-4">
-                                            <div className="flex items-center gap-2">
-                                                {canIntegrate && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            onIntegracao?.(
-                                                                equipamento
-                                                            )
-                                                        }
-                                                        className="rounded-xl border border-blue-200 p-2 text-blue-600 transition hover:bg-blue-50"
-                                                        title="Integração"
-                                                        aria-label={`Abrir integração do equipamento ${equipamento.nome}`}
-                                                    >
-                                                        <Cable
-                                                            size={
-                                                                16
-                                                            }
-                                                        />
-                                                    </button>
-                                                )}
-
-                                                {canEdit && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            onEdit?.(
-                                                                equipamento
-                                                            )
-                                                        }
-                                                        className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
-                                                        title="Editar"
-                                                        aria-label={`Editar equipamento ${equipamento.nome}`}
-                                                    >
-                                                        <Pencil
-                                                            size={
-                                                                16
-                                                            }
-                                                        />
-                                                    </button>
-                                                )}
-
-                                                {canDelete && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            onDelete?.(
-                                                                equipamento
-                                                            )
-                                                        }
-                                                        className="rounded-xl border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
-                                                        title="Excluir"
-                                                        aria-label={`Excluir equipamento ${equipamento.nome}`}
-                                                    >
-                                                        <Trash2
-                                                            size={
-                                                                16
-                                                            }
-                                                        />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    )}
-                                </tr>
-                            )
-                        )
-                    )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            <Icon size={13} />
+        </button>
     );
 }
 

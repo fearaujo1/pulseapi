@@ -1,8 +1,24 @@
 import {
+    Network,
     Pencil,
     Trash2,
     Users,
 } from "lucide-react";
+
+import StatusBadge from "../common/StatusBadge.jsx";
+
+import {
+    estruturaStatusMap,
+} from "../../config/statusMaps.js";
+
+import {
+    DataTable,
+    TableActionButton,
+    TableActions,
+    TablePrimaryText,
+    TableSecondaryText,
+    TableText,
+} from "../common/table/index.js";
 
 function LinhaTable({
                         linhas = [],
@@ -10,147 +26,153 @@ function LinhaTable({
                         onEdit,
                         onDelete,
                         onManageResponsaveis,
+                        canEdit = false,
+                        canDelete = false,
+                        canManageResponsaveis = false,
                         canManage = false,
                         loading = false,
                     }) {
+    const permiteEditar =
+        canEdit || canManage;
+
+    const permiteExcluir =
+        canDelete || canManage;
+
+    const permiteResponsaveis =
+        canManageResponsaveis || canManage;
+
+    const possuiAcoes =
+        permiteEditar ||
+        permiteExcluir ||
+        permiteResponsaveis;
+
+    const columns = [
+        {
+            key: "linha",
+            header: "Linha",
+            width: "15rem",
+            render: (linha) => (
+                <div className="min-w-0">
+                    <TablePrimaryText
+                        title={linha.nome}
+                    >
+                        {linha.nome || "—"}
+                    </TablePrimaryText>
+
+                    <TableSecondaryText>
+                        {linha.codigo || "Sem código"}
+                    </TableSecondaryText>
+                </div>
+            ),
+        },
+        {
+            key: "descricao",
+            header: "Descrição",
+            width: "20rem",
+            render: (linha) => (
+                <TableText title={linha.descricao}>
+                    {linha.descricao ||
+                        "Sem descrição"}
+                </TableText>
+            ),
+        },
+        {
+            key: "status",
+            header: "Status",
+            width: "8rem",
+            render: (linha) => (
+                <StatusBadge
+                    status={linha.status}
+                    statusMap={estruturaStatusMap}
+                    showDot
+                />
+            ),
+        },
+    ];
+
+    if (possuiAcoes) {
+        columns.push({
+            key: "acoes",
+            header: "Ações",
+            align: "right",
+            width: "9rem",
+            render: (linha) => (
+                <TableActions>
+                    {permiteResponsaveis && (
+                        <TableActionButton
+                            title="Gerenciar responsáveis"
+                            aria-label={`Gerenciar responsáveis de ${
+                                linha.nome || "linha"
+                            }`}
+                            variant="primary"
+                            onClick={() =>
+                                onManageResponsaveis?.(
+                                    linha
+                                )
+                            }
+                        >
+                            <Users size={14} />
+                        </TableActionButton>
+                    )}
+
+                    {permiteEditar && (
+                        <TableActionButton
+                            title="Editar linha"
+                            aria-label={`Editar ${
+                                linha.nome || "linha"
+                            }`}
+                            onClick={() =>
+                                onEdit?.(linha)
+                            }
+                        >
+                            <Pencil size={14} />
+                        </TableActionButton>
+                    )}
+
+                    {permiteExcluir && (
+                        <TableActionButton
+                            title="Excluir linha"
+                            aria-label={`Excluir ${
+                                linha.nome || "linha"
+                            }`}
+                            variant="danger"
+                            onClick={() =>
+                                onDelete?.(linha)
+                            }
+                        >
+                            <Trash2 size={14} />
+                        </TableActionButton>
+                    )}
+                </TableActions>
+            ),
+        });
+    }
+
     if (!plantaSelecionada) {
         return (
-            <EmptyState message="Selecione uma planta para visualizar suas linhas." />
-        );
-    }
-
-    if (loading) {
-        return (
-            <EmptyState message="Carregando linhas..." />
-        );
-    }
-
-    if (linhas.length === 0) {
-        return (
-            <EmptyState
-                message={`Nenhuma linha cadastrada em ${plantaSelecionada.nome}.`}
+            <DataTable
+                columns={columns}
+                data={[]}
+                minWidth="36rem"
+                emptyIcon={Network}
+                emptyTitle="Selecione uma planta"
+                emptyDescription="As linhas da planta selecionada aparecerão aqui."
             />
         );
     }
 
     return (
-        <div className="overflow-hidden rounded-2xl border border-slate-200">
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[42rem]">
-                    <thead className="border-b border-slate-200 bg-slate-50">
-                    <tr className="text-left">
-                        <Header>Linha</Header>
-                        <Header>Descrição</Header>
-                        <Header>Status</Header>
-                        <Header>Ações</Header>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    {linhas.map((linha) => (
-                        <tr
-                            key={linha.id}
-                            className="border-b border-slate-100 transition last:border-b-0 hover:bg-slate-50"
-                        >
-                            <td className="px-4 py-4">
-                                <p className="text-sm font-semibold text-slate-800">
-                                    {linha.nome}
-                                </p>
-
-                                <p className="mt-1 text-xs text-slate-500">
-                                    {linha.codigo}
-                                </p>
-                            </td>
-
-                            <td className="max-w-sm px-4 py-4 text-sm text-slate-600">
-                                {linha.descricao ||
-                                    "Sem descrição"}
-                            </td>
-
-                            <td className="px-4 py-4">
-                                <StatusLocal
-                                    status={linha.status}
-                                />
-                            </td>
-
-                            <td className="px-4 py-4">
-                                {canManage && (
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                onManageResponsaveis(
-                                                    linha
-                                                )
-                                            }
-                                            className="rounded-xl border border-blue-200 p-2 text-blue-600 transition hover:bg-blue-50"
-                                            title="Gerenciar responsáveis"
-                                        >
-                                            <Users size={15} />
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                onEdit(linha)
-                                            }
-                                            className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
-                                            title="Editar linha"
-                                        >
-                                            <Pencil size={15} />
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                onDelete(linha)
-                                            }
-                                            className="rounded-xl border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
-                                            title="Excluir linha"
-                                        >
-                                            <Trash2 size={15} />
-                                        </button>
-                                    </div>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-}
-
-function Header({ children }) {
-    return (
-        <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-            {children}
-        </th>
-    );
-}
-
-function StatusLocal({ status }) {
-    const ativa = status === "ATIVA";
-
-    return (
-        <span
-            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                ativa
-                    ? "bg-green-50 text-green-600"
-                    : "bg-slate-100 text-slate-500"
-            }`}
-        >
-            {ativa ? "Ativa" : "Inativa"}
-        </span>
-    );
-}
-
-function EmptyState({ message }) {
-    return (
-        <div className="rounded-2xl border border-dashed border-slate-300 px-6 py-10 text-center text-sm text-slate-500">
-            {message}
-        </div>
+        <DataTable
+            columns={columns}
+            data={linhas}
+            loading={loading}
+            skeletonRows={4}
+            minWidth="36rem"
+            rowKey={(linha) => linha.id}
+            emptyIcon={Network}
+            emptyTitle="Nenhuma linha cadastrada"
+            emptyDescription={`Ainda não existem linhas em ${plantaSelecionada.nome}.`}
+        />
     );
 }
 

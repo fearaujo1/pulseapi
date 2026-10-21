@@ -11,6 +11,16 @@ import {
     X,
 } from "lucide-react";
 
+import StatusBadge from "../common/StatusBadge.jsx";
+
+import {
+    DataTable,
+    TableActionButton,
+    TableActions,
+    TablePrimaryText,
+    TableText,
+} from "../common/table/index.js";
+
 import {
     useCallback,
     useEffect,
@@ -26,7 +36,8 @@ import {
 
 import {
     obterStatusProducao,
-} from "./producaoStatusMap.js";
+    producaoItemStatusMap,
+} from "../../config/statusMaps.js";
 
 import ImportarItensModal from "./ImportarItensModal.jsx";
 
@@ -38,56 +49,6 @@ import {
     ACOES,
     podeExecutar,
 } from "../../config/accessControl.js";
-
-const statusItemMap = {
-    AGUARDANDO: {
-        label: "Aguardando",
-        className:
-            "bg-slate-100 text-slate-700 ring-slate-300",
-    },
-
-    EM_IMPRESSAO: {
-        label: "Em impressão",
-        className:
-            "bg-blue-100 text-blue-700 ring-blue-300",
-    },
-
-    AGUARDANDO_VALIDACAO: {
-        label: "Aguardando validação",
-        className:
-            "bg-amber-100 text-amber-700 ring-amber-300",
-    },
-
-    AGUARDANDO_RETRABALHO: {
-        label: "Aguardando retrabalho",
-        className:
-            "bg-orange-100 text-orange-700 ring-orange-300",
-    },
-
-    EM_RETRABALHO: {
-        label: "Em retrabalho",
-        className:
-            "bg-violet-100 text-violet-700 ring-violet-300",
-    },
-
-    CONCLUIDO: {
-        label: "Concluído",
-        className:
-            "bg-green-100 text-green-700 ring-green-300",
-    },
-
-    ERRO: {
-        label: "Erro",
-        className:
-            "bg-red-100 text-red-700 ring-red-300",
-    },
-
-    CANCELADO: {
-        label: "Cancelado",
-        className:
-            "bg-slate-100 text-slate-600 ring-slate-300",
-    },
-};
 
 function ProducaoDetalhesModal({
                                    isOpen,
@@ -662,12 +623,12 @@ function ProducaoDetalhesModal({
 
     return (
         <>
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
-                <div className="flex max-h-[94vh] w-full max-w-7xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-[#f5f7fb] shadow-2xl">
-                    <header className="flex items-start justify-between border-b border-slate-200 bg-white px-6 py-5">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-sm">
+                <div className="flex max-h-[96vh] w-full max-w-[1500px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-[#f4f6f9] shadow-2xl">
+                    <header className="flex items-start justify-between border-b border-slate-200 bg-white px-4 py-3.5">
                         <div>
                             <div className="flex flex-wrap items-center gap-3">
-                                <h2 className="text-xl font-bold text-slate-900">
+                                <h2 className="text-lg font-bold text-slate-900">
                                     {producao?.codigoOrdem ||
                                         "Produção"}
                                 </h2>
@@ -675,13 +636,15 @@ function ProducaoDetalhesModal({
                                 {producao && (
                                     <span
                                         className={`
-                                            inline-flex rounded-full
-                                            px-3 py-1
-                                            text-xs font-semibold
-                                            ring-1 ring-inset
+                                            inline-flex items-center gap-1.5 rounded-full
+                                            border px-2.5 py-1
+                                            text-[10px] font-semibold
                                             ${status.className}
                                         `}
                                     >
+                                        <span
+                                            className={`h-1.5 w-1.5 rounded-full ${status.dotClass || "bg-slate-400"}`}
+                                        />
                                         {status.label}
                                     </span>
                                 )}
@@ -730,7 +693,7 @@ function ProducaoDetalhesModal({
                         </div>
                     </header>
 
-                    <div className="min-h-0 flex-1 overflow-y-auto p-6">
+                    <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-5">
                         {loading && !producao ? (
                             <div className="flex min-h-72 items-center justify-center">
                                 <Loader2
@@ -739,7 +702,7 @@ function ProducaoDetalhesModal({
                                 />
                             </div>
                         ) : producao ? (
-                            <div className="space-y-6">
+                            <div className="space-y-4">
                                 <InformacoesProducao
                                     producao={
                                         producao
@@ -876,12 +839,12 @@ function InformacoesProducao({
                                  producao,
                              }) {
     return (
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-bold text-slate-900">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4">
+            <h3 className="text-sm font-bold text-slate-900">
                 Informações da produção
             </h3>
 
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-4 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-4">
                 <Info
                     label="Linha"
                     value={
@@ -982,7 +945,7 @@ function InformacoesProducao({
 
             {producao.motivoCancelamento && (
                 <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-red-600">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-red-600">
                         Motivo do cancelamento
                     </p>
 
@@ -1005,55 +968,57 @@ function ResumoItens({
         {
             label: "Total",
             valor: resumo.total,
-            className:
-                "border-blue-200 bg-blue-50 text-blue-800",
+            iconClass: "bg-blue-500",
         },
         {
             label: "Aguardando validação",
             valor:
             resumo.aguardandoValidacao,
-            className:
-                "border-amber-200 bg-amber-50 text-amber-800",
+            iconClass: "bg-amber-500",
         },
         {
             label: "Retrabalho",
             valor: resumo.retrabalho,
-            className:
-                "border-orange-200 bg-orange-50 text-orange-800",
+            iconClass: "bg-orange-500",
         },
         {
             label: "Concluídos",
             valor: resumo.concluidos,
-            className:
-                "border-green-200 bg-green-50 text-green-800",
+            iconClass: "bg-emerald-500",
         },
         {
             label: "Erros",
             valor: resumo.erros,
-            className:
-                "border-red-200 bg-red-50 text-red-800",
+            iconClass: "bg-red-500",
         },
     ];
 
     return (
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            {cards.map((card) => (
-                <div
-                    key={card.label}
-                    className={`
-                        rounded-2xl border p-4
-                        ${card.className}
-                    `}
-                >
-                    <p className="text-xs font-semibold uppercase tracking-wide">
-                        {card.label}
-                    </p>
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="grid divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-5">
+                {cards.map((card, index) => (
+                    <div
+                        key={card.label}
+                        className={`flex items-center gap-3 px-4 py-3.5 ${
+                            index >= 2
+                                ? "sm:border-t sm:border-slate-100 xl:border-t-0"
+                                : ""
+                        }`}
+                    >
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${card.iconClass}`} />
 
-                    <p className="mt-2 text-2xl font-bold">
-                        {card.valor}
-                    </p>
-                </div>
-            ))}
+                        <div>
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                                {card.label}
+                            </p>
+
+                            <p className="mt-0.5 text-lg font-bold text-slate-900">
+                                {card.valor}
+                            </p>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </section>
     );
 }
@@ -1081,12 +1046,12 @@ function AcoesProducao({
         producao.status;
 
     return (
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-bold text-slate-900">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4">
+            <h3 className="text-sm font-bold text-slate-900">
                 Ações disponíveis
             </h3>
 
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-3 flex flex-wrap gap-2">
                 {status === "AGUARDANDO_DADOS" && (
                     <>
                         {podeImportar && (
@@ -1225,212 +1190,214 @@ function AcoesProducao({
 }
 
 function ItensTable({
-                        itens,
+                        itens = [],
                         producaoStatus,
                         actionLoading,
                         podeGerenciarRetrabalho,
                         onMarcarRetrabalho,
                         onDesmarcarRetrabalho,
                     }) {
+    const permiteAcoes =
+        podeGerenciarRetrabalho &&
+        producaoStatus ===
+        "AGUARDANDO_AVALIACAO";
+
+    const columns = [
+        {
+            key: "sequencia",
+            header: "Sequência",
+            width: "7rem",
+            render: (item) => (
+                <span className="font-bold tabular-nums text-slate-900">
+                    {item.sequencia ?? "—"}
+                </span>
+            ),
+        },
+        {
+            key: "referencia",
+            header: "Referência",
+            width: "12rem",
+            render: (item) => (
+                <TablePrimaryText
+                    title={
+                        item.referenciaExterna
+                    }
+                >
+                    {item.referenciaExterna ||
+                        "Sem referência"}
+                </TablePrimaryText>
+            ),
+        },
+        {
+            key: "valores",
+            header: "Valores",
+            width: "26rem",
+            render: (item) => (
+                <ValoresItem
+                    valores={item.valores}
+                />
+            ),
+        },
+        {
+            key: "status",
+            header: "Status",
+            width: "15rem",
+            render: (item) => (
+                <div>
+                    <StatusBadge
+                        status={item.status}
+                        statusMap={
+                            producaoItemStatusMap
+                        }
+                        showDot
+                    />
+
+                    {item.mensagemErro && (
+                        <p
+                            className="mt-1.5 max-w-xs text-[10px] leading-4 text-red-600"
+                            title={
+                                item.mensagemErro
+                            }
+                        >
+                            {item.mensagemErro}
+                        </p>
+                    )}
+                </div>
+            ),
+        },
+        {
+            key: "impressao",
+            header: "Impressão",
+            width: "11rem",
+            render: (item) => (
+                <TableText className="whitespace-nowrap">
+                    {formatarData(
+                        item.impressoEm
+                    )}
+                </TableText>
+            ),
+        },
+    ];
+
+    if (permiteAcoes) {
+        columns.push({
+            key: "acoes",
+            header: "Ações",
+            type: "actions",
+            align: "right",
+            width: "7rem",
+            render: (item) => {
+                const marcando =
+                    actionLoading ===
+                    `MARCAR-${item.id}`;
+
+                const desmarcando =
+                    actionLoading ===
+                    `DESMARCAR-${item.id}`;
+
+                if (
+                    item.status ===
+                    "AGUARDANDO_VALIDACAO"
+                ) {
+                    return (
+                        <TableActions>
+                            <TableActionButton
+                                title="Marcar para retrabalho"
+                                aria-label={`Marcar item ${item.sequencia} para retrabalho`}
+                                variant="warning"
+                                disabled={Boolean(
+                                    actionLoading
+                                )}
+                                onClick={() =>
+                                    onMarcarRetrabalho?.(
+                                        item
+                                    )
+                                }
+                            >
+                                {marcando ? (
+                                    <Loader2
+                                        size={14}
+                                        className="animate-spin"
+                                    />
+                                ) : (
+                                    <Wrench
+                                        size={14}
+                                    />
+                                )}
+                            </TableActionButton>
+                        </TableActions>
+                    );
+                }
+
+                if (
+                    item.status ===
+                    "AGUARDANDO_RETRABALHO"
+                ) {
+                    return (
+                        <TableActions>
+                            <TableActionButton
+                                title="Desmarcar retrabalho"
+                                aria-label={`Desmarcar retrabalho do item ${item.sequencia}`}
+                                disabled={Boolean(
+                                    actionLoading
+                                )}
+                                onClick={() =>
+                                    onDesmarcarRetrabalho?.(
+                                        item
+                                    )
+                                }
+                            >
+                                {desmarcando ? (
+                                    <Loader2
+                                        size={14}
+                                        className="animate-spin"
+                                    />
+                                ) : (
+                                    <RotateCcw
+                                        size={14}
+                                    />
+                                )}
+                            </TableActionButton>
+                        </TableActions>
+                    );
+                }
+
+                return (
+                    <span className="text-[10px] text-slate-400">
+                        —
+                    </span>
+                );
+            },
+        });
+    }
+
     return (
-        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-5 py-4">
-                <h3 className="text-base font-bold text-slate-900">
+        <section>
+            <div className="rounded-t-xl border border-b-0 border-slate-200 bg-white px-4 py-3.5">
+                <h3 className="text-sm font-bold text-slate-900">
                     Itens da produção
                 </h3>
 
                 <p className="mt-1 text-xs text-slate-500">
-                    {itens.length} item(ns) encontrado(s)
+                    {itens.length}{" "}
+                    {itens.length === 1
+                        ? "item encontrado"
+                        : "itens encontrados"}
                 </p>
             </div>
 
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[62rem]">
-                    <thead className="border-b border-slate-200 bg-slate-50">
-                    <tr className="text-left">
-                        <Header>
-                            Sequência
-                        </Header>
-
-                        <Header>
-                            Referência
-                        </Header>
-
-                        <Header>
-                            Valores
-                        </Header>
-
-                        <Header>
-                            Status
-                        </Header>
-
-                        <Header>
-                            Impressão
-                        </Header>
-
-                        <Header>
-                            Ações
-                        </Header>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    {itens.length === 0 ? (
-                        <tr>
-                            <td
-                                colSpan={6}
-                                className="px-5 py-12 text-center text-sm text-slate-500"
-                            >
-                                Nenhum item importado.
-                            </td>
-                        </tr>
-                    ) : (
-                        itens.map((item) => {
-                            const status =
-                                statusItemMap[
-                                    item.status
-                                    ] || {
-                                    label:
-                                    item.status,
-                                    className:
-                                        "bg-slate-100 text-slate-700 ring-slate-300",
-                                };
-
-                            const carregandoItem =
-                                actionLoading ===
-                                `MARCAR-${item.id}` ||
-                                actionLoading ===
-                                `DESMARCAR-${item.id}`;
-
-                            return (
-                                <tr
-                                    key={item.id}
-                                    className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
-                                >
-                                    <td className="px-4 py-4 text-sm font-semibold text-slate-900">
-                                        {
-                                            item.sequencia
-                                        }
-                                    </td>
-
-                                    <td className="px-4 py-4 text-sm text-slate-700">
-                                        {item.referenciaExterna ||
-                                            "—"}
-                                    </td>
-
-                                    <td className="px-4 py-4">
-                                        <ValoresItem
-                                            valores={
-                                                item.valores
-                                            }
-                                        />
-                                    </td>
-
-                                    <td className="px-4 py-4">
-                                            <span
-                                                className={`
-                                                    inline-flex whitespace-nowrap
-                                                    rounded-full px-3 py-1
-                                                    text-xs font-semibold
-                                                    ring-1 ring-inset
-                                                    ${status.className}
-                                                `}
-                                            >
-                                                {
-                                                    status.label
-                                                }
-                                            </span>
-
-                                        {item.mensagemErro && (
-                                            <p className="mt-2 max-w-xs text-xs text-red-600">
-                                                {
-                                                    item.mensagemErro
-                                                }
-                                            </p>
-                                        )}
-                                    </td>
-
-                                    <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">
-                                        {formatarData(
-                                            item.impressoEm
-                                        )}
-                                    </td>
-
-                                    <td className="px-4 py-4">
-                                        {podeGerenciarRetrabalho &&
-                                            producaoStatus ===
-                                            "AGUARDANDO_AVALIACAO" &&
-                                            item.status ===
-                                            "AGUARDANDO_VALIDACAO" && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        onMarcarRetrabalho(
-                                                            item
-                                                        )
-                                                    }
-                                                    disabled={
-                                                        Boolean(
-                                                            actionLoading
-                                                        )
-                                                    }
-                                                    className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-orange-200 px-3 py-2 text-xs font-semibold text-orange-700 transition hover:bg-orange-50 disabled:opacity-50"
-                                                >
-                                                    {carregandoItem ? (
-                                                        <Loader2
-                                                            size={15}
-                                                            className="animate-spin"
-                                                        />
-                                                    ) : (
-                                                        <Wrench
-                                                            size={15}
-                                                        />
-                                                    )}
-
-                                                    Marcar retrabalho
-                                                </button>
-                                            )}
-
-                                        {podeGerenciarRetrabalho &&
-                                            producaoStatus ===
-                                            "AGUARDANDO_AVALIACAO" &&
-                                            item.status ===
-                                            "AGUARDANDO_RETRABALHO" && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        onDesmarcarRetrabalho(
-                                                            item
-                                                        )
-                                                    }
-                                                    disabled={
-                                                        Boolean(
-                                                            actionLoading
-                                                        )
-                                                    }
-                                                    className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
-                                                >
-                                                    {carregandoItem ? (
-                                                        <Loader2
-                                                            size={15}
-                                                            className="animate-spin"
-                                                        />
-                                                    ) : (
-                                                        <RotateCcw
-                                                            size={15}
-                                                        />
-                                                    )}
-
-                                                    Desmarcar
-                                                </button>
-                                            )}
-                                    </td>
-                                </tr>
-                            );
-                        })
-                    )}
-                    </tbody>
-                </table>
+            <div className="[&>div]:rounded-t-none">
+                <DataTable
+                    columns={columns}
+                    data={itens}
+                    minWidth="62rem"
+                    rowKey={(item) =>
+                        item.id
+                    }
+                    emptyIcon={FileUp}
+                    emptyTitle="Nenhum item importado"
+                    emptyDescription="Importe os dados da produção para visualizar os itens."
+                />
             </div>
         </section>
     );
@@ -1444,7 +1411,7 @@ function CancelamentoBox({
                              loading,
                          }) {
     return (
-        <section className="rounded-3xl border border-red-200 bg-red-50 p-5">
+        <section className="rounded-2xl border border-red-200 bg-red-50 p-4">
             <h3 className="font-bold text-red-900">
                 Cancelar produção
             </h3>
@@ -1472,7 +1439,7 @@ function CancelamentoBox({
                     type="button"
                     onClick={onFechar}
                     disabled={loading}
-                    className="h-10 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                    className="h-10 rounded-xl border border-red-200 bg-white px-3.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
                 >
                     Voltar
                 </button>
@@ -1484,7 +1451,7 @@ function CancelamentoBox({
                         loading ||
                         !motivo.trim()
                     }
-                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-red-600 px-3.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
                 >
                     {loading && (
                         <Loader2
@@ -1528,9 +1495,9 @@ function ActionButton({
             onClick={onClick}
             disabled={disabled}
             className={`
-                inline-flex h-11 items-center
+                inline-flex h-10 items-center
                 gap-2 rounded-xl border bg-white
-                px-4 text-sm font-semibold
+                px-3.5 text-xs font-semibold
                 transition disabled:cursor-not-allowed
                 disabled:opacity-50
                 ${colors[color]}
@@ -1556,7 +1523,7 @@ function Info({
               }) {
     return (
         <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                 {label}
             </p>
 
@@ -1599,16 +1566,6 @@ function ValoresItem({
                 )
             )}
         </div>
-    );
-}
-
-function Header({
-                    children,
-                }) {
-    return (
-        <th className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-slate-600">
-            {children}
-        </th>
     );
 }
 
@@ -1691,7 +1648,7 @@ function ConfirmacaoAcaoBox({
     return (
         <section
             className={`
-                rounded-3xl border p-5
+                rounded-2xl border p-4
                 ${estilo.container}
             `}
         >
@@ -1711,7 +1668,7 @@ function ConfirmacaoAcaoBox({
                     <div>
                         <h3
                             className={`
-                                text-base font-bold
+                                text-sm font-bold
                                 ${estilo.titulo}
                             `}
                         >
@@ -1745,7 +1702,7 @@ function ConfirmacaoAcaoBox({
                         onClick={onConfirmar}
                         disabled={loading}
                         className={`
-                            inline-flex h-11 items-center
+                            inline-flex h-10 items-center
                             justify-center gap-2 rounded-xl
                             px-5 text-sm font-semibold
                             text-white transition

@@ -1,5 +1,7 @@
 import {
-    Cable,
+    Cpu,
+    MapPin,
+    Network,
     Pencil,
     Trash2,
 } from "lucide-react";
@@ -10,182 +12,178 @@ function EquipmentCards({
                             equipamentos = [],
                             onEdit,
                             onDelete,
-                            onIntegracao,
                             canEdit = false,
                             canDelete = false,
-                            canIntegrate = false,
                         }) {
     if (equipamentos.length === 0) {
         return (
-            <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">
-                Nenhum equipamento encontrado.
+            <div className="flex min-h-52 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-6 text-center">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm">
+                    <Cpu size={19} />
+                </div>
+
+                <h3 className="mt-3 text-sm font-semibold text-slate-800">
+                    Nenhum equipamento encontrado
+                </h3>
+
+                <p className="mt-1 text-xs text-slate-500">
+                    Altere os filtros ou cadastre um novo equipamento.
+                </p>
             </div>
         );
     }
 
     const possuiAcoes =
-        canIntegrate ||
-        canEdit ||
-        canDelete;
+        canEdit || canDelete;
 
     return (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
             {equipamentos.map((equipamento) => (
-                <div
+                <article
                     key={equipamento.id}
-                    className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+                    className="overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-sm"
                 >
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                            <p className="text-sm text-slate-500">
-                                {equipamento.codigo || "-"}
-                            </p>
-
-                            <h3 className="mt-1 text-xl font-bold text-slate-900">
-                                {equipamento.nome || "-"}
-                            </h3>
-                        </div>
-
-                        <div className="flex items-start gap-4">
-                            <div>
-                                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                                    Status
-                                </p>
-
-                                <StatusBadge
-                                    status={equipamento.status}
-                                />
+                    <header className="flex items-start justify-between gap-4 border-b border-slate-100 px-4 py-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                <Cpu size={18} />
                             </div>
 
-                            <div>
-                                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                                    Conexão
-                                </p>
+                            <div className="min-w-0">
+                                <h3 className="truncate text-sm font-bold text-slate-900">
+                                    {equipamento.nome || "Sem nome"}
+                                </h3>
 
-                                <StatusBadge
-                                    status={
-                                        equipamento.statusConexao ||
-                                        "SEM_CONEXAO"
-                                    }
-                                />
+                                <p className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                                    {equipamento.codigo || "Sem código"}
+                                </p>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="mt-6 grid grid-cols-2 gap-4">
-                        <InfoCard
+                        <div className="flex shrink-0 flex-col items-end gap-1.5">
+                            <StatusBadge status={equipamento.status} />
+                            <StatusBadge
+                                status={equipamento.statusConexao || "SEM_CONEXAO"}
+                            />
+                        </div>
+                    </header>
+
+                    <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-4 sm:divide-y-0">
+                        <Info
+                            icon={MapPin}
                             label="Planta"
                             value={equipamento.plantaNome}
                         />
 
-                        <InfoCard
+                        <Info
+                            icon={MapPin}
                             label="Linha"
                             value={equipamento.linhaNome}
                         />
 
-                        <InfoCard
-                            label="Tipo"
-                            value={equipamento.tipo}
+                        <Info
+                            icon={Network}
+                            label="Endereço"
+                            value={formatarEndereco(equipamento)}
                         />
 
-                        <InfoCard
-                            label="IP"
-                            value={equipamento.ip}
-                        />
-
-                        <InfoCard
-                            label="Porta"
-                            value={equipamento.porta}
-                        />
-
-                        <InfoCard
-                            label="Protocolo"
-                            value={equipamento.protocolo}
-                        />
-
-                        <InfoCard
-                            label="Fabricante"
-                            value={equipamento.fabricante}
-                        />
-
-                        <InfoCard
+                        <Info
+                            icon={Cpu}
                             label="Modelo"
-                            value={equipamento.modelo}
+                            value={formatarModelo(equipamento)}
                         />
                     </div>
 
-                    {possuiAcoes && (
-                        <div className="mt-6 flex items-center justify-end gap-2">
-                            {canIntegrate && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        onIntegracao?.(
-                                            equipamento
-                                        )
-                                    }
-                                    className="rounded-xl border border-blue-200 p-2 text-blue-600 transition hover:bg-blue-50"
-                                    title="Integração"
-                                    aria-label={`Abrir integração do equipamento ${equipamento.nome}`}
-                                >
-                                    <Cable size={16} />
-                                </button>
-                            )}
+                    <div className="flex items-center justify-between gap-3 bg-slate-50/70 px-4 py-3">
+                        <div className="min-w-0 text-[10px] text-slate-500">
+                            <span className="font-semibold text-slate-600">
+                                {equipamento.tipo || "Tipo não informado"}
+                            </span>
 
-                            {canEdit && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        onEdit?.(
-                                            equipamento
-                                        )
-                                    }
-                                    className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
-                                    title="Editar"
-                                    aria-label={`Editar equipamento ${equipamento.nome}`}
-                                >
-                                    <Pencil size={16} />
-                                </button>
-                            )}
-
-                            {canDelete && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        onDelete?.(
-                                            equipamento
-                                        )
-                                    }
-                                    className="rounded-xl border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
-                                    title="Excluir"
-                                    aria-label={`Excluir equipamento ${equipamento.nome}`}
-                                >
-                                    <Trash2 size={16} />
-                                </button>
+                            {equipamento.protocolo && (
+                                <>
+                                    <span className="px-1.5 text-slate-300">•</span>
+                                    {equipamento.protocolo}
+                                </>
                             )}
                         </div>
-                    )}
-                </div>
+
+                        {possuiAcoes && (
+                            <div className="flex shrink-0 items-center gap-1">
+                                {canEdit && (
+                                    <ActionButton
+                                        icon={Pencil}
+                                        label="Editar"
+                                        onClick={() => onEdit?.(equipamento)}
+                                        className="hover:bg-slate-200 hover:text-slate-700"
+                                    />
+                                )}
+
+                                {canDelete && (
+                                    <ActionButton
+                                        icon={Trash2}
+                                        label="Excluir"
+                                        onClick={() => onDelete?.(equipamento)}
+                                        className="hover:bg-red-100 hover:text-red-600"
+                                    />
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </article>
             ))}
         </div>
     );
 }
 
-function InfoCard({
-                      label,
-                      value,
-                  }) {
+function Info({ icon: Icon, label, value }) {
     return (
-        <div className="rounded-2xl bg-slate-50 p-4">
-            <p className="text-sm text-slate-500">
+        <div className="min-w-0 px-3 py-3">
+            <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                <Icon size={11} />
                 {label}
-            </p>
+            </div>
 
-            <p className="mt-1 text-[13.5px] text-slate-800">
-                {value ?? "-"}
+            <p className="mt-1 truncate text-[11px] font-semibold text-slate-700">
+                {value || "—"}
             </p>
         </div>
     );
+}
+
+function ActionButton({ icon: Icon, label, onClick, className }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition ${className}`}
+            title={label}
+            aria-label={label}
+        >
+            <Icon size={15} />
+        </button>
+    );
+}
+
+function formatarEndereco(equipamento) {
+    if (!equipamento.ip) {
+        return "Sem IP";
+    }
+
+    return equipamento.porta
+        ? `${equipamento.ip}:${equipamento.porta}`
+        : equipamento.ip;
+}
+
+function formatarModelo(equipamento) {
+    const partes = [
+        equipamento.fabricante,
+        equipamento.modelo,
+    ].filter(Boolean);
+
+    return partes.length > 0
+        ? partes.join(" ")
+        : "Não informado";
 }
 
 export default EquipmentCards;
